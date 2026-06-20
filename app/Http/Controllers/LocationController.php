@@ -20,6 +20,11 @@ class LocationController extends Controller
             ]
         ]);
 
+        // // Opsional: simpan permanen ke kolom users.last_location
+        // Auth::user()->update([
+        //     'last_location' => new Point($request->lat, $request->lng),
+        // ]);
+
         return response()->json(['status' => 'ok']);
     }
 }

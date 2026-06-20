@@ -568,3 +568,13 @@ footer {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
 }
+
+.nav-link-eo {
+    color: var(--accent) !important;
+    font-weight: 600;
+    border: 1px solid rgba(216,255,79,.2);
+}
+ 
+.nav-link-eo:hover {
+    background: rgba(216,255,79,.08) !important;
+}

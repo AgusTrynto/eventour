@@ -10,7 +10,7 @@ class LoginController extends Controller
 {
     public function showForm()
     {
-        return view('auth.UserLogin');
+        return view('auth.userlogin');
     }
 
     public function submit(Request $request)
@@ -35,8 +35,15 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'))
-            ->with('success', 'Selamat datang kembali, ' . Auth::user()->name . '!');
+        $user = Auth::user();
+
+        $redirectTo = match ($user->role) {
+            'admin' => route('admin.dashboard'),
+            default => route('dashboard'),
+        };
+
+        return redirect()->intended($redirectTo)
+            ->with('success', 'Selamat datang kembali, ' . $user->name . '!');
     }
 
     public function logout(Request $request)

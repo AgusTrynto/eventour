@@ -1,10 +1,19 @@
 <?php
+
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\EORegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\EO\EODashboardController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventMapController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminEOController;
+use App\Http\Controllers\Admin\AdminEventController;
 use Illuminate\Support\Facades\Route;
+
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -46,19 +55,19 @@ Route::post('/register/resend-otp', [RegisterController::class, 'resendOtp'])
 Route::get('/eo-register', [EORegisterController::class, 'showForm'])
     ->name('eo.register')
     ->middleware('guest');
- 
+
 Route::post('/eo-register', [EORegisterController::class, 'submitForm'])
     ->name('eo.register.submit')
     ->middleware('guest');
- 
+
 Route::get('/eo-register/verify-otp', [EORegisterController::class, 'showOtpForm'])
     ->name('eo.register.otp')
     ->middleware('guest');
- 
+
 Route::post('/eo-register/verify-otp', [EORegisterController::class, 'verifyOtp'])
     ->name('eo.register.otp.verify')
     ->middleware('guest');
- 
+
 Route::post('/eo-register/resend-otp', [EORegisterController::class, 'resendOtp'])
     ->name('eo.register.otp.resend')
     ->middleware('guest');
@@ -71,3 +80,53 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::post('/location/save', [LocationController::class, 'save'])
     ->name('location.save')
     ->middleware('auth');
+
+Route::get('/events/nearby', [EventMapController::class, 'nearby'])
+    ->name('events.nearby');
+
+Route::get('/events/{event}', [EventController::class, 'show'])
+    ->name('events.show')
+    ->middleware('auth');
+
+// === EO DASHBOARD ROUTES ===
+// middleware: auth (sudah login) + eo (role harus eo)
+
+Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
+
+    Route::get('/dashboard', [EODashboardController::class, 'index'])
+        ->name('eo.dashboard');
+
+    Route::get('/events/create', [EODashboardController::class, 'createEvent'])
+        ->name('eo.events.create');
+
+    Route::post('/events', [EODashboardController::class, 'storeEvent'])
+        ->name('eo.events.store');
+});
+
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+ 
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])
+        ->name('admin.dashboard');
+ 
+    // ── EO ─────────────────────────────────────────
+    Route::get('/eo', [AdminEOController::class, 'index'])
+        ->name('admin.eo.index');
+ 
+    Route::post('/eo/{organizer}/approve', [AdminEOController::class, 'approve'])
+        ->name('admin.eo.approve');
+ 
+    Route::post('/eo/{organizer}/reject', [AdminEOController::class, 'reject'])
+        ->name('admin.eo.reject');
+ 
+    // ── Events ──────────────────────────────────────
+    Route::get('/events', [AdminEventController::class, 'index'])
+        ->name('admin.events.index');
+ 
+    Route::post('/events/{event}/approve', [AdminEventController::class, 'approve'])
+        ->name('admin.events.approve');
+ 
+    Route::post('/events/{event}/reject', [AdminEventController::class, 'reject'])
+        ->name('admin.events.reject');
+ 
+});

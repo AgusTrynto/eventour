@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,6 +25,11 @@
                 <a href="/dashboard" class="nav-link active">Dashboard</a>
                 <a href="#" class="nav-link">Event</a>
                 <a href="#" class="nav-link">Tiket Saya</a>
+                @if (auth()->user()->role === 'eo')
+                    <a href="{{ route('eo.dashboard') }}" class="nav-link nav-link-eo">
+                        Dashboard EO
+                    </a>
+                @endif
             </nav>
 
             <div class="nav-right">
@@ -81,12 +87,15 @@
                             {{ session('user_location') ? '✅ Terdeteksi' : '⏳ Mendeteksi...' }}
                         </span>
                     </div>
-                    <button type="button" id="refresh-location-btn" class="btn-refresh-location" title="Perbarui lokasi">
-                        <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                            <path d="M21 3v5h-5"/>
-                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                            <path d="M8 16H3v5"/>
+                    <button type="button" id="refresh-location-btn" class="btn-refresh-location"
+                        title="Perbarui lokasi">
+                        <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                            <path d="M21 3v5h-5" />
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                            <path d="M8 16H3v5" />
                         </svg>
                     </button>
                 </div>
@@ -125,56 +134,27 @@
                     </div>
 
                     <div class="recommendation-list" id="recommendation-list">
-                        {{-- Contoh item statis, nanti diganti dari DB --}}
-                        <div class="rec-item">
-                            <div class="rec-emoji">🎵</div>
-                            <div class="rec-info">
-                                <span class="rec-title">Java Jazz Festival 2026</span>
-                                <span class="rec-meta">Jakarta · 15 Jun 2026</span>
-                                <span class="rec-price">Rp 250.000</span>
+                        @forelse ($recommendedEvents as $event)
+                            <div class="rec-item">
+                                <div class="rec-emoji">{{ $event->category_emoji }}</div>
+                                <div class="rec-info">
+                                    <span class="rec-title">{{ $event->title }}</span>
+                                    <span class="rec-meta">
+                                        {{ $event->location_name }} ·
+                                        {{ $event->start_date->translatedFormat('d M Y') }}
+                                    </span>
+                                    <span class="rec-price">
+                                        {{ $event->price > 0 ? 'Rp ' . number_format($event->price, 0, ',', '.') : 'Gratis' }}
+                                    </span>
+                                </div>
+                                <a href="{{ route('events.show', $event->id) }}" class="rec-btn">Lihat</a>
                             </div>
-                            <a href="#" class="rec-btn">Lihat</a>
-                        </div>
-
-                        <div class="rec-item">
-                            <div class="rec-emoji">🎭</div>
-                            <div class="rec-info">
-                                <span class="rec-title">Pameran Seni Nusantara</span>
-                                <span class="rec-meta">Semarang · 20 Jun 2026</span>
-                                <span class="rec-price">Rp 50.000</span>
+                        @empty
+                            <div class="empty-state">
+                                <span>🎪</span>
+                                <p>Belum ada event tersedia saat ini.</p>
                             </div>
-                            <a href="#" class="rec-btn">Lihat</a>
-                        </div>
-
-                        <div class="rec-item">
-                            <div class="rec-emoji">🏃</div>
-                            <div class="rec-info">
-                                <span class="rec-title">Marathon Borobudur 2026</span>
-                                <span class="rec-meta">Magelang · 1 Jul 2026</span>
-                                <span class="rec-price">Rp 150.000</span>
-                            </div>
-                            <a href="#" class="rec-btn">Lihat</a>
-                        </div>
-
-                        <div class="rec-item">
-                            <div class="rec-emoji">🍜</div>
-                            <div class="rec-info">
-                                <span class="rec-title">Festival Kuliner Jawa Tengah</span>
-                                <span class="rec-meta">Semarang · 5 Jul 2026</span>
-                                <span class="rec-price">Gratis</span>
-                            </div>
-                            <a href="#" class="rec-btn">Lihat</a>
-                        </div>
-
-                        <div class="rec-item">
-                            <div class="rec-emoji">🎮</div>
-                            <div class="rec-info">
-                                <span class="rec-title">GameFest Indonesia 2026</span>
-                                <span class="rec-meta">Surabaya · 12 Jul 2026</span>
-                                <span class="rec-price">Rp 100.000</span>
-                            </div>
-                            <a href="#" class="rec-btn">Lihat</a>
-                        </div>
+                        @endforelse
                     </div>
                 </div>
 
@@ -207,8 +187,9 @@
         }).addTo(map);
 
         // ── Marker & lingkaran radius ───────────────────────────
-        let userMarker  = null;
+        let userMarker = null;
         let radiusCircle = null;
+        let eventMarkers = [];
 
         function getRadius() {
             return parseInt(document.getElementById('radius-select').value);
@@ -238,14 +219,70 @@
             map.setView([lat, lng], 12);
 
             document.getElementById('map-info-text').textContent =
-                `📍 Menampilkan event dalam radius ${getRadius() / 1000} km dari lokasi kamu`;
+                `🔍 Memuat event dalam radius ${getRadius() / 1000} km...`;
+
+            loadNearbyEvents();
+        }
+
+        // ── Ambil SEMUA event dari server, beri info radius ──────
+        function loadNearbyEvents() {
+            eventMarkers.forEach(m => map.removeLayer(m));
+            eventMarkers = [];
+
+            fetch(`{{ route('events.nearby') }}?radius=${getRadius()}`)
+                .then(res => res.json())
+                .then(data => {
+                    const events = data.events || [];
+
+                    events.forEach(ev => {
+                        const inRadius = ev.in_radius === true || ev.in_radius === null;
+
+                        const marker = L.circleMarker([ev.lat, ev.lng], {
+                            radius: inRadius ? 9 : 6,
+                            fillColor: inRadius ? '#ff5da2' : '#9ca3af',
+                            color: inRadius ? '#ffffff' : '#d1d5db',
+                            weight: inRadius ? 2.5 : 1.5,
+                            fillOpacity: inRadius ? 0.95 : 0.6,
+                            opacity: inRadius ? 1 : 0.7,
+                        })
+                            .addTo(map)
+                            .bindPopup(
+                                `<strong>${ev.title}</strong><br>${ev.date}<br>` +
+                                (ev.price > 0 ? `Rp ${Number(ev.price).toLocaleString('id-ID')}` : 'Gratis') +
+                                (ev.distance !== null ? `<br><small>${(ev.distance / 1000).toFixed(1)} km dari kamu</small>` : '')
+                            );
+
+                        eventMarkers.push(marker);
+                    });
+
+                    document.getElementById('map-info-text').textContent =
+                        `📍 Menampilkan ${data.count_total} event` +
+                        (data.count_in_radius !== null
+                            ? ` · ${data.count_in_radius} dalam radius ${getRadius() / 1000} km`
+                            : '');
+                })
+                .catch(() => {
+                    document.getElementById('map-info-text').textContent =
+                        '⚠️ Gagal memuat data event.';
+                });
         }
 
         // ── Update radius saat select berubah ───────────────────
         document.getElementById('radius-select').addEventListener('change', () => {
             if (userMarker) {
                 const latlng = userMarker.getLatLng();
-                placeUserOnMap(latlng.lat, latlng.lng);
+                if (radiusCircle) map.removeLayer(radiusCircle);
+
+                radiusCircle = L.circle(latlng, {
+                    radius: getRadius(),
+                    color: '#d8ff4f',
+                    fillColor: '#d8ff4f',
+                    fillOpacity: 0.06,
+                    weight: 1.5,
+                    dashArray: '6, 6',
+                }).addTo(map);
+
+                loadNearbyEvents();
             }
         });
 
@@ -261,6 +298,7 @@
         function requestUserLocation(onDone) {
             if (!('geolocation' in navigator)) {
                 document.getElementById('location-status').textContent = '❌ Tidak didukung';
+                loadNearbyEvents();
                 if (onDone) onDone();
                 return;
             }
@@ -290,6 +328,7 @@
                     document.getElementById('map-info-text').textContent =
                         '⚠️ Izin lokasi ditolak. Aktifkan GPS untuk fitur ini.';
                     map.setView([defaultLat, defaultLng], 5);
+                    loadNearbyEvents(); // tetap tampilkan semua event walau lokasi ditolak
                     if (onDone) onDone();
                 },
                 { enableHighAccuracy: true, timeout: 10000 }
@@ -297,7 +336,7 @@
         }
 
         // ── Tombol refresh lokasi ─────────────────────────────────
-        const refreshBtn  = document.getElementById('refresh-location-btn');
+        const refreshBtn = document.getElementById('refresh-location-btn');
         const refreshIcon = document.getElementById('refresh-icon');
 
         refreshBtn.addEventListener('click', () => {
@@ -314,4 +353,5 @@
     </script>
 
 </body>
+
 </html>
