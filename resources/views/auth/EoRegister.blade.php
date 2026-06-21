@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,12 +48,8 @@
 
                 <div class="form-group">
                     <label>Nama Organisasi / EO</label>
-                    <input
-                        type="text"
-                        name="org_name"
-                        placeholder="Contoh: Java Production"
-                        value="{{ old('org_name') }}"
-                        required>
+                    <input type="text" name="org_name" placeholder="Contoh: Java Production"
+                        value="{{ old('org_name') }}" required>
                     @error('org_name')
                         <span class="field-error">{{ $message }}</span>
                     @enderror
@@ -60,11 +57,7 @@
 
                 <div class="form-group">
                     <label>Nama Penanggung Jawab</label>
-                    <input
-                        type="text"
-                        name="name"
-                        placeholder="Masukkan nama lengkap"
-                        value="{{ old('name') }}"
+                    <input type="text" name="name" placeholder="Masukkan nama lengkap" value="{{ old('name') }}"
                         required>
                     @error('name')
                         <span class="field-error">{{ $message }}</span>
@@ -73,12 +66,7 @@
 
                 <div class="form-group">
                     <label>Email</label>
-                    <input
-                        type="email"
-                        name="email"
-                        placeholder="nama@email.com"
-                        value="{{ old('email') }}"
-                        required>
+                    <input type="email" name="email" placeholder="nama@email.com" value="{{ old('email') }}" required>
                     @error('email')
                         <span class="field-error">{{ $message }}</span>
                     @enderror
@@ -86,12 +74,7 @@
 
                 <div class="form-group">
                     <label>Nomor Telepon</label>
-                    <input
-                        type="text"
-                        name="phone"
-                        placeholder="08xxxxxxxxxx"
-                        value="{{ old('phone') }}"
-                        required>
+                    <input type="text" name="phone" placeholder="08xxxxxxxxxx" value="{{ old('phone') }}" required>
                     @error('phone')
                         <span class="field-error">{{ $message }}</span>
                     @enderror
@@ -99,23 +82,51 @@
 
                 <div class="form-group">
                     <label>Alamat (opsional)</label>
-                    <input
-                        type="text"
-                        name="address"
-                        placeholder="Alamat organisasi/EO"
-                        value="{{ old('address') }}">
+                    <input type="text" name="address" placeholder="Alamat organisasi/EO" value="{{ old('address') }}">
                     @error('address')
+                        <span class="field-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+
+                <div class="form-group">
+                    <label>Nama Bank</label>
+                    <select name="bank_name" required>
+                        <option value="">Pilih bank</option>
+                        <option value="BCA" {{ old('bank_name') === 'BCA' ? 'selected' : '' }}>BCA</option>
+                        <option value="BNI" {{ old('bank_name') === 'BNI' ? 'selected' : '' }}>BNI</option>
+                        <option value="BRI" {{ old('bank_name') === 'BRI' ? 'selected' : '' }}>BRI</option>
+                        <option value="Mandiri" {{ old('bank_name') === 'Mandiri' ? 'selected' : '' }}>Mandiri</option>
+                        <option value="CIMB Niaga" {{ old('bank_name') === 'CIMB Niaga' ? 'selected' : '' }}>CIMB Niaga
+                        </option>
+                        <option value="Lainnya" {{ old('bank_name') === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                    </select>
+                    @error('bank_name')
+                        <span class="field-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label>Nomor Rekening</label>
+                    <input type="text" name="bank_account_number" placeholder="Contoh: 1234567890"
+                        value="{{ old('bank_account_number') }}" required>
+                    @error('bank_account_number')
+                        <span class="field-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label>Nama Pemilik Rekening</label>
+                    <input type="text" name="bank_account_name" placeholder="Sesuai buku tabungan"
+                        value="{{ old('bank_account_name') }}" required>
+                    @error('bank_account_name')
                         <span class="field-error">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div class="form-group">
                     <label>Password</label>
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Minimal 8 karakter"
-                        required>
+                    <input type="password" name="password" placeholder="Minimal 8 karakter" required>
                     @error('password')
                         <span class="field-error">{{ $message }}</span>
                     @enderror
@@ -153,4 +164,5 @@
     </footer>
 
 </body>
+
 </html>

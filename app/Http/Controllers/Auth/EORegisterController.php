@@ -33,6 +33,9 @@ class EORegisterController extends Controller
             'email'    => ['required', 'email', 'unique:users,email'],
             'phone'    => ['required', 'string', 'max:20'],
             'address'  => ['nullable', 'string', 'max:500'],
+            'bank_name'            => ['required', 'string', 'max:50'],   // ← baru
+            'bank_account_number'  => ['required', 'string', 'max:50'],   // ← baru
+            'bank_account_name'    => ['required', 'string', 'max:255'],  // ← baru
             'password' => ['required', 'string', 'min:8'],
         ], [
             'org_name.required' => 'Nama organisasi/EO wajib diisi.',
@@ -41,6 +44,9 @@ class EORegisterController extends Controller
             'email.email'       => 'Format email tidak valid.',
             'email.unique'      => 'Email ini sudah terdaftar.',
             'phone.required'    => 'Nomor telepon wajib diisi.',
+            'bank_name.required'            => 'Nama bank wajib diisi.',
+            'bank_account_number.required'  => 'Nomor rekening bank wajib diisi.',
+            'bank_account_name.required'    => 'Nama pemilik rekening wajib diisi.',
             'password.required' => 'Password wajib diisi.',
             'password.min'      => 'Password minimal 8 karakter.',
         ]);
@@ -54,6 +60,9 @@ class EORegisterController extends Controller
             'email'    => $request->email,
             'phone'    => $request->phone,
             'address'  => $request->address,
+            'bank_name'           => $request->bank_name,
+            'bank_account_number' => $request->bank_account_number,
+            'bank_account_name'   => $request->bank_account_name,
             'password' => Hash::make($request->password),
         ]);
 
@@ -143,7 +152,10 @@ class EORegisterController extends Controller
             'user_id'  => $user->id,
             'org_name' => $pending['org_name'],
             'phone'    => $pending['phone'],
-            'address'  => $pending['address'],
+            'address'  => $pending['address'],  
+            'bank_name'           => $pending['bank_name'],
+            'bank_account_number' => $pending['bank_account_number'],
+            'bank_account_name'   => $pending['bank_account_name'],
             'status'   => 'pending',
         ]);
 

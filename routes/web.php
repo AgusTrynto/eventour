@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminEOController;
 use App\Http\Controllers\Admin\AdminEventController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\AdminPayoutController;
+use App\Http\Controllers\Admin\AdminRefundController;
 
 
 Route::get('/', function () {
@@ -128,5 +130,22 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
  
     Route::post('/events/{event}/reject', [AdminEventController::class, 'reject'])
         ->name('admin.events.reject');
+
+            // ── Payout (pencairan dana ke EO) ────────────────
+    Route::get('/payouts', [AdminPayoutController::class, 'index'])
+        ->name('admin.payouts.index');
+ 
+    Route::post('/payouts/{event}/create', [AdminPayoutController::class, 'create'])
+        ->name('admin.payouts.create');
+ 
+    Route::post('/payouts/{payout}/complete', [AdminPayoutController::class, 'complete'])
+        ->name('admin.payouts.complete');
+ 
+    // ── Refund (kembalikan dana ke user) ─────────────
+    Route::post('/events/{event}/refund', [AdminRefundController::class, 'refundEvent'])
+        ->name('admin.events.refund');
+ 
+    Route::post('/orders/{order}/refund', [AdminRefundController::class, 'refundOrder'])
+        ->name('admin.orders.refund');
  
 });

@@ -82,4 +82,26 @@ class Event extends Model
             ])
             ->orderBy('distance');
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function payout()
+    {
+        return $this->hasOne(Payout::class);
+    }
+
+    // Total dana yang sudah dibayar user & DITAHAN platform (belum dicairkan)
+    public function getEscrowAmountAttribute(): float
+    {
+        return (float) $this->orders()->where('payment_status', 'paid')->sum('total_amount');
+    }
+
+    // Jumlah tiket yang berhasil terjual (status paid)
+    public function getTicketsSoldAttribute(): int
+    {
+        return (int) $this->orders()->where('payment_status', 'paid')->sum('quantity');
+    }
 }

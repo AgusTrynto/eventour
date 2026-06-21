@@ -214,3 +214,36 @@ footer {
     font-size: 13px;
     text-align: center;
 }
+
+.form-group select {
+    width: 100%;
+    padding: 12px 14px;
+    background: #000;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 8px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.form-group select option {
+    background: #000;
+    color: #fff;
+}
+
+.form-group select:focus {
+    border-color: #666;
+}   
+
+.form-group {
+    position: relative;
+}
+
+.form-group select {
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+}
