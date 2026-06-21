@@ -1,0 +1,5 @@
+/* create-event styles placeholder */
+
+.form-row { display: flex; gap: 1rem; }
+label { display: block; margin-bottom: .5rem; }
+input, select, textarea { width: 100%; padding: .5rem; border: 1px solid #ddd; border-radius: 4px; }

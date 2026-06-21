@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -28,6 +29,12 @@ class DashboardController extends Controller
                 ->get();
         }
 
-        return view('user.dashboard', compact('user', 'recommendedEvents'));
+        // Jumlah tiket yang sudah dibayar oleh user (dan belum direfund)
+        $ticketCount = Order::where('user_id', $user->id)
+            ->where('payment_status', 'paid')
+            ->whereNull('refunded_at')
+            ->sum('quantity');
+
+        return view('user.dashboard', compact('user', 'recommendedEvents', 'ticketCount'));
     }
 }

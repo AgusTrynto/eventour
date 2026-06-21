@@ -10,6 +10,7 @@ class Order extends Model
         'user_id', 'event_id', 'quantity', 'unit_price', 'total_amount',
         'payment_status', 'payment_method', 'payment_proof',
         'paid_at', 'refunded_at', 'refund_reason',
+        'xendit_invoice_id', 'xendit_invoice_url', 'external_id',
     ];
 
     protected $casts = [

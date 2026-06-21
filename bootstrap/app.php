@@ -16,6 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
         ]);
     })
+
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/xendit',
+        ]);
+    })
+    
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

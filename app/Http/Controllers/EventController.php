@@ -12,6 +12,8 @@ class EventController extends Controller
             abort(404);
         }
 
+        $event->load('organizer');
+
         return view('events.show', compact('event'));
     }
 }

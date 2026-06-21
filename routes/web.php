@@ -14,6 +14,8 @@ use App\Http\Controllers\Admin\AdminEventController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminRefundController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\XenditWebhookController;
 
 
 Route::get('/', function () {
@@ -90,6 +92,25 @@ Route::get('/events/{event}', [EventController::class, 'show'])
     ->name('events.show')
     ->middleware('auth');
 
+// ── Checkout (perlu login) ──────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::get('/checkout/{event}', [CheckoutController::class, 'show'])
+        ->name('checkout.show');
+
+    Route::post('/checkout/{event}', [CheckoutController::class, 'store'])
+        ->name('checkout.store');
+
+    Route::get('/checkout/order/{order}/success', [CheckoutController::class, 'success'])
+        ->name('checkout.success');
+
+    Route::get('/checkout/order/{order}/failed', [CheckoutController::class, 'failed'])
+        ->name('checkout.failed');
+});
+
+// ── Webhook Xendit (TANPA middleware auth/csrf — dipanggil server Xendit) ──
+Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
+    ->name('webhooks.xendit');
+
 // === EO DASHBOARD ROUTES ===
 // middleware: auth (sudah login) + eo (role harus eo)
 
@@ -107,45 +128,48 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
 
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
- 
+
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->name('admin.dashboard');
- 
+
     // ── EO ─────────────────────────────────────────
     Route::get('/eo', [AdminEOController::class, 'index'])
         ->name('admin.eo.index');
- 
+
     Route::post('/eo/{organizer}/approve', [AdminEOController::class, 'approve'])
         ->name('admin.eo.approve');
- 
+
     Route::post('/eo/{organizer}/reject', [AdminEOController::class, 'reject'])
         ->name('admin.eo.reject');
- 
+
+        
+    // (checkout & webhook moved to public routes)
+        
     // ── Events ──────────────────────────────────────
     Route::get('/events', [AdminEventController::class, 'index'])
         ->name('admin.events.index');
- 
+
     Route::post('/events/{event}/approve', [AdminEventController::class, 'approve'])
         ->name('admin.events.approve');
- 
+
     Route::post('/events/{event}/reject', [AdminEventController::class, 'reject'])
         ->name('admin.events.reject');
 
-            // ── Payout (pencairan dana ke EO) ────────────────
+    // ── Payout (pencairan dana ke EO) ────────────────
     Route::get('/payouts', [AdminPayoutController::class, 'index'])
         ->name('admin.payouts.index');
- 
+
     Route::post('/payouts/{event}/create', [AdminPayoutController::class, 'create'])
         ->name('admin.payouts.create');
- 
+
     Route::post('/payouts/{payout}/complete', [AdminPayoutController::class, 'complete'])
         ->name('admin.payouts.complete');
- 
+
     // ── Refund (kembalikan dana ke user) ─────────────
     Route::post('/events/{event}/refund', [AdminRefundController::class, 'refundEvent'])
         ->name('admin.events.refund');
- 
+
     Route::post('/orders/{order}/refund', [AdminRefundController::class, 'refundOrder'])
         ->name('admin.orders.refund');
- 
+
 });
