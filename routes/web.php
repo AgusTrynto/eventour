@@ -18,6 +18,8 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\XenditWebhookController;
 use App\Http\Controllers\Eo\EoScanController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\EO\EOMapController;
+use App\Http\Controllers\ReviewController;
 
 
 Route::get('/', function () {
@@ -116,6 +118,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])
         ->name('tickets.show');
+
+    Route::get('/reviews', [ReviewController::class, 'index'])
+        ->name('reviews.index');
+
+    Route::post('/reviews', [ReviewController::class, 'store'])
+        ->name('reviews.store');
 });
 
 // ── Webhook Xendit (TANPA middleware auth/csrf — dipanggil server Xendit) ──
@@ -142,6 +150,9 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
     Route::post('/scan/validate', [EoScanController::class, 'validateTicket'])
         ->name('eo.scan.validate');
 
+    Route::get('/nearby', [EOMapController::class, 'nearby'])
+        ->name('eo.nearby')
+        ->middleware('auth');
 });
 
 
@@ -160,9 +171,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/eo/{organizer}/reject', [AdminEOController::class, 'reject'])
         ->name('admin.eo.reject');
 
-        
+
     // (checkout & webhook moved to public routes)
-        
+
     // ── Events ──────────────────────────────────────
     Route::get('/events', [AdminEventController::class, 'index'])
         ->name('admin.events.index');
@@ -189,7 +200,4 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     Route::post('/orders/{order}/refund', [AdminRefundController::class, 'refundOrder'])
         ->name('admin.orders.refund');
-
 });
-
-

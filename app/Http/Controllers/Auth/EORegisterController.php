@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use MatanYadaev\EloquentSpatial\Objects\Point;
 
 class EORegisterController extends Controller
 {
@@ -33,6 +34,8 @@ class EORegisterController extends Controller
             'email'    => ['required', 'email', 'unique:users,email'],
             'phone'    => ['required', 'string', 'max:20'],
             'address'  => ['nullable', 'string', 'max:500'],
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
             'bank_name'            => ['required', 'string', 'max:50'],   // ← baru
             'bank_account_number'  => ['required', 'string', 'max:50'],   // ← baru
             'bank_account_name'    => ['required', 'string', 'max:255'],  // ← baru
@@ -60,6 +63,8 @@ class EORegisterController extends Controller
             'email'    => $request->email,
             'phone'    => $request->phone,
             'address'  => $request->address,
+            'lat' => $request->lat,
+            'lng' => $request->lng,
             'bank_name'           => $request->bank_name,
             'bank_account_number' => $request->bank_account_number,
             'bank_account_name'   => $request->bank_account_name,
@@ -152,7 +157,8 @@ class EORegisterController extends Controller
             'user_id'  => $user->id,
             'org_name' => $pending['org_name'],
             'phone'    => $pending['phone'],
-            'address'  => $pending['address'],  
+            'address'  => $pending['address'],
+            'location' => new Point((float) $pending['lat'], (float) $pending['lng']),
             'bank_name'           => $pending['bank_name'],
             'bank_account_number' => $pending['bank_account_number'],
             'bank_account_name'   => $pending['bank_account_name'],

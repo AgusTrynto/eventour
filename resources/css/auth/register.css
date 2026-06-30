@@ -247,3 +247,12 @@ footer {
     background-repeat: no-repeat;
     background-position: right 14px center;
 }
+
+.map-picker-small {
+    height: 240px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #1a1a22;
+    cursor: crosshair;
+}

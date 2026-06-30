@@ -51,6 +51,11 @@ class User extends Authenticatable
         return $this->hasOne(EventOrganizer::class);
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
     // Helper cek role
     public function isEO(): bool
     {

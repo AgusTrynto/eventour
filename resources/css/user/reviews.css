@@ -1,0 +1,265 @@
+@import '../app.css';
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --bg: #0f1117;
+    --card: rgba(25,25,30,.75);
+    --accent: #d8ff4f;
+    --border: rgba(255,255,255,.08);
+}
+
+body.reviews-page {
+    font-family: "DM Sans", sans-serif;
+    background: var(--bg);
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.bg-glow {
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(circle at top left, rgba(216,255,79,.1), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(255,93,162,.08), transparent 40%);
+    pointer-events: none;
+}
+
+.container-custom {
+    max-width: 1100px;
+    margin: auto;
+    width: 100%;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.container-custom.narrow {
+    max-width: 760px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
+}
+
+.logo {
+    font-family: "Syne", sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: white;
+    text-decoration: none;
+}
+
+.logo span { color: var(--accent); }
+
+.back-link {
+    color: #9ca3af;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.back-link:hover { color: white; }
+
+.main-content {
+    flex: 1;
+    padding: 20px 20px 60px;
+}
+
+.page-heading { text-align: center; }
+
+.badge {
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 2px;
+    font-weight: 700;
+}
+
+.page-heading h1 {
+    font-family: "Syne", sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    margin-top: 8px;
+}
+
+.page-heading p {
+    color: #9ca3af;
+    margin-top: 8px;
+}
+
+.alert {
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+}
+
+.alert-success {
+    background: rgba(216,255,79,.08);
+    border: 1px solid rgba(216,255,79,.2);
+    color: var(--accent);
+}
+
+.alert-error {
+    background: rgba(255,80,80,.08);
+    border: 1px solid rgba(255,80,80,.2);
+    color: #ff6b6b;
+}
+
+.review-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 22px;
+    backdrop-filter: blur(12px);
+}
+
+.review-event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.review-event-header h2 {
+    font-family: "Syne", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.review-event-header p {
+    color: #9ca3af;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.review-status {
+    flex-shrink: 0;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(216,255,79,.1);
+    border: 1px solid rgba(216,255,79,.2);
+    color: var(--accent);
+}
+
+.review-status.pending {
+    background: rgba(255,255,255,.04);
+    border-color: var(--border);
+    color: #9ca3af;
+}
+
+.review-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.review-form label {
+    color: #c4c4c4;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.review-form select,
+.review-form textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(255,255,255,.04);
+    color: white;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.review-form select:focus,
+.review-form textarea:focus {
+    border-color: rgba(216,255,79,.35);
+    box-shadow: 0 0 0 3px rgba(216,255,79,.08);
+}
+
+.review-form select option {
+    background: #1a1a22;
+    color: white;
+}
+
+.review-form textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+.btn-submit-review,
+.btn-explore {
+    align-self: flex-start;
+    border: 1px solid rgba(216,255,79,.25);
+    border-radius: 12px;
+    background: rgba(216,255,79,.12);
+    color: var(--accent);
+    padding: 10px 18px;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn-submit-review:hover,
+.btn-explore:hover {
+    background: rgba(216,255,79,.2);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 56px 24px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--card);
+    color: #9ca3af;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.empty-state span {
+    color: var(--accent);
+    font-size: 48px;
+}
+
+.empty-state p {
+    color: white;
+    font-weight: 700;
+}
+
+.empty-state small {
+    color: #6b7280;
+}
+
+footer {
+    text-align: center;
+    color: #6b7280;
+    padding: 20px;
+    font-size: 13px;
+}
+
+@media (max-width: 640px) {
+    .page-heading h1 { font-size: 24px; }
+
+    .review-event-header {
+        flex-direction: column;
+    }
+
+    .btn-submit-review,
+    .btn-explore {
+        width: 100%;
+        text-align: center;
+    }
+}

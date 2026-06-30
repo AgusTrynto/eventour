@@ -28,6 +28,7 @@
                 <a href="/dashboard" class="nav-link active">Dashboard</a>
                 <a href="#" class="nav-link">Event</a>
                 <a href="{{ route('tickets.index') }}" class="nav-link">Tiket Saya</a>
+                <a href="{{ route('reviews.index') }}" class="nav-link">Ulasan</a>
             </nav>
 
             <div class="nav-right">
@@ -69,6 +70,9 @@
             </a>
             <a href="{{ route('tickets.index') }}" class="sidebar-link">
                 <span>🎫</span> Tiket Saya
+            </a>
+            <a href="{{ route('reviews.index') }}" class="sidebar-link">
+                <span>⭐</span> Ulasan
             </a>
 
             @if (auth()->user()->role === 'eo')
@@ -145,7 +149,7 @@
                 {{-- MAP CARD --}}
                 <div class="card">
                     <div class="card-header">
-                        <h2>Event di Sekitarmu</h2>
+                        <h2 id="map-title">Event di Sekitarmu</h2>
                         <div class="radius-control">
                             <label for="radius-select">Radius:</label>
                             <select id="radius-select" class="radius-select">
@@ -155,6 +159,15 @@
                                 <option value="50000">50 km</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div class="map-toggle">
+                        <button type="button" class="map-toggle-btn active" data-mode="events">
+                            🎪 Event
+                        </button>
+                        <button type="button" class="map-toggle-btn" data-mode="eo">
+                            🏢 Event Organizer
+                        </button>
                     </div>
 
                     <div id="map" class="map-container"></div>
@@ -227,7 +240,8 @@
         // ── Marker & lingkaran radius ───────────────────────────
         let userMarker  = null;
         let radiusCircle = null;
-        let eventMarkers = [];
+        let dataMarkers = [];
+        let currentMode = 'events'; // 'events' | 'eo'
 
         function getRadius() {
             return parseInt(document.getElementById('radius-select').value);
@@ -257,57 +271,108 @@
             map.setView([lat, lng], 12);
 
             document.getElementById('map-info-text').textContent =
-                `🔍 Memuat event dalam radius ${getRadius() / 1000} km...`;
+                `🔍 Memuat data dalam radius ${getRadius() / 1000} km...`;
 
-            loadNearbyEvents();
+            loadMapData();
         }
 
-        // ── Ambil SEMUA event dari server, beri info radius ──────
-        function loadNearbyEvents() {
-            eventMarkers.forEach(m => map.removeLayer(m));
-            eventMarkers = [];
+        function loadMapData() {
+            dataMarkers.forEach(m => map.removeLayer(m));
+            dataMarkers = [];
 
-            fetch(`{{ route('events.nearby', [], false) }}?radius=${getRadius()}`)
+            const url = currentMode === 'events'
+                ? `{{ route('events.nearby') }}?radius=${getRadius()}`
+                : `{{ route('eo.nearby') }}?radius=${getRadius()}`;
+
+            fetch(url)
                 .then(res => res.json())
                 .then(data => {
-                    const events = data.events || [];
-
-                    events.forEach(ev => {
-                        const inRadius = ev.in_radius === true || ev.in_radius === null;
-
-                        const marker = L.circleMarker([ev.lat, ev.lng], {
-                            radius: inRadius ? 9 : 6,
-                            fillColor: inRadius ? '#ff5da2' : '#9ca3af',
-                            color: inRadius ? '#ffffff' : '#d1d5db',
-                            weight: inRadius ? 2.5 : 1.5,
-                            fillOpacity: inRadius ? 0.95 : 0.6,
-                            opacity: inRadius ? 1 : 0.7,
-                        })
-                        .addTo(map)
-                        .bindPopup(
-                            `<div class="popup-event">` +
-                                `<strong>${ev.title}</strong><br>` +
-                                `${ev.date}<br>` +
-                                (ev.price > 0 ? `Rp ${Number(ev.price).toLocaleString('id-ID')}` : 'Gratis') +
-                                (ev.distance !== null ? `<br><small>${(ev.distance / 1000).toFixed(1)} km dari kamu</small>` : '') +
-                                `<br><a href="/events/${ev.id}" class="popup-link">Lihat Detail →</a>` +
-                            `</div>`
-                        );
-
-                        eventMarkers.push(marker);
-                    });
-
-                    document.getElementById('map-info-text').textContent =
-                        `📍 Menampilkan ${data.count_total} event` +
-                        (data.count_in_radius !== null
-                            ? ` · ${data.count_in_radius} dalam radius ${getRadius() / 1000} km`
-                            : '');
+                    if (currentMode === 'events') {
+                        renderEventMarkers(data.events || []);
+                        updateMapInfo(data.count_total, data.count_in_radius, 'event');
+                    } else {
+                        renderEOMarkers(data.organizers || []);
+                        updateMapInfo(data.count_total, data.count_in_radius, 'EO');
+                    }
                 })
                 .catch(() => {
                     document.getElementById('map-info-text').textContent =
-                        '⚠️ Gagal memuat data event.';
+                        '⚠️ Gagal memuat data.';
                 });
         }
+
+        function renderEventMarkers(events) {
+            events.forEach(ev => {
+                const inRadius = ev.in_radius === true || ev.in_radius === null;
+
+                const marker = L.circleMarker([ev.lat, ev.lng], {
+                    radius: inRadius ? 9 : 6,
+                    fillColor: inRadius ? '#ff5da2' : '#9ca3af',
+                    color: inRadius ? '#ffffff' : '#d1d5db',
+                    weight: inRadius ? 2.5 : 1.5,
+                    fillOpacity: inRadius ? 0.95 : 0.6,
+                    opacity: inRadius ? 1 : 0.7,
+                })
+                .addTo(map)
+                .bindPopup(
+                    `<div class="popup-event">` +
+                        `<strong>${ev.title}</strong><br>` +
+                        `${ev.date}<br>` +
+                        (ev.price > 0 ? `Rp ${Number(ev.price).toLocaleString('id-ID')}` : 'Gratis') +
+                        (ev.distance !== null ? `<br><small>${(ev.distance / 1000).toFixed(1)} km dari kamu</small>` : '') +
+                        `<br><a href="/events/${ev.id}" class="popup-link">Lihat Detail →</a>` +
+                    `</div>`
+                );
+
+                dataMarkers.push(marker);
+            });
+        }
+
+        function renderEOMarkers(organizers) {
+            organizers.forEach(eo => {
+                const inRadius = eo.in_radius === true || eo.in_radius === null;
+
+                const marker = L.circleMarker([eo.lat, eo.lng], {
+                    radius: inRadius ? 9 : 6,
+                    fillColor: inRadius ? '#60a5fa' : '#9ca3af',
+                    color: inRadius ? '#ffffff' : '#d1d5db',
+                    weight: inRadius ? 2.5 : 1.5,
+                    fillOpacity: inRadius ? 0.95 : 0.6,
+                    opacity: inRadius ? 1 : 0.7,
+                })
+                .addTo(map)
+                .bindPopup(
+                    `<div class="popup-event">` +
+                        `<strong>${eo.name}</strong><br>` +
+                        `${eo.total_events} event terdaftar<br>` +
+                        `📞 ${eo.phone}` +
+                        (eo.distance !== null ? `<br><small>${(eo.distance / 1000).toFixed(1)} km dari kamu</small>` : '') +
+                    `</div>`
+                );
+
+                dataMarkers.push(marker);
+            });
+        }
+
+        function updateMapInfo(total, inRadius, label) {
+            document.getElementById('map-info-text').textContent =
+                `📍 Menampilkan ${total} ${label}` +
+                (inRadius !== null ? ` · ${inRadius} dalam radius ${getRadius() / 1000} km` : '');
+        }
+
+        // ── Toggle Event / EO ────────────────────────────────────
+        document.querySelectorAll('.map-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.map-toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                currentMode = btn.dataset.mode;
+                document.getElementById('map-title').textContent =
+                    currentMode === 'events' ? 'Event di Sekitarmu' : 'Event Organizer di Sekitarmu';
+
+                loadMapData();
+            });
+        });
 
         // ── Update radius saat select berubah ───────────────────
         document.getElementById('radius-select').addEventListener('change', () => {
@@ -324,7 +389,7 @@
                     dashArray: '6, 6',
                 }).addTo(map);
 
-                loadNearbyEvents();
+                loadMapData();
             }
         });
 
@@ -340,7 +405,7 @@
         function requestUserLocation(onDone) {
             if (!('geolocation' in navigator)) {
                 document.getElementById('location-status').textContent = '❌ Tidak didukung';
-                loadNearbyEvents();
+                loadMapData();
                 if (onDone) onDone();
                 return;
             }
@@ -370,7 +435,7 @@
                     document.getElementById('map-info-text').textContent =
                         '⚠️ Izin lokasi ditolak. Aktifkan GPS untuk fitur ini.';
                     map.setView([defaultLat, defaultLng], 5);
-                    loadNearbyEvents(); // tetap tampilkan semua event walau lokasi ditolak
+                    loadMapData(); // tetap tampilkan data walau lokasi ditolak
                     if (onDone) onDone();
                 },
                 { enableHighAccuracy: true, timeout: 10000 }

@@ -7,6 +7,7 @@
     <title>Daftar EO - EvenTour</title>
 
     @vite(['resources/css/auth/register.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 
 <body class="register-page">
@@ -90,6 +91,18 @@
 
 
                 <div class="form-group">
+                    <label>Lokasi Kantor/Basis Operasi <span class="hint">(klik untuk menandai)</span></label>
+                    <div id="map-picker" class="map-picker-small"></div>
+                    <div class="coord-display">
+                        <span id="coord-text">Belum ada titik dipilih</span>
+                    </div>
+                </div>
+
+                <input type="hidden" name="lat" id="lat-input" value="{{ old('lat') }}" required>
+                <input type="hidden" name="lng" id="lng-input" value="{{ old('lng') }}" required>
+
+
+                <div class="form-group">
                     <label>Nama Bank</label>
                     <select name="bank_name" required>
                         <option value="">Pilih bank</option>
@@ -162,6 +175,39 @@
     <footer>
         © 2026 EvenTour. All Rights Reserved.
     </footer>
+
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const defaultLat = -6.2088, defaultLng = 106.8456;
+        const map = L.map('map-picker').setView([defaultLat, defaultLng], 5);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CARTO', maxZoom: 19,
+        }).addTo(map);
+
+        let marker = null;
+        const latInput = document.getElementById('lat-input');
+        const lngInput = document.getElementById('lng-input');
+        const coordText = document.getElementById('coord-text');
+
+        map.on('click', (e) => {
+            if (marker) map.removeLayer(marker);
+            marker = L.marker(e.latlng, { draggable: true }).addTo(map);
+            updateCoords(e.latlng.lat, e.latlng.lng);
+
+            marker.on('dragend', (ev) => {
+                const pos = ev.target.getLatLng();
+                updateCoords(pos.lat, pos.lng);
+            });
+        });
+
+        function updateCoords(lat, lng) {
+            latInput.value = lat.toFixed(7);
+            lngInput.value = lng.toFixed(7);
+            coordText.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        }
+    </script>
 
 </body>
 
