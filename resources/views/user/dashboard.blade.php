@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,23 +15,28 @@
 
     <div class="bg-glow"></div>
 
-    {{-- NAVBAR --}}
+    {{-- NAVBAR (desktop) --}}
     <header class="navbar">
         <div class="container-custom">
+            <button type="button" class="hamburger-btn" id="hamburger-btn" aria-label="Buka menu">
+                <span></span><span></span><span></span>
+            </button>
+
             <a href="/" class="logo">Even<span>Tour</span></a>
 
             <nav class="nav-links">
                 <a href="/dashboard" class="nav-link active">Dashboard</a>
                 <a href="#" class="nav-link">Event</a>
-                <a href="#" class="nav-link">Tiket Saya</a>
-                @if (auth()->user()->role === 'eo')
-                    <a href="{{ route('eo.dashboard') }}" class="nav-link nav-link-eo">
-                        Dashboard EO
-                    </a>
-                @endif
+                <a href="{{ route('tickets.index') }}" class="nav-link">Tiket Saya</a>
             </nav>
 
             <div class="nav-right">
+                @if (auth()->user()->role === 'eo')
+                    <a href="{{ route('eo.dashboard') }}" class="nav-link-eo-badge">
+                        🏢 Dashboard EO
+                    </a>
+                @endif
+
                 <span class="user-name">{{ $user->name }}</span>
 
                 <form action="{{ route('logout') }}" method="POST">
@@ -42,6 +46,43 @@
             </div>
         </div>
     </header>
+
+    {{-- SIDEBAR (mobile) --}}
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <aside class="mobile-sidebar" id="mobile-sidebar">
+        <div class="sidebar-top">
+            <a href="/" class="logo">Even<span>Tour</span></a>
+            <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Tutup menu">✕</button>
+        </div>
+
+        <div class="sidebar-user">
+            <span class="user-name">{{ $user->name }}</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="sidebar-link active">
+                <span>📊</span> Dashboard
+            </a>
+            <a href="#" class="sidebar-link">
+                <span>🎪</span> Event
+            </a>
+            <a href="{{ route('tickets.index') }}" class="sidebar-link">
+                <span>🎫</span> Tiket Saya
+            </a>
+
+            @if (auth()->user()->role === 'eo')
+                <a href="{{ route('eo.dashboard') }}" class="sidebar-link sidebar-link-eo">
+                    <span>🏢</span> Dashboard EO
+                </a>
+            @endif
+        </nav>
+
+        <form action="{{ route('logout') }}" method="POST" class="sidebar-logout">
+            @csrf
+            <button type="submit" class="btn-logout">Logout</button>
+        </form>
+    </aside>
 
     <main class="main-content">
         <div class="container-custom">
@@ -87,15 +128,12 @@
                             {{ session('user_location') ? '✅ Terdeteksi' : '⏳ Mendeteksi...' }}
                         </span>
                     </div>
-                    <button type="button" id="refresh-location-btn" class="btn-refresh-location"
-                        title="Perbarui lokasi">
-                        <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                            <path d="M21 3v5h-5" />
-                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                            <path d="M8 16H3v5" />
+                    <button type="button" id="refresh-location-btn" class="btn-refresh-location" title="Perbarui lokasi">
+                        <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                            <path d="M8 16H3v5"/>
                         </svg>
                     </button>
                 </div>
@@ -187,7 +225,7 @@
         }).addTo(map);
 
         // ── Marker & lingkaran radius ───────────────────────────
-        let userMarker = null;
+        let userMarker  = null;
         let radiusCircle = null;
         let eventMarkers = [];
 
@@ -229,7 +267,7 @@
             eventMarkers.forEach(m => map.removeLayer(m));
             eventMarkers = [];
 
-            fetch(`{{ route('events.nearby') }}?radius=${getRadius()}`)
+            fetch(`{{ route('events.nearby', [], false) }}?radius=${getRadius()}`)
                 .then(res => res.json())
                 .then(data => {
                     const events = data.events || [];
@@ -245,12 +283,16 @@
                             fillOpacity: inRadius ? 0.95 : 0.6,
                             opacity: inRadius ? 1 : 0.7,
                         })
-                            .addTo(map)
-                            .bindPopup(
-                                `<strong>${ev.title}</strong><br>${ev.date}<br>` +
+                        .addTo(map)
+                        .bindPopup(
+                            `<div class="popup-event">` +
+                                `<strong>${ev.title}</strong><br>` +
+                                `${ev.date}<br>` +
                                 (ev.price > 0 ? `Rp ${Number(ev.price).toLocaleString('id-ID')}` : 'Gratis') +
-                                (ev.distance !== null ? `<br><small>${(ev.distance / 1000).toFixed(1)} km dari kamu</small>` : '')
-                            );
+                                (ev.distance !== null ? `<br><small>${(ev.distance / 1000).toFixed(1)} km dari kamu</small>` : '') +
+                                `<br><a href="/events/${ev.id}" class="popup-link">Lihat Detail →</a>` +
+                            `</div>`
+                        );
 
                         eventMarkers.push(marker);
                     });
@@ -312,7 +354,7 @@
                     document.getElementById('location-status').textContent = '✅ Terdeteksi';
 
                     // Kirim ke server untuk disimpan di session
-                    fetch('{{ route("location.save") }}', {
+                    fetch('{{ route("location.save", [], false) }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -336,7 +378,7 @@
         }
 
         // ── Tombol refresh lokasi ─────────────────────────────────
-        const refreshBtn = document.getElementById('refresh-location-btn');
+        const refreshBtn  = document.getElementById('refresh-location-btn');
         const refreshIcon = document.getElementById('refresh-icon');
 
         refreshBtn.addEventListener('click', () => {
@@ -350,8 +392,29 @@
                 refreshIcon.classList.remove('spinning');
             });
         });
+
+        // ── Sidebar mobile toggle ───────────────────────────
+        const hamburgerBtn   = document.getElementById('hamburger-btn');
+        const sidebarClose   = document.getElementById('sidebar-close');
+        const mobileSidebar  = document.getElementById('mobile-sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        function openSidebar() {
+            mobileSidebar.classList.add('open');
+            sidebarOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            mobileSidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        hamburgerBtn.addEventListener('click', openSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
     </script>
 
 </body>
-
 </html>

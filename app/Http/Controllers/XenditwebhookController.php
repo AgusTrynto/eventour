@@ -6,6 +6,7 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Xendit\Invoice\InvoiceCallback;
+use App\Models\Ticket;
 
 class XenditWebhookController extends Controller
 {
@@ -29,8 +30,6 @@ class XenditWebhookController extends Controller
         $payload = $request->all();
         Log::info('Xendit webhook received', $payload);
 
-        // Bungkus payload mentah ke object InvoiceCallback resmi
-        // supaya bisa pakai getter yang type-safe
         $callback = new InvoiceCallback($payload);
 
         $externalId = $callback->getExternalId();
@@ -55,6 +54,9 @@ class XenditWebhookController extends Controller
                         'payment_status' => 'paid',
                         'paid_at'        => now(),
                     ]);
+
+                    $this->generateTickets($order); // ← INI YANG HILANG
+
                     Log::info("Order {$order->id} marked as paid via webhook");
                 }
                 break;
@@ -70,5 +72,26 @@ class XenditWebhookController extends Controller
         }
 
         return response()->json(['message' => 'OK']);
+    }
+
+    // =========================================================
+    // Buat 1 tiket per quantity di order, masing-masing dengan
+    // kode unik sendiri (1 tiket = 1 kursi/akses masuk)
+    // =========================================================
+    private function generateTickets(Order $order): void
+    {
+        if (Ticket::where('order_id', $order->id)->exists()) {
+            return;
+        }
+
+        for ($i = 0; $i < $order->quantity; $i++) {
+            Ticket::create([
+                'order_id'    => $order->id,
+                'event_id'    => $order->event_id,
+                'user_id'     => $order->user_id,
+                'ticket_code' => Ticket::generateCode(),
+                'status'      => 'valid',
+            ]);
+        }
     }
 }

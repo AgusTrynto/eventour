@@ -119,6 +119,163 @@ body.dashboard-page {
     background: rgba(255,80,80,.08);
 }
 
+/* ── HAMBURGER BUTTON ─────────────────────────── */
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 16px;
+    height: 2px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 2px;
+}
+
+.hamburger-btn:hover { border-color: rgba(216,255,79,.3); }
+.hamburger-btn:hover span { background: var(--accent); }
+
+/* ── SIDEBAR (mobile) ─────────────────────────── */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(2px);
+    z-index: 199;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
+}
+
+.sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.mobile-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 80vw;
+    background: #14141c;
+    border-right: 1px solid var(--border);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+}
+
+.mobile-sidebar.open {
+    transform: translateX(0);
+}
+
+.sidebar-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.sidebar-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.04);
+    color: #9ca3af;
+    font-size: 16px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.sidebar-close:hover {
+    color: white;
+    border-color: rgba(255,80,80,.3);
+}
+
+.sidebar-user {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+}
+
+.sidebar-user .user-name {
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    color: #9ca3af;
+    text-decoration: none;
+    font-size: 14px;
+    transition: .2s;
+}
+
+.sidebar-link:hover {
+    background: rgba(255,255,255,.05);
+    color: white;
+}
+
+.sidebar-link.active {
+    background: rgba(255,255,255,.06);
+    color: white;
+    font-weight: 600;
+}
+
+.sidebar-link-eo {
+    background: rgba(216,255,79,.08);
+    color: var(--accent);
+    border: 1px solid rgba(216,255,79,.2);
+}
+
+.sidebar-link-eo:hover {
+    background: rgba(216,255,79,.15);
+    color: var(--accent);
+}
+
+.sidebar-logout {
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.sidebar-logout .btn-logout {
+    width: 100%;
+    padding: 10px;
+}
+
 /* ── MAIN ────────────────────────────────────── */
 .main-content {
     flex: 1;
@@ -196,6 +353,7 @@ body.dashboard-page {
     gap: 16px;
     backdrop-filter: blur(12px);
     transition: .3s;
+    position: relative;
 }
 
 .stat-card:hover {
@@ -344,21 +502,6 @@ footer {
     font-size: 13px;
 }
 
-/* ── RESPONSIVE ──────────────────────────────── */
-@media (max-width: 768px) {
-    .nav-links { display: none; }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .welcome-text h1 { font-size: 26px; }
-}
-
 /* ── MAP ─────────────────────────────────────── */
 .map-container {
     height: 380px;
@@ -398,13 +541,17 @@ footer {
     border-color: var(--accent);
 }
 
+.radius-select option {
+    background: #1a1a22;
+    color: white;
+}
+
 /* ── REKOMENDASI ─────────────────────────────── */
 .recommendation-list {
     max-height: 412px;
     overflow-y: auto;
 }
 
-/* scrollbar */
 .recommendation-list::-webkit-scrollbar {
     width: 6px;
 }
@@ -507,28 +654,7 @@ footer {
     background: #1e1e28;
 }
 
-.radius-select {
-    background: rgba(255,255,255,.05);
-    border: 1px solid var(--border);
-    color: white;
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-size: 13px;
-    cursor: pointer;
-    outline: none;
-}
-
-.radius-select option {
-    background: #1a1a22;
-    color: white;
-}
-
-
 /* ── REFRESH LOCATION BUTTON ──────────────────── */
-.stat-card {
-    position: relative;
-}
- 
 .btn-refresh-location {
     margin-left: auto;
     flex-shrink: 0;
@@ -544,29 +670,50 @@ footer {
     cursor: pointer;
     transition: .2s;
 }
- 
+
 .btn-refresh-location:hover:not(:disabled) {
     border-color: rgba(216,255,79,.3);
     color: var(--accent);
     background: rgba(216,255,79,.06);
 }
- 
+
 .btn-refresh-location:disabled {
     cursor: not-allowed;
     opacity: .6;
 }
- 
+
 .btn-refresh-location:active:not(:disabled) {
     transform: scale(.92);
 }
- 
+
 #refresh-icon.spinning {
     animation: spin 0.8s linear infinite;
 }
- 
+
 @keyframes spin {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
+}
+
+/* ── EO BADGE LINK (desktop navbar) ───────────── */
+.nav-link-eo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: rgba(216,255,79,.1);
+    border: 1px solid rgba(216,255,79,.25);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: .2s;
+    white-space: nowrap;
+}
+
+.nav-link-eo-badge:hover {
+    background: rgba(216,255,79,.18);
 }
 
 .nav-link-eo {
@@ -574,7 +721,31 @@ footer {
     font-weight: 600;
     border: 1px solid rgba(216,255,79,.2);
 }
- 
+
 .nav-link-eo:hover {
     background: rgba(216,255,79,.08) !important;
+}
+
+/* ── RESPONSIVE ──────────────────────────────── */
+@media (max-width: 768px) {
+    .nav-links,
+    .nav-right .user-name,
+    .nav-right .nav-link-eo-badge,
+    .nav-right form {
+        display: none;
+    }
+
+    .hamburger-btn {
+        display: flex;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome-text h1 { font-size: 26px; }
 }

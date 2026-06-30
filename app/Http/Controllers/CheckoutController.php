@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\Order;
+use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -76,6 +77,17 @@ class CheckoutController extends Controller
                 'payment_status' => 'paid',
                 'paid_at'        => now(),
             ]);
+
+            // Generate tiket QR untuk event gratis
+            for ($i = 0; $i < $quantity; $i++) {
+                Ticket::create([
+                    'order_id'    => $order->id,
+                    'event_id'    => $event->id,
+                    'user_id'     => $user->id,
+                    'ticket_code' => Ticket::generateCode(),
+                    'status'      => 'valid',
+                ]);
+            }
 
             return redirect()->route('checkout.success', $order)
                 ->with('success', 'Tiket gratis berhasil diklaim!');

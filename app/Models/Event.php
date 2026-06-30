@@ -104,4 +104,9 @@ class Event extends Model
     {
         return (int) $this->orders()->where('payment_status', 'paid')->sum('quantity');
     }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
 }

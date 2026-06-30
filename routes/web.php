@@ -16,6 +16,8 @@ use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminRefundController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\XenditWebhookController;
+use App\Http\Controllers\Eo\EoScanController;
+use App\Http\Controllers\TicketController;
 
 
 Route::get('/', function () {
@@ -107,6 +109,15 @@ Route::middleware('auth')->group(function () {
         ->name('checkout.failed');
 });
 
+// ── User: lihat tiket sendiri (gabungkan ke grup auth yang sama) ──
+Route::middleware('auth')->group(function () {
+    Route::get('/tickets', [TicketController::class, 'index'])
+        ->name('tickets.index');
+
+    Route::get('/tickets/{ticket}', [TicketController::class, 'show'])
+        ->name('tickets.show');
+});
+
 // ── Webhook Xendit (TANPA middleware auth/csrf — dipanggil server Xendit) ──
 Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
     ->name('webhooks.xendit');
@@ -124,6 +135,13 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
 
     Route::post('/events', [EODashboardController::class, 'storeEvent'])
         ->name('eo.events.store');
+    // ── EO: scan QR tiket
+    Route::get('/scan', [EoScanController::class, 'index'])
+        ->name('eo.scan');
+
+    Route::post('/scan/validate', [EoScanController::class, 'validateTicket'])
+        ->name('eo.scan.validate');
+
 });
 
 
@@ -173,3 +191,5 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->name('admin.orders.refund');
 
 });
+
+

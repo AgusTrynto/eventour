@@ -14,14 +14,19 @@
 
     <div class="bg-glow"></div>
 
-    {{-- NAVBAR --}}
+    {{-- NAVBAR (desktop) --}}
     <header class="navbar">
         <div class="container-custom">
+            <button type="button" class="hamburger-btn" id="hamburger-btn" aria-label="Buka menu">
+                <span></span><span></span><span></span>
+            </button>
+
             <a href="/dashboard" class="logo">Even<span>Tour</span></a>
 
             <nav class="nav-links">
                 <a href="{{ route('eo.dashboard') }}" class="nav-link active">Dashboard EO</a>
                 <a href="{{ route('eo.events.create') }}" class="nav-link">+ Tambah Event</a>
+                <a href="{{ route('eo.scan') }}" class="nav-link">Scan Tiket</a>
             </nav>
 
             <div class="nav-right">
@@ -35,6 +40,38 @@
             </div>
         </div>
     </header>
+
+    {{-- SIDEBAR (mobile) --}}
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <aside class="mobile-sidebar" id="mobile-sidebar">
+        <div class="sidebar-top">
+            <a href="/dashboard" class="logo">Even<span>Tour</span></a>
+            <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Tutup menu">✕</button>
+        </div>
+
+        <div class="sidebar-user">
+            <span class="user-name">{{ $organizer->org_name }}</span>
+            <span class="role-badge">EO</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{{ route('eo.dashboard') }}" class="sidebar-link active">
+                <span>📊</span> Dashboard EO
+            </a>
+            <a href="{{ route('eo.events.create') }}" class="sidebar-link">
+                <span>➕</span> Tambah Event
+            </a>
+            <a href="{{ route('eo.scan') }}" class="sidebar-link">
+                <span>📷</span> Scan Tiket
+            </a>
+        </nav>
+
+        <form action="{{ route('logout') }}" method="POST" class="sidebar-logout">
+            @csrf
+            <button type="submit" class="btn-logout">Logout</button>
+        </form>
+    </aside>
 
     <main class="main-content">
         <div class="container-custom">
@@ -234,6 +271,28 @@
 
             map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
         }
+
+        // ── Sidebar mobile toggle ───────────────────────────
+        const hamburgerBtn   = document.getElementById('hamburger-btn');
+        const sidebarClose   = document.getElementById('sidebar-close');
+        const mobileSidebar  = document.getElementById('mobile-sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        function openSidebar() {
+            mobileSidebar.classList.add('open');
+            sidebarOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            mobileSidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        hamburgerBtn.addEventListener('click', openSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
     </script>
 
 </body>
