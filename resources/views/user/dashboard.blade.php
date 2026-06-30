@@ -281,8 +281,8 @@
             dataMarkers = [];
 
             const url = currentMode === 'events'
-                ? `{{ route('events.nearby') }}?radius=${getRadius()}`
-                : `{{ route('eo.nearby') }}?radius=${getRadius()}`;
+                ? `{{ route('events.nearby', [], false) }}?radius=${getRadius()}`
+                : `{{ route('eo.nearby', [], false) }}?radius=${getRadius()}`;
 
             fetch(url)
                 .then(res => res.json())
@@ -331,6 +331,9 @@
         function renderEOMarkers(organizers) {
             organizers.forEach(eo => {
                 const inRadius = eo.in_radius === true || eo.in_radius === null;
+                const ratingText = eo.review_count > 0
+                    ? `⭐ ${Number(eo.average_rating).toFixed(1)} / 5 (${eo.review_count} ulasan)`
+                    : '⭐ Belum ada ulasan';
 
                 const marker = L.circleMarker([eo.lat, eo.lng], {
                     radius: inRadius ? 9 : 6,
@@ -345,6 +348,7 @@
                     `<div class="popup-event">` +
                         `<strong>${eo.name}</strong><br>` +
                         `${eo.total_events} event terdaftar<br>` +
+                        `${ratingText}<br>` +
                         `📞 ${eo.phone}` +
                         (eo.distance !== null ? `<br><small>${(eo.distance / 1000).toFixed(1)} km dari kamu</small>` : '') +
                     `</div>`

@@ -34,6 +34,18 @@ class EventOrganizer extends Model
         return $this->hasMany(Payout::class);
     }
 
+    public function reviews()
+    {
+        return $this->hasManyThrough(
+            Review::class,
+            Event::class,
+            'event_organizer_id',
+            'event_id',
+            'id',
+            'id'
+        );
+    }
+
     public function getLatAttribute()
     {
         return $this->location?->latitude;

@@ -96,6 +96,10 @@ Route::get('/events/{event}', [EventController::class, 'show'])
     ->name('events.show')
     ->middleware('auth');
 
+Route::get('/eo/nearby', [EOMapController::class, 'nearby'])
+    ->name('eo.nearby')
+    ->middleware('auth');
+
 // ── Checkout (perlu login) ──────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get('/checkout/{event}', [CheckoutController::class, 'show'])
@@ -150,9 +154,6 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
     Route::post('/scan/validate', [EoScanController::class, 'validateTicket'])
         ->name('eo.scan.validate');
 
-    Route::get('/nearby', [EOMapController::class, 'nearby'])
-        ->name('eo.nearby')
-        ->middleware('auth');
 });
 
 
