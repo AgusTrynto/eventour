@@ -45,16 +45,20 @@ class ReviewController extends Controller
             return back()->with('error', 'Kamu hanya bisa mengulas event yang tiketnya sudah digunakan.');
         }
 
-        Review::updateOrCreate(
-            [
-                'user_id' => $userId,
-                'event_id' => $validated['event_id'],
-            ],
-            [
-                'rating' => $validated['rating'],
-                'comment' => $validated['comment'],
-            ]
-        );
+        $alreadyReviewed = Review::where('user_id', $userId)
+            ->where('event_id', $validated['event_id'])
+            ->exists();
+
+        if ($alreadyReviewed) {
+            return back()->with('error', 'Event ini sudah pernah kamu ulas. Ulasan tidak bisa diperbarui.');
+        }
+
+        Review::create([
+            'user_id' => $userId,
+            'event_id' => $validated['event_id'],
+            'rating' => $validated['rating'],
+            'comment' => $validated['comment'],
+        ]);
 
         return back()->with('success', 'Ulasan berhasil disimpan.');
     }
