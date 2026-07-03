@@ -181,6 +181,7 @@
                             <span>Lokasi</span>
                             <span>Harga</span>
                             <span>Kuota</span>
+                            <span>Ulasan</span>
                         </div>
 
                         @foreach ($approvedEvents as $event)
@@ -190,6 +191,9 @@
                                 <span>{{ $event->location_name }}</span>
                                 <span>{{ $event->price > 0 ? 'Rp ' . number_format($event->price, 0, ',', '.') : 'Gratis' }}</span>
                                 <span>{{ $event->quota ?? '∞' }}</span>
+                                <span>
+                                    <a href="{{ route('eo.events.reviews', $event) }}" class="btn-reviews">Lihat</a>
+                                </span>
                             </div>
                         @endforeach
                     </div>

@@ -147,6 +147,9 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
 
     Route::post('/events', [EODashboardController::class, 'storeEvent'])
         ->name('eo.events.store');
+
+    Route::get('/events/{event}/reviews', [EODashboardController::class, 'eventReviews'])
+        ->name('eo.events.reviews');
     // ── EO: scan QR tiket
     Route::get('/scan', [EoScanController::class, 'index'])
         ->name('eo.scan');

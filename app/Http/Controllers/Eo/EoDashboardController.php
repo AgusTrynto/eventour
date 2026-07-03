@@ -4,6 +4,7 @@ namespace App\Http\Controllers\EO;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use MatanYadaev\EloquentSpatial\Objects\Point;
@@ -108,5 +109,28 @@ class EODashboardController extends Controller
 
         return redirect()->route('eo.dashboard')
             ->with('success', 'Event berhasil diajukan! Menunggu persetujuan admin.');
+    }
+
+    // =========================================================
+    // Daftar ulasan untuk 1 event milik EO
+    // =========================================================
+    public function eventReviews(Event $event)
+    {
+        $organizer = Auth::user()->eventOrganizer;
+
+        if (!$organizer || $event->event_organizer_id !== $organizer->id) {
+            abort(403, 'Event ini bukan milikmu.');
+        }
+
+        $reviews = Review::where('event_id', $event->id)
+            ->with('user')
+            ->latest()
+            ->get();
+
+        $averageRating = $reviews->count() > 0
+            ? round($reviews->avg('rating'), 1)
+            : null;
+
+        return view('eo.event-reviews', compact('event', 'reviews', 'averageRating'));
     }
 }
