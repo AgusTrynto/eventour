@@ -5,9 +5,12 @@ namespace App\Http\Controllers\EO;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Review;
+use App\Models\ReviewSummary;
+use App\Services\ReviewSummaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use MatanYadaev\EloquentSpatial\Objects\Point;
+use Throwable;
 
 class EODashboardController extends Controller
 {
@@ -122,15 +125,62 @@ class EODashboardController extends Controller
             abort(403, 'Event ini bukan milikmu.');
         }
 
-        $reviews = Review::where('event_id', $event->id)
+        $reviewQuery = Review::where('event_id', $event->id);
+
+        $reviewCount = (clone $reviewQuery)->count();
+        $averageRating = $reviewCount > 0
+            ? round((clone $reviewQuery)->avg('rating'), 1)
+            : null;
+
+        $reviews = $reviewQuery
             ->with('user')
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        $reviewSummary = $event->reviewSummary;
+
+        return view('eo.event-reviews', compact('event', 'reviews', 'averageRating', 'reviewCount', 'reviewSummary'));
+    }
+
+    public function refreshReviewSummary(Event $event, ReviewSummaryService $summaryService)
+    {
+        $organizer = Auth::user()->eventOrganizer;
+
+        if (!$organizer || $event->event_organizer_id !== $organizer->id) {
+            abort(403, 'Event ini bukan milikmu.');
+        }
+
+        $reviews = Review::where('event_id', $event->id)
             ->latest()
             ->get();
 
-        $averageRating = $reviews->count() > 0
-            ? round($reviews->avg('rating'), 1)
-            : null;
+        if ($reviews->isEmpty()) {
+            return back()->with('error', 'Belum ada ulasan yang bisa diringkas.');
+        }
 
-        return view('eo.event-reviews', compact('event', 'reviews', 'averageRating'));
+        try {
+            $analysis = $summaryService->summarize($event, $reviews);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', $exception->getMessage());
+        }
+
+        ReviewSummary::updateOrCreate(
+            ['event_id' => $event->id],
+            [
+                'summary' => $analysis['summary'],
+                'sentiment' => $analysis['sentiment'],
+                'positive_points' => $analysis['positive_points'],
+                'negative_points' => $analysis['negative_points'],
+                'recommendations' => $analysis['recommendations'],
+                'review_count' => $reviews->count(),
+                'average_rating' => round($reviews->avg('rating'), 1),
+                'generated_at' => now(),
+            ]
+        );
+
+        return back()->with('success', 'Kesimpulan AI berhasil diperbarui.');
     }
 }

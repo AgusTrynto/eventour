@@ -28,6 +28,14 @@
     <main class="main-content">
         <div class="container-custom narrow">
 
+            @if (session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
+            @if (session('error'))
+                <div class="alert alert-error">{{ session('error') }}</div>
+            @endif
+
             <div class="page-heading">
                 <span class="badge">ULASAN EVENT</span>
                 <h1>{{ $event->title }}</h1>
@@ -46,7 +54,7 @@
                     <div class="stat-icon">💬</div>
                     <div class="stat-info">
                         <span class="stat-label">Total Ulasan</span>
-                        <span class="stat-value">{{ $reviews->count() }}</span>
+                        <span class="stat-value">{{ $reviewCount }}</span>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -60,7 +68,94 @@
 
             <a href="{{ route('eo.dashboard') }}" class="btn-explore">← Kembali ke Dashboard</a>
 
-            @if ($reviews->isEmpty())
+            <section class="ai-summary-card">
+                <div class="ai-summary-header">
+                    <div>
+                        <span class="badge">ANALISIS AI</span>
+                        <h2>Kesimpulan Ulasan</h2>
+                        @if ($reviewSummary)
+                            <p>
+                                Diperbarui {{ $reviewSummary->generated_at?->translatedFormat('d M Y, H:i') }}
+                                dari {{ $reviewSummary->review_count }} ulasan.
+                            </p>
+                        @else
+                            <p>Belum ada kesimpulan tersimpan untuk event ini.</p>
+                        @endif
+                    </div>
+
+                    <form action="{{ route('eo.events.reviews.summary', $event) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn-refresh-summary" @disabled($reviewCount === 0)>
+                            Refresh Kesimpulan
+                        </button>
+                    </form>
+                </div>
+
+                @if ($reviewSummary)
+                    @if ($reviewSummary->review_count !== $reviewCount)
+                        <div class="summary-notice">Ada perubahan jumlah ulasan sejak kesimpulan terakhir. Tekan refresh untuk memperbarui analisis.</div>
+                    @endif
+
+                    <div class="summary-body">
+                        <div class="summary-main">
+                            <span class="summary-label">Ringkasan Utama</span>
+                            <p>{{ $reviewSummary->summary }}</p>
+                        </div>
+
+                        <div class="summary-meta-grid">
+                            <div>
+                                <span class="summary-label">Sentimen</span>
+                                <strong>{{ ucfirst($reviewSummary->sentiment ?? '-') }}</strong>
+                            </div>
+                            <div>
+                                <span class="summary-label">Rating Saat Analisis</span>
+                                <strong>{{ $reviewSummary->average_rating ? number_format((float) $reviewSummary->average_rating, 1, ',', '.') : '-' }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="summary-columns">
+                            <div class="summary-list-block">
+                                <span class="summary-label">Poin Positif</span>
+                                <ul>
+                                    @forelse ($reviewSummary->positive_points ?? [] as $point)
+                                        <li>{{ $point }}</li>
+                                    @empty
+                                        <li class="muted">Belum ada poin positif spesifik.</li>
+                                    @endforelse
+                                </ul>
+                            </div>
+
+                            <div class="summary-list-block">
+                                <span class="summary-label">Keluhan Utama</span>
+                                <ul>
+                                    @forelse ($reviewSummary->negative_points ?? [] as $point)
+                                        <li>{{ $point }}</li>
+                                    @empty
+                                        <li class="muted">Belum ada keluhan spesifik.</li>
+                                    @endforelse
+                                </ul>
+                            </div>
+
+                            <div class="summary-list-block">
+                                <span class="summary-label">Rekomendasi EO</span>
+                                <ul>
+                                    @forelse ($reviewSummary->recommendations ?? [] as $point)
+                                        <li>{{ $point }}</li>
+                                    @empty
+                                        <li class="muted">Belum ada rekomendasi spesifik.</li>
+                                    @endforelse
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <div class="summary-empty">
+                        <p>Tekan Refresh Kesimpulan untuk membuat analisis dari ulasan yang sudah masuk.</p>
+                    </div>
+                @endif
+            </section>
+
+            @if ($reviewCount === 0)
                 <div class="empty-state">
                     <span>💬</span>
                     <p>Belum ada ulasan untuk event ini.</p>
@@ -90,6 +185,31 @@
                         </div>
                     @endforeach
                 </div>
+
+                @if ($reviews->hasPages())
+                    <div class="review-pagination">
+                        <span>
+                            Menampilkan {{ $reviews->firstItem() }}-{{ $reviews->lastItem() }}
+                            dari {{ $reviews->total() }} ulasan
+                        </span>
+
+                        <div class="pagination-actions">
+                            @if ($reviews->onFirstPage())
+                                <span class="pagination-btn disabled">Sebelumnya</span>
+                            @else
+                                <a href="{{ $reviews->previousPageUrl() }}" class="pagination-btn">Sebelumnya</a>
+                            @endif
+
+                            <span class="pagination-current">Halaman {{ $reviews->currentPage() }} / {{ $reviews->lastPage() }}</span>
+
+                            @if ($reviews->hasMorePages())
+                                <a href="{{ $reviews->nextPageUrl() }}" class="pagination-btn">Berikutnya</a>
+                            @else
+                                <span class="pagination-btn disabled">Berikutnya</span>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             @endif
 
         </div>

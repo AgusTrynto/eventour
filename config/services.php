@@ -40,4 +40,10 @@ return [
         'webhook_token' => env('XENDIT_WEBHOOK_TOKEN'),
     ],
 
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'interactions_url' => env('GEMINI_INTERACTIONS_URL', 'https://generativelanguage.googleapis.com/v1beta/interactions'),
+        'summary_model' => env('GEMINI_SUMMARY_MODEL', 'gemini-3.1-flash-lite'),
+    ],
+
 ];

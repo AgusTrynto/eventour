@@ -150,6 +150,10 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
 
     Route::get('/events/{event}/reviews', [EODashboardController::class, 'eventReviews'])
         ->name('eo.events.reviews');
+
+    Route::post('/events/{event}/reviews/summary', [EODashboardController::class, 'refreshReviewSummary'])
+        ->name('eo.events.reviews.summary');
+
     // ── EO: scan QR tiket
     Route::get('/scan', [EoScanController::class, 'index'])
         ->name('eo.scan');

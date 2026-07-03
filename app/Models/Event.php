@@ -114,4 +114,9 @@ class Event extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function reviewSummary()
+    {
+        return $this->hasOne(ReviewSummary::class);
+    }
 }
