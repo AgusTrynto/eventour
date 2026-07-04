@@ -20,7 +20,7 @@ class OtpMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Kode Verifikasi EvenTour — ' . $this->otp,
+            subject: 'Kode Verifikasi EvenTour - ' . $this->otp,
         );
     }
 

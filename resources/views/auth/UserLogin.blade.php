@@ -34,7 +34,8 @@
             {{-- Flash sukses dari register --}}
             @if (session('success'))
                 <div class="alert-success">
-                    ✅ {{ session('success') }}
+                    <x-icon name="check-circle" :size="18" />
+                    {{ session('success') }}
                 </div>
             @endif
 
@@ -98,7 +99,7 @@
     </main>
 
     <footer>
-        © 2026 EvenTour. All Rights Reserved.
+        Copyright 2026 EvenTour. All Rights Reserved.
     </footer>
 
 </body>

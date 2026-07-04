@@ -7,42 +7,42 @@
 
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon">👥</div>
+        <div class="stat-icon"><x-icon name="users" :size="26" /></div>
         <div class="stat-info">
             <span class="stat-label">Total User</span>
             <span class="stat-value">{{ $stats['total_users'] }}</span>
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon">🏢</div>
+        <div class="stat-icon"><x-icon name="building" :size="26" /></div>
         <div class="stat-info">
             <span class="stat-label">Total EO</span>
             <span class="stat-value">{{ $stats['total_eo'] }}</span>
         </div>
     </div>
     <div class="stat-card highlight">
-        <div class="stat-icon">⏳</div>
+        <div class="stat-icon"><x-icon name="clock" :size="26" /></div>
         <div class="stat-info">
             <span class="stat-label">EO Pending</span>
             <span class="stat-value">{{ $stats['pending_eo'] }}</span>
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon">🎪</div>
+        <div class="stat-icon"><x-icon name="ticket" :size="26" /></div>
         <div class="stat-info">
             <span class="stat-label">Total Event</span>
             <span class="stat-value">{{ $stats['total_events'] }}</span>
         </div>
     </div>
     <div class="stat-card highlight">
-        <div class="stat-icon">⏳</div>
+        <div class="stat-icon"><x-icon name="clock" :size="26" /></div>
         <div class="stat-info">
             <span class="stat-label">Event Pending</span>
             <span class="stat-value">{{ $stats['pending_events'] }}</span>
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon">✅</div>
+        <div class="stat-icon"><x-icon name="check-circle" :size="26" /></div>
         <div class="stat-info">
             <span class="stat-label">Event Live</span>
             <span class="stat-value">{{ $stats['approved_events'] }}</span>
@@ -56,7 +56,7 @@
     <div class="card">
         <div class="card-header">
             <h2>EO Menunggu Persetujuan</h2>
-            <a href="{{ route('admin.eo.index') }}" class="card-link">Lihat semua →</a>
+            <a href="{{ route('admin.eo.index') }}" class="card-link">Lihat semua</a>
         </div>
 
         @forelse ($recentPendingEO as $eo)
@@ -69,10 +69,14 @@
                 <div class="list-actions">
                     <form action="{{ route('admin.eo.approve', $eo) }}" method="POST">
                         @csrf
-                        <button type="submit" class="btn-approve" title="Setujui">✓</button>
+                        <button type="submit" class="btn-approve" title="Setujui">
+                            <x-icon name="check-circle" :size="16" />
+                        </button>
                     </form>
                     <button type="button" class="btn-reject-open" title="Tolak"
-                        onclick="openRejectModal({{ $eo->id }}, '{{ addslashes($eo->org_name) }}', 'eo')">✕</button>
+                        onclick="openRejectModal({{ $eo->id }}, '{{ addslashes($eo->org_name) }}', 'eo')">
+                        <x-icon name="x" :size="16" />
+                    </button>
                 </div>
             </div>
         @empty
@@ -84,12 +88,12 @@
     <div class="card">
         <div class="card-header">
             <h2>Event Menunggu Persetujuan</h2>
-            <a href="{{ route('admin.events.index') }}" class="card-link">Lihat semua →</a>
+            <a href="{{ route('admin.events.index') }}" class="card-link">Lihat semua</a>
         </div>
 
         @forelse ($recentPendingEvents as $event)
             <div class="list-item">
-                <div class="list-avatar event">🎪</div>
+                <div class="list-avatar event"><x-icon name="ticket" :size="18" /></div>
                 <div class="list-info">
                     <span class="list-title">{{ $event->title }}</span>
                     <span class="list-meta">
@@ -100,10 +104,14 @@
                 <div class="list-actions">
                     <form action="{{ route('admin.events.approve', $event) }}" method="POST">
                         @csrf
-                        <button type="submit" class="btn-approve" title="Setujui">✓</button>
+                        <button type="submit" class="btn-approve" title="Setujui">
+                            <x-icon name="check-circle" :size="16" />
+                        </button>
                     </form>
                     <button type="button" class="btn-reject-open" title="Tolak"
-                        onclick="openRejectModal({{ $event->id }}, '{{ addslashes($event->title) }}', 'event')">✕</button>
+                        onclick="openRejectModal({{ $event->id }}, '{{ addslashes($event->title) }}', 'event')">
+                        <x-icon name="x" :size="16" />
+                    </button>
                 </div>
             </div>
         @empty

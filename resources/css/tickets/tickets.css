@@ -55,7 +55,10 @@ body.ticket-list-page {
 .logo span { color: var(--accent); }
 
 .back-link {
+    align-items: center;
     color: #9ca3af;
+    display: inline-flex;
+    gap: 8px;
     text-decoration: none;
     font-size: 14px;
 }
@@ -83,7 +86,9 @@ body.ticket-list-page {
 }
 
 .ticket-status {
-    display: inline-block;
+    align-items: center;
+    display: inline-flex;
+    gap: 7px;
     font-size: 12px;
     font-weight: 700;
     padding: 6px 16px;
@@ -147,6 +152,11 @@ body.ticket-list-page {
 }
 
 .info-row:last-child { border-bottom: none; }
+.info-row > span:first-child {
+    align-items: center;
+    display: inline-flex;
+    gap: 7px;
+}
 .info-row span:last-child { color: white; text-align: right; }
 .info-row.checked-in span:last-child { color: #4ade80; }
 
@@ -259,7 +269,10 @@ body.ticket-list-page {
     gap: 12px;
 }
 
-.empty-state span { font-size: 48px; }
+.empty-state-icon {
+    color: var(--accent);
+    display: flex;
+}
 
 .btn-explore {
     margin-top: 8px;

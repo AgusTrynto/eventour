@@ -21,7 +21,10 @@
 
             <nav class="nav-links">
                 <a href="{{ route('eo.dashboard') }}" class="nav-link">Dashboard EO</a>
-                <a href="{{ route('eo.events.create') }}" class="nav-link active">+ Tambah Event</a>
+                <a href="{{ route('eo.events.create') }}" class="nav-link active">
+                    <x-icon name="circle-plus" :size="15" />
+                    Tambah Event
+                </a>
             </nav>
 
             <div class="nav-right">
@@ -139,7 +142,7 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -187,7 +190,7 @@
         function updateCoords(lat, lng) {
             latInput.value = lat.toFixed(7);
             lngInput.value = lng.toFixed(7);
-            coordText.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            coordText.textContent = `Koordinat: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         }
     </script>
 

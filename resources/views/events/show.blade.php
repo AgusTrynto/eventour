@@ -17,7 +17,10 @@
     <header class="navbar">
         <div class="container-custom">
             <a href="/" class="logo">Even<span>Tour</span></a>
-            <a href="{{ url()->previous('/dashboard') }}" class="back-link">← Kembali</a>
+            <a href="{{ url()->previous('/dashboard') }}" class="back-link">
+                <x-icon name="arrow-left" :size="16" />
+                Kembali
+            </a>
         </div>
     </header>
 
@@ -31,7 +34,7 @@
 
                 <div class="event-meta-row">
                     <div class="meta-item">
-                        <span class="meta-icon">📅</span>
+                        <span class="meta-icon"><x-icon name="calendar" :size="22" /></span>
                         <div>
                             <span class="meta-label">Tanggal</span>
                             <span class="meta-value">
@@ -44,7 +47,7 @@
                     </div>
 
                     <div class="meta-item">
-                        <span class="meta-icon">📍</span>
+                        <span class="meta-icon"><x-icon name="map-pin" :size="22" /></span>
                         <div>
                             <span class="meta-label">Lokasi</span>
                             <span class="meta-value">{{ $event->location_name }}</span>
@@ -52,7 +55,7 @@
                     </div>
 
                     <div class="meta-item">
-                        <span class="meta-icon">🏢</span>
+                        <span class="meta-icon"><x-icon name="building" :size="22" /></span>
                         <div>
                             <span class="meta-label">Diselenggarakan oleh</span>
                             <span class="meta-value">{{ $event->organizer->org_name }}</span>
@@ -106,7 +109,8 @@
                         @endif
 
                         <div class="escrow-note">
-                            🔒 Dana kamu ditahan aman oleh EvenTour sampai event terverifikasi berlangsung.
+                            <x-icon name="shield" :size="16" />
+                            Dana kamu ditahan aman oleh EvenTour sampai event terverifikasi berlangsung.
                         </div>
 
                         @auth
@@ -130,7 +134,7 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>

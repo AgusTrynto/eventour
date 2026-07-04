@@ -42,9 +42,9 @@
                 <div class="form-group">
                     <label>Pilih Event</label>
                     <select id="event-select">
-                        <option value="">— Pilih event yang sedang berlangsung —</option>
+                        <option value="">- Pilih event yang sedang berlangsung -</option>
                         @foreach ($events as $event)
-                            <option value="{{ $event->id }}">{{ $event->title }} — {{ $event->start_date?->translatedFormat('d M Y') }}</option>
+                            <option value="{{ $event->id }}">{{ $event->title }} - {{ $event->start_date?->translatedFormat('d M Y') }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -56,7 +56,7 @@
                 <div id="scan-result" class="scan-result" style="display:none;"></div>
 
                 <div id="scan-placeholder" class="scan-placeholder">
-                    <span>📷</span>
+                    <span class="empty-state-icon"><x-icon name="camera" :size="40" /></span>
                     <p>Pilih event terlebih dahulu untuk mulai scan.</p>
                 </div>
             </div>
@@ -64,7 +64,7 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script>
@@ -147,7 +147,7 @@
             scanResult.className = 'scan-result ' + (valid ? 'result-valid' : 'result-invalid');
 
             scanResult.innerHTML = `
-                <div class="result-icon">${valid ? '✅' : '❌'}</div>
+                <div class="result-icon">${resultIcon(valid)}</div>
                 <p class="result-message">${message}</p>
                 ${ticket ? `
                     <div class="result-details">
@@ -160,6 +160,18 @@
             setTimeout(() => {
                 scanResult.style.display = 'none';
             }, 3000);
+        }
+
+        function resultIcon(valid) {
+            const path = valid
+                ? '<path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="10"></circle>'
+                : '<circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path>';
+
+            return `
+                <svg class="icon" width="40" height="40" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">${path}</svg>
+            `;
         }
     </script>
 

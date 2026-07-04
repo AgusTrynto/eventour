@@ -94,7 +94,7 @@
     </main>
 
     <footer>
-        © 2026 EvenTour. All Rights Reserved.
+        Copyright 2026 EvenTour. All Rights Reserved.
     </footer>
 
 </body>

@@ -136,7 +136,7 @@
             </div>
 
             <div class="warning">
-                🔒 Jangan bagikan kode ini kepada siapapun, termasuk tim EvenTour.
+                Jangan bagikan kode ini kepada siapapun, termasuk tim EvenTour.
                 Kami tidak pernah meminta kode OTP kamu.
             </div>
 
@@ -148,7 +148,7 @@
             </p>
         </div>
 
-        <p class="footer-copy">© 2026 EvenTour. All Rights Reserved.</p>
+        <p class="footer-copy">Copyright 2026 EvenTour. All Rights Reserved.</p>
 
     </div>
 </body>

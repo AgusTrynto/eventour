@@ -1,9 +1,8 @@
 /* =============================================
-   EventMap — Premium Dark Theme
+   EventMap - Premium Dark Theme
    ============================================= */
-@import './app.css';
+@import '../app.css';
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
-
 /* === RESET & ROOT === */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -147,10 +146,12 @@ body::before {
   background: none;
   border: 1px solid var(--border-mid);
   color: var(--text-primary);
-  padding: 0.4rem 0.6rem;
+  width: 42px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 1.1rem;
 }
 
 /* === HERO === */
@@ -423,7 +424,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  color: var(--accent);
 }
 
 .hero__float-card-title {
@@ -453,7 +454,9 @@ body::before {
 }
 
 .section-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -565,13 +568,23 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
   margin-bottom: 1.25rem;
 }
 
-.feature-card:nth-child(1) .feature-card__icon { background: rgba(232,255,106,0.12); }
-.feature-card:nth-child(2) .feature-card__icon { background: rgba(106,255,218,0.12); }
-.feature-card:nth-child(3) .feature-card__icon { background: rgba(255,106,158,0.12); }
+.feature-card:nth-child(1) .feature-card__icon {
+  background: rgba(232,255,106,0.12);
+  color: var(--accent);
+}
+
+.feature-card:nth-child(2) .feature-card__icon {
+  background: rgba(106,255,218,0.12);
+  color: var(--accent-2);
+}
+
+.feature-card:nth-child(3) .feature-card__icon {
+  background: rgba(255,106,158,0.12);
+  color: var(--accent-3);
+}
 
 .feature-card__title {
   font-family: var(--font-display);
@@ -715,7 +728,7 @@ body::before {
   font-size: 0.78rem;
   font-weight: 500;
   color: var(--text-secondary);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   transition: color 0.2s;
@@ -869,7 +882,7 @@ footer {
 
 @media (max-width: 768px) {
   .navbar__links { display: none; }
-  .navbar__toggle { display: block; }
+  .navbar__toggle { display: inline-flex; }
   .navbar__links.open {
     display: flex;
     flex-direction: column;

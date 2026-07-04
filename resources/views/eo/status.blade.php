@@ -17,7 +17,8 @@
 
         <div style="display:flex;align-items:center;gap:16px;">
             <a href="{{ route('dashboard') }}" class="btn-back">
-                ← Kembali
+                <x-icon name="arrow-left" :size="16" />
+                Kembali
             </a>
 
             <a href="/" class="logo">Even<span>Tour</span></a>
@@ -34,7 +35,7 @@
         <div class="status-card">
 
             @if ($organizer->status === 'pending')
-                <div class="status-icon pending">⏳</div>
+                <div class="status-icon pending"><x-icon name="clock" :size="54" /></div>
                 <span class="badge badge-pending">MENUNGGU PERSETUJUAN</span>
                 <h1>Akun EO Sedang Diverifikasi</h1>
                 <p>
@@ -62,7 +63,7 @@
                 </div>
 
             @elseif ($organizer->status === 'rejected')
-                <div class="status-icon rejected">❌</div>
+                <div class="status-icon rejected"><x-icon name="x-circle" :size="54" /></div>
                 <span class="badge badge-rejected">PENDAFTARAN DITOLAK</span>
                 <h1>Akun EO Tidak Disetujui</h1>
                 <p>
@@ -89,7 +90,7 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
 </body>
 

@@ -173,7 +173,7 @@
     </main>
 
     <footer>
-        © 2026 EvenTour. All Rights Reserved.
+        Copyright 2026 EvenTour. All Rights Reserved.
     </footer>
 
 
@@ -205,7 +205,7 @@
         function updateCoords(lat, lng) {
             latInput.value = lat.toFixed(7);
             lngInput.value = lng.toFixed(7);
-            coordText.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            coordText.textContent = `Koordinat: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         }
     </script>
 

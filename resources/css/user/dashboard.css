@@ -72,7 +72,10 @@ body.dashboard-page {
 }
 
 .nav-link {
+    align-items: center;
     color: #9ca3af;
+    display: inline-flex;
+    gap: 7px;
     text-decoration: none;
     padding: 6px 14px;
     border-radius: 8px;
@@ -293,6 +296,9 @@ body.dashboard-page {
 
 /* ── ALERTS ──────────────────────────────────── */
 .alert {
+    align-items: center;
+    display: flex;
+    gap: 10px;
     padding: 14px 18px;
     border-radius: 12px;
     font-size: 14px;
@@ -361,7 +367,17 @@ body.dashboard-page {
     box-shadow: 0 8px 30px rgba(0,0,0,.2);
 }
 
-.stat-icon { font-size: 32px; }
+.stat-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(216,255,79,.1);
+    color: var(--accent);
+    flex-shrink: 0;
+}
 
 .stat-info {
     display: flex;
@@ -417,6 +433,9 @@ body.dashboard-page {
     font-size: 13px;
     text-decoration: none;
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 /* Empty state */
@@ -429,7 +448,10 @@ body.dashboard-page {
     color: #6b7280;
 }
 
-.empty-state span { font-size: 40px; }
+.empty-state-icon {
+    color: var(--accent);
+    display: flex;
+}
 .empty-state p { font-size: 14px; }
 
 .btn-explore {
@@ -511,6 +533,7 @@ footer {
 }
 
 .map-toggle-btn {
+    align-items: center;
     border: 1px solid var(--border);
     background: rgba(255,255,255,.04);
     color: #9ca3af;
@@ -519,6 +542,9 @@ footer {
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    gap: 7px;
     transition: .2s;
 }
 
@@ -632,8 +658,7 @@ footer {
     background: rgba(216,255,79,.03);
 }
 
-.rec-emoji {
-    font-size: 26px;
+.rec-icon {
     flex-shrink: 0;
     width: 44px;
     height: 44px;
@@ -641,6 +666,7 @@ footer {
     align-items: center;
     justify-content: center;
     background: rgba(255,255,255,.04);
+    color: var(--accent);
     border-radius: 12px;
 }
 
@@ -746,7 +772,7 @@ footer {
 .nav-link-eo-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 7px;
     padding: 6px 14px;
     border-radius: 8px;
     background: rgba(216,255,79,.1);

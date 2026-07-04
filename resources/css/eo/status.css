@@ -1,6 +1,7 @@
 @import '../app.css';
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
+
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -53,6 +54,11 @@ body.status-page {
 
 .logo span { color: var(--accent); }
 
+.icon {
+    display: inline-block;
+    flex-shrink: 0;
+}
+
 .btn-logout {
     background: rgba(255,255,255,.05);
     border: 1px solid var(--border);
@@ -91,8 +97,17 @@ body.status-page {
 }
 
 .status-icon {
-    font-size: 56px;
+    display: flex;
+    justify-content: center;
     margin-bottom: 16px;
+}
+
+.status-icon.pending {
+    color: var(--accent);
+}
+
+.status-icon.rejected {
+    color: #ff6b6b;
 }
 
 .badge {
@@ -196,6 +211,7 @@ footer {
 .btn-back{
     display:inline-flex;
     align-items:center;
+    gap:8px;
     justify-content:center;
     padding:10px 16px;
     border-radius:10px;

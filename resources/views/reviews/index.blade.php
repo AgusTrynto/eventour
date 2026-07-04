@@ -13,7 +13,10 @@
 
     <header class="container-custom">
         <a href="/" class="logo">Even<span>Tour</span></a>
-        <a href="{{ route('dashboard') }}" class="back-link">← Dashboard</a>
+        <a href="{{ route('dashboard') }}" class="back-link">
+            <x-icon name="arrow-left" :size="16" />
+            Dashboard
+        </a>
     </header>
 
     <main class="main-content">
@@ -44,7 +47,7 @@
                         <div>
                             <h2>{{ $event->title }}</h2>
                             <p>
-                                {{ $event->location_name }} ·
+                                {{ $event->location_name }} -
                                 {{ $event->start_date?->translatedFormat('d M Y, H:i') ?? '-' }}
                             </p>
                         </div>
@@ -61,7 +64,7 @@
                             <span class="review-history-label">Rating kamu</span>
                             <div class="readonly-stars" aria-label="Rating {{ $review->rating }} dari 5">
                                 @for ($rating = 1; $rating <= 5; $rating++)
-                                    <span class="{{ $rating <= $review->rating ? 'filled' : '' }}">★</span>
+                                    <span class="{{ $rating <= $review->rating ? 'filled' : '' }}">&#9733;</span>
                                 @endfor
                             </div>
 
@@ -83,7 +86,7 @@
                                 <div class="star-rating" aria-label="Pilih rating bintang">
                                     @for ($rating = 5; $rating >= 1; $rating--)
                                         <input type="radio" id="rating-{{ $event->id }}-{{ $rating }}" name="rating" value="{{ $rating }}" required @checked((int) old('event_id') === $event->id && (int) old('rating') === $rating)>
-                                        <label for="rating-{{ $event->id }}-{{ $rating }}" title="{{ $rating }} bintang">★</label>
+                                        <label for="rating-{{ $event->id }}-{{ $rating }}" title="{{ $rating }} bintang">&#9733;</label>
                                     @endfor
                                 </div>
                             </fieldset>
@@ -97,7 +100,7 @@
                 </section>
             @empty
                 <div class="empty-state">
-                    <span>★</span>
+                    <span class="empty-state-icon"><x-icon name="star" :size="38" /></span>
                     <p>Belum ada event yang bisa kamu ulas.</p>
                     <small>Ulasan akan tersedia setelah tiket kamu digunakan/check-in di event.</small>
                     <a href="{{ route('tickets.index') }}" class="btn-explore">Lihat Tiket Saya</a>
@@ -107,7 +110,7 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
 </body>
 </html>

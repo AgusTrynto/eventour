@@ -16,7 +16,7 @@
 
     <main class="main-content">
         <div class="checkout-card result-card">
-            <div class="result-icon success">✅</div>
+            <div class="result-icon success"><x-icon name="check-circle" :size="44" /></div>
             <h1>Pembayaran Berhasil!</h1>
             <p>Tiket kamu untuk <strong>{{ $order->event->title }}</strong> sudah dikonfirmasi.</p>
 
@@ -31,6 +31,6 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 </body>
 </html>

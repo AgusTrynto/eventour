@@ -1,5 +1,5 @@
-@import '../app.css';
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+@import '../app.css';
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -193,6 +193,9 @@ body.admin-page {
 
 /* ── ALERTS ──────────────────────────────────── */
 .alert {
+    align-items: center;
+    display: flex;
+    gap: 10px;
     padding: 14px 18px;
     border-radius: 12px;
     font-size: 14px;
@@ -233,7 +236,17 @@ body.admin-page {
     background: rgba(255,93,162,.05);
 }
 
-.stat-icon { font-size: 28px; }
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(216,255,79,.1);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
 
 .stat-info {
     display: flex;
@@ -320,6 +333,7 @@ body.admin-page {
 .list-avatar.event {
     background: rgba(255,93,162,.1);
     border-color: rgba(255,93,162,.2);
+    color: #ff8fbd;
 }
 
 .list-info {
@@ -349,9 +363,10 @@ body.admin-page {
     height: 32px;
     border-radius: 8px;
     border: none;
-    font-size: 14px;
-    font-weight: 700;
+    align-items: center;
     cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
     transition: .2s;
 }
 
@@ -503,7 +518,11 @@ body.admin-page {
 }
 
 .btn-approve-full {
+    align-items: center;
+    display: inline-flex;
     flex: 1;
+    gap: 8px;
+    justify-content: center;
     padding: 11px;
     border-radius: 10px;
     border: 1px solid rgba(216,255,79,.3);
@@ -520,7 +539,11 @@ body.admin-page {
 }
 
 .btn-reject-full {
+    align-items: center;
+    display: inline-flex;
     flex: 1;
+    gap: 8px;
+    justify-content: center;
     padding: 11px;
     border-radius: 10px;
     border: 1px solid rgba(255,80,80,.2);
@@ -555,7 +578,10 @@ body.admin-page {
     gap: 12px;
 }
 
-.empty-card span { font-size: 40px; }
+.empty-card-icon {
+    color: var(--accent);
+    display: flex;
+}
 
 /* ── STATUS BADGES ───────────────────────────── */
 .status-badge {

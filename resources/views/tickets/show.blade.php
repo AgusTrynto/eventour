@@ -13,7 +13,10 @@
 
     <header class="container-custom">
         <a href="/" class="logo">Even<span>Tour</span></a>
-        <a href="{{ route('tickets.index') }}" class="back-link">← Tiket Saya</a>
+        <a href="{{ route('tickets.index') }}" class="back-link">
+            <x-icon name="arrow-left" :size="16" />
+            Tiket Saya
+        </a>
     </header>
 
     <main class="main-content">
@@ -21,11 +24,14 @@
 
             <div class="ticket-status status-{{ $ticket->status }}">
                 @if ($ticket->status === 'valid')
-                    🟢 Tiket Aktif
+                    <x-icon name="ticket" :size="16" />
+                    Tiket Aktif
                 @elseif ($ticket->status === 'used')
-                    ✅ Sudah Digunakan
+                    <x-icon name="check-circle" :size="16" />
+                    Sudah Digunakan
                 @else
-                    ⛔ Dibatalkan
+                    <x-icon name="x-circle" :size="16" />
+                    Dibatalkan
                 @endif
             </div>
 
@@ -43,21 +49,21 @@
                 <h2>{{ $ticket->event->title }}</h2>
 
                 <div class="info-row">
-                    <span>📅 Tanggal</span>
+                    <span><x-icon name="calendar" :size="16" /> Tanggal</span>
                     <span>{{ $ticket->event->start_date?->translatedFormat('d F Y, H:i') ?? '-' }} WIB</span>
                 </div>
                 <div class="info-row">
-                    <span>📍 Lokasi</span>
+                    <span><x-icon name="map-pin" :size="16" /> Lokasi</span>
                     <span>{{ $ticket->event->location_name }}</span>
                 </div>
                 <div class="info-row">
-                    <span>👤 Atas Nama</span>
+                    <span><x-icon name="user" :size="16" /> Atas Nama</span>
                     <span>{{ $ticket->user->name }}</span>
                 </div>
 
                 @if ($ticket->status === 'used')
                     <div class="info-row checked-in">
-                        <span>✅ Check-in</span>
+                        <span><x-icon name="check-circle" :size="16" /> Check-in</span>
                         <span>{{ $ticket->checked_in_at->translatedFormat('d M Y, H:i') }}</span>
                     </div>
                 @endif
@@ -70,7 +76,7 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>

@@ -34,7 +34,8 @@
             <div class="nav-right">
                 @if (auth()->user()->role === 'eo')
                     <a href="{{ route('eo.dashboard') }}" class="nav-link-eo-badge">
-                        🏢 Dashboard EO
+                        <x-icon name="building" :size="15" />
+                        Dashboard EO
                     </a>
                 @endif
 
@@ -54,7 +55,9 @@
     <aside class="mobile-sidebar" id="mobile-sidebar">
         <div class="sidebar-top">
             <a href="/" class="logo">Even<span>Tour</span></a>
-            <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Tutup menu">✕</button>
+            <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Tutup menu">
+                <x-icon name="x" :size="16" />
+            </button>
         </div>
 
         <div class="sidebar-user">
@@ -63,21 +66,26 @@
 
         <nav class="sidebar-nav">
             <a href="/dashboard" class="sidebar-link active">
-                <span>📊</span> Dashboard
+                <x-icon name="bar-chart" :size="18" />
+                Dashboard
             </a>
             <a href="#" class="sidebar-link">
-                <span>🎪</span> Event
+                <x-icon name="ticket" :size="18" />
+                Event
             </a>
             <a href="{{ route('tickets.index') }}" class="sidebar-link">
-                <span>🎫</span> Tiket Saya
+                <x-icon name="ticket" :size="18" />
+                Tiket Saya
             </a>
             <a href="{{ route('reviews.index') }}" class="sidebar-link">
-                <span>⭐</span> Ulasan
+                <x-icon name="star" :size="18" />
+                Ulasan
             </a>
 
             @if (auth()->user()->role === 'eo')
                 <a href="{{ route('eo.dashboard') }}" class="sidebar-link sidebar-link-eo">
-                    <span>🏢</span> Dashboard EO
+                    <x-icon name="building" :size="18" />
+                    Dashboard EO
                 </a>
             @endif
         </nav>
@@ -93,7 +101,10 @@
 
             {{-- Flash messages --}}
             @if (session('success'))
-                <div class="alert alert-success">✅ {{ session('success') }}</div>
+                <div class="alert alert-success">
+                    <x-icon name="check-circle" :size="18" />
+                    {{ session('success') }}
+                </div>
             @endif
             @if (session('error'))
                 <div class="alert alert-error">{{ session('error') }}</div>
@@ -103,7 +114,7 @@
             <div class="welcome-section">
                 <div class="welcome-text">
                     <span class="badge">DASHBOARD</span>
-                    <h1>Halo, {{ $user->name }} 👋</h1>
+                    <h1>Halo, {{ $user->name }}</h1>
                     <p>Temukan event seru di sekitarmu dan jangan sampai ketinggalan.</p>
                 </div>
             </div>
@@ -111,25 +122,25 @@
             {{-- Stats --}}
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">🎟️</div>
+                    <div class="stat-icon"><x-icon name="ticket" :size="28" /></div>
                     <div class="stat-info">
                         <span class="stat-label">Tiket Dimiliki</span>
                         <span class="stat-value">0</span>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">📅</div>
+                    <div class="stat-icon"><x-icon name="calendar" :size="28" /></div>
                     <div class="stat-info">
                         <span class="stat-label">Event Diikuti</span>
                         <span class="stat-value">0</span>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">📍</div>
+                    <div class="stat-icon"><x-icon name="map-pin" :size="28" /></div>
                     <div class="stat-info">
                         <span class="stat-label">Lokasi</span>
                         <span class="stat-value" id="location-status" style="font-size:14px; padding-top:4px;">
-                            {{ session('user_location') ? '✅ Terdeteksi' : '⏳ Mendeteksi...' }}
+                            {{ session('user_location') ? 'Terdeteksi' : 'Mendeteksi...' }}
                         </span>
                     </div>
                     <button type="button" id="refresh-location-btn" class="btn-refresh-location" title="Perbarui lokasi">
@@ -163,17 +174,19 @@
 
                     <div class="map-toggle">
                         <button type="button" class="map-toggle-btn active" data-mode="events">
-                            🎪 Event
+                            <x-icon name="ticket" :size="15" />
+                            Event
                         </button>
                         <button type="button" class="map-toggle-btn" data-mode="eo">
-                            🏢 Event Organizer
+                            <x-icon name="building" :size="15" />
+                            Event Organizer
                         </button>
                     </div>
 
                     <div id="map" class="map-container"></div>
 
                     <div id="map-info" class="map-info">
-                        <span id="map-info-text">🔍 Mendeteksi lokasi kamu...</span>
+                        <span id="map-info-text">Mendeteksi lokasi kamu...</span>
                     </div>
                 </div>
 
@@ -181,13 +194,16 @@
                 <div class="card">
                     <div class="card-header">
                         <h2>Rekomendasi untuk Anda</h2>
-                        <a href="#" class="card-link">Lihat semua →</a>
+                        <a href="#" class="card-link">
+                            Lihat semua
+                            <x-icon name="arrow-right" size="14" />
+                        </a>
                     </div>
 
                     <div class="recommendation-list" id="recommendation-list">
                         @forelse ($recommendedEvents as $event)
                             <div class="rec-item">
-                                <div class="rec-emoji">{{ $event->category_emoji }}</div>
+                                <div class="rec-icon"><x-icon name="ticket" :size="22" /></div>
                                 <div class="rec-info">
                                     <span class="rec-title">{{ $event->title }}</span>
                                     <span class="rec-meta">
@@ -202,7 +218,7 @@
                             </div>
                         @empty
                             <div class="empty-state">
-                                <span>🎪</span>
+                                <span class="empty-state-icon"><x-icon name="ticket" :size="38" /></span>
                                 <p>Belum ada event tersedia saat ini.</p>
                             </div>
                         @endforelse
@@ -213,7 +229,7 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
     {{-- Leaflet JS --}}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -257,7 +273,7 @@
                 color: '#0f1117',
                 weight: 2,
                 fillOpacity: 1,
-            }).addTo(map).bindPopup('📍 Lokasi kamu').openPopup();
+            }).addTo(map).bindPopup('Lokasi kamu').openPopup();
 
             radiusCircle = L.circle([lat, lng], {
                 radius: getRadius(),
@@ -271,7 +287,7 @@
             map.setView([lat, lng], 12);
 
             document.getElementById('map-info-text').textContent =
-                `🔍 Memuat data dalam radius ${getRadius() / 1000} km...`;
+                `Memuat data dalam radius ${getRadius() / 1000} km...`;
 
             loadMapData();
         }
@@ -297,7 +313,7 @@
                 })
                 .catch(() => {
                     document.getElementById('map-info-text').textContent =
-                        '⚠️ Gagal memuat data.';
+                        'Gagal memuat data.';
                 });
         }
 
@@ -320,7 +336,7 @@
                         `${ev.date}<br>` +
                         (ev.price > 0 ? `Rp ${Number(ev.price).toLocaleString('id-ID')}` : 'Gratis') +
                         (ev.distance !== null ? `<br><small>${(ev.distance / 1000).toFixed(1)} km dari kamu</small>` : '') +
-                        `<br><a href="/events/${ev.id}" class="popup-link">Lihat Detail →</a>` +
+                        `<br><a href="/events/${ev.id}" class="popup-link">Lihat Detail</a>` +
                     `</div>`
                 );
 
@@ -332,8 +348,8 @@
             organizers.forEach(eo => {
                 const inRadius = eo.in_radius === true || eo.in_radius === null;
                 const ratingText = eo.review_count > 0
-                    ? `⭐ ${Number(eo.average_rating).toFixed(1)} / 5 (${eo.review_count} ulasan)`
-                    : '⭐ Belum ada ulasan';
+                    ? `Rating ${Number(eo.average_rating).toFixed(1)} / 5 (${eo.review_count} ulasan)`
+                    : 'Belum ada ulasan';
 
                 const marker = L.circleMarker([eo.lat, eo.lng], {
                     radius: inRadius ? 9 : 6,
@@ -349,7 +365,7 @@
                         `<strong>${eo.name}</strong><br>` +
                         `${eo.total_events} event terdaftar<br>` +
                         `${ratingText}<br>` +
-                        `📞 ${eo.phone}` +
+                        `Telepon: ${eo.phone}` +
                         (eo.distance !== null ? `<br><small>${(eo.distance / 1000).toFixed(1)} km dari kamu</small>` : '') +
                     `</div>`
                 );
@@ -360,7 +376,7 @@
 
         function updateMapInfo(total, inRadius, label) {
             document.getElementById('map-info-text').textContent =
-                `📍 Menampilkan ${total} ${label}` +
+                `Menampilkan ${total} ${label}` +
                 (inRadius !== null ? ` · ${inRadius} dalam radius ${getRadius() / 1000} km` : '');
         }
 
@@ -400,7 +416,7 @@
         // ── Kalau sudah ada lokasi di session, langsung pakai ───
         if (savedLat && savedLng) {
             placeUserOnMap(savedLat, savedLng);
-            document.getElementById('location-status').textContent = '✅ Terdeteksi';
+            document.getElementById('location-status').textContent = 'Terdeteksi';
         } else {
             requestUserLocation();
         }
@@ -408,7 +424,7 @@
         // ── Fungsi minta GPS dari browser ────────────────────────
         function requestUserLocation(onDone) {
             if (!('geolocation' in navigator)) {
-                document.getElementById('location-status').textContent = '❌ Tidak didukung';
+                document.getElementById('location-status').textContent = 'Tidak didukung';
                 loadMapData();
                 if (onDone) onDone();
                 return;
@@ -420,7 +436,7 @@
                     const lng = pos.coords.longitude;
 
                     placeUserOnMap(lat, lng);
-                    document.getElementById('location-status').textContent = '✅ Terdeteksi';
+                    document.getElementById('location-status').textContent = 'Terdeteksi';
 
                     // Kirim ke server untuk disimpan di session
                     fetch('{{ route("location.save", [], false) }}', {
@@ -435,9 +451,9 @@
                     });
                 },
                 (err) => {
-                    document.getElementById('location-status').textContent = '❌ Ditolak';
+                    document.getElementById('location-status').textContent = 'Ditolak';
                     document.getElementById('map-info-text').textContent =
-                        '⚠️ Izin lokasi ditolak. Aktifkan GPS untuk fitur ini.';
+                        'Izin lokasi ditolak. Aktifkan GPS untuk fitur ini.';
                     map.setView([defaultLat, defaultLng], 5);
                     loadMapData(); // tetap tampilkan data walau lokasi ditolak
                     if (onDone) onDone();
@@ -453,8 +469,8 @@
         refreshBtn.addEventListener('click', () => {
             refreshBtn.disabled = true;
             refreshIcon.classList.add('spinning');
-            document.getElementById('location-status').textContent = '⏳ Memperbarui...';
-            document.getElementById('map-info-text').textContent = '🔍 Mendeteksi lokasi kamu...';
+            document.getElementById('location-status').textContent = 'Memperbarui...';
+            document.getElementById('map-info-text').textContent = 'Mendeteksi lokasi kamu...';
 
             requestUserLocation(() => {
                 refreshBtn.disabled = false;

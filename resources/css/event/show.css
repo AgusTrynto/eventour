@@ -1,6 +1,7 @@
 @import '../app.css';
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -64,7 +65,10 @@ body.event-detail-page {
 .logo span { color: var(--accent); }
 
 .back-link {
+    align-items: center;
     color: #9ca3af;
+    display: inline-flex;
+    gap: 8px;
     text-decoration: none;
     font-size: 14px;
 }
@@ -106,7 +110,10 @@ body.event-detail-page {
     align-items: flex-start;
 }
 
-.meta-icon { font-size: 20px; }
+.meta-icon {
+    color: var(--pink);
+    display: flex;
+}
 
 .meta-label {
     display: block;
@@ -231,12 +238,15 @@ body.event-detail-page {
 .low-stock { color: #ff6b6b; font-weight: 600; }
 
 .escrow-note {
+    align-items: flex-start;
     background: rgba(216,255,79,.05);
     border: 1px solid rgba(216,255,79,.15);
     border-radius: 12px;
     padding: 12px 14px;
     font-size: 12px;
     color: #c4c4c4;
+    display: flex;
+    gap: 8px;
     line-height: 1.6;
 }
 

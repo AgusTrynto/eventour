@@ -22,7 +22,7 @@
         <div class="otp-card">
 
             <div class="heading">
-                <div class="otp-icon">✉️</div>
+                <div class="otp-icon"><x-icon name="mail" :size="38" /></div>
                 <span class="badge">VERIFIKASI EMAIL</span>
 
                 <h1>Cek Emailmu</h1>
@@ -82,14 +82,15 @@
             </div>
 
             <a href="{{ route('register') }}" class="back-link">
-                ← Kembali & ubah email
+                <x-icon name="arrow-left" :size="16" />
+                Kembali & ubah email
             </a>
 
         </div>
     </main>
 
     <footer>
-        © 2026 EvenTour. All Rights Reserved.
+        Copyright 2026 EvenTour. All Rights Reserved.
     </footer>
 
     <script>

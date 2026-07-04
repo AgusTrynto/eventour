@@ -44,21 +44,21 @@
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">⭐</div>
+                    <div class="stat-icon"><x-icon name="star" :size="28" /></div>
                     <div class="stat-info">
                         <span class="stat-label">Rating Rata-rata</span>
                         <span class="stat-value">{{ $averageRating ?? '-' }}</span>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">💬</div>
+                    <div class="stat-icon"><x-icon name="message-circle" :size="28" /></div>
                     <div class="stat-info">
                         <span class="stat-label">Total Ulasan</span>
                         <span class="stat-value">{{ $reviewCount }}</span>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">🎟️</div>
+                    <div class="stat-icon"><x-icon name="ticket" :size="28" /></div>
                     <div class="stat-info">
                         <span class="stat-label">Tiket Terjual</span>
                         <span class="stat-value">{{ $event->tickets_sold }}</span>
@@ -66,7 +66,10 @@
                 </div>
             </div>
 
-            <a href="{{ route('eo.dashboard') }}" class="btn-explore">← Kembali ke Dashboard</a>
+            <a href="{{ route('eo.dashboard') }}" class="btn-explore">
+                <x-icon name="arrow-left" :size="16" />
+                Kembali ke Dashboard
+            </a>
 
             <section class="ai-summary-card">
                 <div class="ai-summary-header">
@@ -86,6 +89,7 @@
                     <form action="{{ route('eo.events.reviews.summary', $event) }}" method="POST">
                         @csrf
                         <button type="submit" class="btn-refresh-summary" @disabled($reviewCount === 0)>
+                            <x-icon name="refresh" :size="16" />
                             Refresh Kesimpulan
                         </button>
                     </form>
@@ -157,7 +161,7 @@
 
             @if ($reviewCount === 0)
                 <div class="empty-state">
-                    <span>💬</span>
+                    <span class="empty-state-icon"><x-icon name="message-circle" :size="38" /></span>
                     <p>Belum ada ulasan untuk event ini.</p>
                     <small>Ulasan akan muncul setelah peserta check-in dan memberikan penilaian.</small>
                 </div>
@@ -173,7 +177,7 @@
                                 </div>
                                 <div class="review-stars">
                                     @for ($rating = 1; $rating <= 5; $rating++)
-                                        <span class="{{ $rating <= $review->rating ? 'filled' : '' }}">★</span>
+                                        <span class="{{ $rating <= $review->rating ? 'filled' : '' }}">&#9733;</span>
                                     @endfor
                                 </div>
                             </div>
@@ -215,7 +219,7 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
 </body>
 </html>

@@ -13,7 +13,10 @@
 
     <header class="container-custom">
         <a href="/" class="logo">Even<span>Tour</span></a>
-        <a href="{{ route('dashboard') }}" class="back-link">← Dashboard</a>
+        <a href="{{ route('dashboard') }}" class="back-link">
+            <x-icon name="arrow-left" :size="16" />
+            Dashboard
+        </a>
     </header>
 
     <main class="main-content">
@@ -57,7 +60,7 @@
                 </div>
             @empty
                 <div class="empty-state">
-                    <span>🎫</span>
+                    <span class="empty-state-icon"><x-icon name="ticket" :size="38" /></span>
                     <p>Kamu belum punya tiket apapun.</p>
                     <a href="{{ route('dashboard') }}" class="btn-explore">Jelajahi Event</a>
                 </div>
@@ -66,7 +69,7 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
 </body>
 </html>

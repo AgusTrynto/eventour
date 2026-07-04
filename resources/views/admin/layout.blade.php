@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin') — EvenTour</title>
+    <title>@yield('title', 'Admin') - EvenTour</title>
     @vite(['resources/css/admin/admin.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
@@ -21,14 +21,16 @@
         <nav class="sidebar-nav">
             <a href="{{ route('admin.dashboard') }}"
                class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                <span>📊</span> Dashboard
+                <x-icon name="bar-chart" :size="18" />
+                Dashboard
             </a>
 
             <span class="sidebar-section">Manajemen</span>
 
             <a href="{{ route('admin.eo.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.eo.*') ? 'active' : '' }}">
-                <span>🏢</span> Akun EO
+                <x-icon name="building" :size="18" />
+                Akun EO
                 @if ($pendingSidebar['eo'] > 0)
                     <span class="nav-badge">{{ $pendingSidebar['eo'] }}</span>
                 @endif
@@ -36,7 +38,8 @@
 
             <a href="{{ route('admin.events.index') }}"
                class="sidebar-link {{ request()->routeIs('admin.events.*') ? 'active' : '' }}">
-                <span>🎪</span> Event
+                <x-icon name="ticket" :size="18" />
+                Event
                 @if ($pendingSidebar['events'] > 0)
                     <span class="nav-badge">{{ $pendingSidebar['events'] }}</span>
                 @endif
@@ -58,10 +61,16 @@
 
         <main class="admin-content">
             @if (session('success'))
-                <div class="alert alert-success">✅ {{ session('success') }}</div>
+                <div class="alert alert-success">
+                    <x-icon name="check-circle" :size="18" />
+                    {{ session('success') }}
+                </div>
             @endif
             @if (session('error'))
-                <div class="alert alert-error">⚠️ {{ session('error') }}</div>
+                <div class="alert alert-error">
+                    <x-icon name="alert-triangle" :size="18" />
+                    {{ session('error') }}
+                </div>
             @endif
 
             @yield('content')

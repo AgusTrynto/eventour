@@ -47,7 +47,10 @@ body.checkout-page {
 .logo span { color: var(--accent); }
 
 .back-link {
+    align-items: center;
     color: #9ca3af;
+    display: inline-flex;
+    gap: 8px;
     text-decoration: none;
     font-size: 14px;
 }
@@ -95,6 +98,12 @@ body.checkout-page {
     margin-top: 12px;
     color: #9ca3af;
     font-size: 13px;
+}
+
+.event-meta span {
+    align-items: center;
+    display: inline-flex;
+    gap: 7px;
 }
 
 .error-box {
@@ -180,9 +189,12 @@ body.checkout-page {
 .price-row.total span:last-child { color: var(--accent); }
 
 .escrow-note {
+    align-items: flex-start;
     background: rgba(216,255,79,.05);
     border: 1px solid rgba(216,255,79,.15);
     border-radius: 12px;
+    display: flex;
+    gap: 8px;
     padding: 12px 14px;
     font-size: 12px;
     color: #c4c4c4;
@@ -214,7 +226,14 @@ body.checkout-page {
     text-align: center;
 }
 
-.result-icon { font-size: 56px; margin-bottom: 16px; }
+.result-icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.result-icon.success { color: var(--accent); }
+.result-icon.failed { color: #ff6b6b; }
 
 .result-card h1 {
     font-family: "Syne", sans-serif;
@@ -248,6 +267,7 @@ body.checkout-page {
 
 .detail-row:last-child { border-bottom: none; }
 .status-paid { color: var(--accent); font-weight: 700; }
+.status-failed { color: #ff6b6b; font-weight: 700; }
 
 footer {
     text-align: center;

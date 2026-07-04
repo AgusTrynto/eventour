@@ -12,7 +12,10 @@
 
     <header class="container-custom">
         <a href="/" class="logo">Even<span>Tour</span></a>
-        <a href="{{ url()->previous() }}" class="back-link">← Kembali</a>
+        <a href="{{ url()->previous() }}" class="back-link">
+            <x-icon name="arrow-left" :size="16" />
+            Kembali
+        </a>
     </header>
 
     <main class="main-content">
@@ -22,8 +25,8 @@
                 <span class="badge">{{ $event->category ?? 'Event' }}</span>
                 <h1>{{ $event->title }}</h1>
                 <div class="event-meta">
-                    <span>📅 {{ $event->start_date?->translatedFormat('d M Y, H:i') ?? '-' }}</span>
-                    <span>📍 {{ $event->location_name }}</span>
+                    <span><x-icon name="calendar" :size="16" /> {{ $event->start_date?->translatedFormat('d M Y, H:i') ?? '-' }}</span>
+                    <span><x-icon name="map-pin" :size="16" /> {{ $event->location_name }}</span>
                 </div>
             </div>
 
@@ -61,7 +64,8 @@
                 </div>
 
                 <div class="escrow-note">
-                    🔒 Dana kamu ditahan aman oleh EvenTour sampai event terverifikasi berlangsung.
+                    <x-icon name="shield" :size="16" />
+                    Dana kamu ditahan aman oleh EvenTour sampai event terverifikasi berlangsung.
                     Jika event terbukti tidak valid, dana akan dikembalikan penuh.
                 </div>
 
@@ -73,7 +77,7 @@
         </div>
     </main>
 
-    <footer>© 2026 EvenTour. All Rights Reserved.</footer>
+    <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
     <script>
         const price = {{ $event->price }};

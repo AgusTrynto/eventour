@@ -1,6 +1,7 @@
 @import '../app.css';
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
+
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -81,7 +82,10 @@ body.eo-dashboard-page {
 }
 
 .nav-link {
+    align-items: center;
     color: #9ca3af;
+    display: inline-flex;
+    gap: 7px;
     text-decoration: none;
     padding: 6px 14px;
     border-radius: 8px;
@@ -119,6 +123,11 @@ body.eo-dashboard-page {
     background: rgba(216,255,79,.12);
     border: 1px solid rgba(216,255,79,.25);
     color: var(--accent);
+}
+
+.icon {
+    display: inline-block;
+    flex-shrink: 0;
 }
 
 .btn-logout {
@@ -306,6 +315,9 @@ body.eo-dashboard-page {
 
 /* ── ALERTS ──────────────────────────────────── */
 .alert {
+    align-items: center;
+    display: flex;
+    gap: 10px;
     padding: 14px 18px;
     border-radius: 12px;
     font-size: 14px;
@@ -358,7 +370,10 @@ body.eo-dashboard-page {
 }
 
 .btn-add-event {
+    align-items: center;
+    display: inline-flex;
     flex-shrink: 0;
+    gap: 8px;
     padding: 12px 24px;
     border-radius: 12px;
     background: var(--accent);
@@ -392,7 +407,17 @@ body.eo-dashboard-page {
     backdrop-filter: blur(12px);
 }
 
-.stat-icon { font-size: 32px; }
+.stat-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(216,255,79,.1);
+    color: var(--accent);
+    flex-shrink: 0;
+}
 
 .stat-info {
     display: flex;
@@ -478,10 +503,16 @@ body.eo-dashboard-page {
     color: #6b7280;
 }
 
-.empty-state span { font-size: 40px; }
+.empty-state-icon {
+    color: var(--accent);
+    display: flex;
+}
 .empty-state p { font-size: 14px; }
 
 .btn-explore {
+    align-items: center;
+    display: inline-flex;
+    gap: 8px;
     margin-top: 4px;
     padding: 9px 22px;
     border-radius: 10px;
@@ -514,7 +545,6 @@ body.eo-dashboard-page {
 }
 
 .event-icon {
-    font-size: 22px;
     flex-shrink: 0;
     width: 40px;
     height: 40px;
@@ -523,6 +553,7 @@ body.eo-dashboard-page {
     justify-content: center;
     border-radius: 12px;
     background: rgba(255,255,255,.04);
+    color: var(--accent);
 }
 
 .event-info {
@@ -810,14 +841,17 @@ body.eo-dashboard-page {
 }
 
 .btn-refresh-summary {
+    align-items: center;
     border: 1px solid rgba(216,255,79,.24);
     border-radius: 10px;
     background: var(--accent);
     color: #0f1117;
     cursor: pointer;
+    display: inline-flex;
     flex-shrink: 0;
     font-size: 13px;
     font-weight: 800;
+    gap: 8px;
     padding: 10px 16px;
     transition: .2s;
     white-space: nowrap;
@@ -1071,7 +1105,7 @@ footer {
     box-shadow: 0 12px 30px rgba(216,255,79,.25);
 }
 
-/* ── RESPONSIVE — switch navbar to sidebar ──────── */
+/* RESPONSIVE - switch navbar to sidebar */
 @media (max-width: 900px) {
     .nav-links,
     .nav-right .user-name,

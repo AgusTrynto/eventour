@@ -40,7 +40,9 @@
     border-radius: 16px;
 }
 
-.scan-placeholder span { font-size: 40px; }
+.scan-placeholder .empty-state-icon {
+    color: var(--accent);
+}
 
 .scan-result {
     margin-top: 20px;
@@ -59,7 +61,19 @@
     border: 1px solid rgba(255,80,80,.25);
 }
 
-.result-icon { font-size: 40px; margin-bottom: 10px; }
+.result-icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.result-valid .result-icon {
+    color: var(--accent);
+}
+
+.result-invalid .result-icon {
+    color: #ff6b6b;
+}
 
 .result-message {
     font-size: 15px;

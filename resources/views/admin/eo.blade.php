@@ -55,17 +55,21 @@
             <div class="eo-actions">
                 <form action="{{ route('admin.eo.approve', $eo) }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn-approve-full">✓ Setujui</button>
+                    <button type="submit" class="btn-approve-full">
+                        <x-icon name="check-circle" :size="17" />
+                        Setujui
+                    </button>
                 </form>
                 <button type="button" class="btn-reject-full"
                     onclick="openRejectModal({{ $eo->id }}, '{{ addslashes($eo->org_name) }}', 'eo')">
-                    ✕ Tolak
+                    <x-icon name="x" :size="17" />
+                    Tolak
                 </button>
             </div>
         </div>
     @empty
         <div class="empty-card">
-            <span>🎉</span>
+            <span class="empty-card-icon"><x-icon name="check-circle" :size="38" /></span>
             <p>Tidak ada EO yang menunggu persetujuan.</p>
         </div>
     @endforelse
@@ -100,7 +104,7 @@
         </div>
     @empty
         <div class="empty-card">
-            <span>📭</span>
+            <span class="empty-card-icon"><x-icon name="inbox" :size="38" /></span>
             <p>Belum ada EO yang disetujui.</p>
         </div>
     @endforelse
@@ -126,7 +130,7 @@
         </div>
     @empty
         <div class="empty-card">
-            <span>📭</span>
+            <span class="empty-card-icon"><x-icon name="inbox" :size="38" /></span>
             <p>Tidak ada EO yang ditolak.</p>
         </div>
     @endforelse

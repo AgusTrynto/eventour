@@ -40,7 +40,7 @@
                     <span>
                         {{ $event->start_date?->translatedFormat('d M Y, H:i') ?? '-' }}
                         @if ($event->end_date)
-                            — {{ $event->end_date->translatedFormat('d M Y, H:i') }}
+                            - {{ $event->end_date->translatedFormat('d M Y, H:i') }}
                         @endif
                     </span>
                 </div>
@@ -67,17 +67,21 @@
             <div class="eo-actions">
                 <form action="{{ route('admin.events.approve', $event) }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn-approve-full">✓ Setujui & Tampilkan di Map</button>
+                    <button type="submit" class="btn-approve-full">
+                        <x-icon name="check-circle" :size="17" />
+                        Setujui & Tampilkan di Map
+                    </button>
                 </form>
                 <button type="button" class="btn-reject-full"
                     onclick="openRejectModal({{ $event->id }}, '{{ addslashes($event->title) }}', 'event')">
-                    ✕ Tolak
+                    <x-icon name="x" :size="17" />
+                    Tolak
                 </button>
             </div>
         </div>
     @empty
         <div class="empty-card">
-            <span>🎉</span>
+            <span class="empty-card-icon"><x-icon name="check-circle" :size="38" /></span>
             <p>Tidak ada event yang menunggu persetujuan.</p>
         </div>
     @endforelse
@@ -103,7 +107,7 @@
             </div>
         @empty
             <div class="empty-card">
-                <span>📭</span>
+                <span class="empty-card-icon"><x-icon name="inbox" :size="38" /></span>
                 <p>Belum ada event yang disetujui.</p>
             </div>
         @endforelse
@@ -129,7 +133,7 @@
         </div>
     @empty
         <div class="empty-card">
-            <span>📭</span>
+            <span class="empty-card-icon"><x-icon name="inbox" :size="38" /></span>
             <p>Tidak ada event yang ditolak.</p>
         </div>
     @endforelse
