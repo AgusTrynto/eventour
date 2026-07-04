@@ -78,16 +78,7 @@ class CheckoutController extends Controller
                 'paid_at'        => now(),
             ]);
 
-            // Generate tiket QR untuk event gratis
-            for ($i = 0; $i < $quantity; $i++) {
-                Ticket::create([
-                    'order_id'    => $order->id,
-                    'event_id'    => $event->id,
-                    'user_id'     => $user->id,
-                    'ticket_code' => Ticket::generateCode(),
-                    'status'      => 'valid',
-                ]);
-            }
+            $this->generateTickets($order);
 
             return redirect()->route('checkout.success', $order)
                 ->with('success', 'Tiket gratis berhasil diklaim!');
@@ -128,11 +119,47 @@ class CheckoutController extends Controller
 
     public function success(Order $order)
     {
+        if ($order->payment_status === 'pending' && $order->xendit_invoice_id) {
+            try {
+                $invoice = (new InvoiceApi())->getInvoiceById($order->xendit_invoice_id);
+                $status = $invoice->getStatus();
+
+                if (in_array($status, ['PAID', 'SETTLED'], true)) {
+                    $order->update([
+                        'payment_status' => 'paid',
+                        'paid_at'        => now(),
+                    ]);
+
+                    $this->generateTickets($order);
+                    $order->refresh();
+                }
+            } catch (XenditSdkException $e) {
+                Log::warning('Xendit invoice status check failed: ' . $e->getMessage());
+            }
+        }
+
         return view('checkout.success', compact('order'));
     }
 
     public function failed(Order $order)
     {
         return view('checkout.failed', compact('order'));
+    }
+
+    private function generateTickets(Order $order): void
+    {
+        if (Ticket::where('order_id', $order->id)->exists()) {
+            return;
+        }
+
+        for ($i = 0; $i < $order->quantity; $i++) {
+            Ticket::create([
+                'order_id'    => $order->id,
+                'event_id'    => $order->event_id,
+                'user_id'     => $order->user_id,
+                'ticket_code' => Ticket::generateCode(),
+                'status'      => 'valid',
+            ]);
+        }
     }
 }
