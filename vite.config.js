@@ -11,6 +11,7 @@ export default defineConfig({
                 'resources/css/auth/verify-otp.css',
                 'resources/css/landing.css',
                 'resources/css/user/dashboard.css',
+                'resources/css/user/navbar.css',
                 'resources/css/user/reviews.css',
                 'resources/css/eo/dashboard.css',
                 'resources/css/eo/create-event.css',
