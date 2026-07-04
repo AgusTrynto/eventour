@@ -231,19 +231,26 @@ body.ticket-list-page {
 
 .ticket-mini {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 10px;
     padding: 12px 14px;
     border-radius: 12px;
     background: rgba(255,255,255,.02);
     border: 1px solid var(--border);
-    text-decoration: none;
     transition: .2s;
 }
 
 .ticket-mini:hover {
     border-color: rgba(216,255,79,.2);
     background: rgba(216,255,79,.03);
+}
+
+.ticket-mini-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-decoration: none;
+    gap: 12px;
 }
 
 .ticket-mini-code {
@@ -257,6 +264,42 @@ body.ticket-list-page {
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 12px;
+}
+
+.ticket-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ticket-action-btn {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: rgba(255,255,255,.04);
+    color: #c4c4c4;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 12px;
+    text-decoration: none;
+    transition: .2s;
+}
+
+.ticket-action-btn:hover {
+    border-color: rgba(216,255,79,.25);
+    color: var(--accent);
+    background: rgba(216,255,79,.08);
+}
+
+.ticket-action-btn.whatsapp {
+    border-color: rgba(74,222,128,.22);
+    color: #4ade80;
+    background: rgba(74,222,128,.08);
+}
+
+.ticket-action-btn.whatsapp:hover {
+    background: rgba(74,222,128,.14);
 }
 
 .empty-state {

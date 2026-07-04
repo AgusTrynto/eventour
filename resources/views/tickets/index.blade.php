@@ -47,14 +47,29 @@
 
                     <div class="ticket-mini-list">
                         @foreach ($group as $ticket)
-                            <a href="{{ route('tickets.show', $ticket) }}" class="ticket-mini">
-                                <span class="ticket-mini-code">{{ $ticket->ticket_code }}</span>
-                                <span class="ticket-mini-status status-{{ $ticket->status }}">
-                                    @if ($ticket->status === 'valid') Aktif
-                                    @elseif ($ticket->status === 'used') Terpakai
-                                    @else Batal @endif
-                                </span>
-                            </a>
+                            @php
+                                $ticketUrl = route('tickets.show', $ticket);
+                                $shareText = "Tiket EvenTour\nEvent: {$ticket->event->title}\nKode: {$ticket->ticket_code}\nDetail: {$ticketUrl}";
+                            @endphp
+
+                            <div class="ticket-mini">
+                                <a href="{{ $ticketUrl }}" class="ticket-mini-main">
+                                    <span class="ticket-mini-code">{{ $ticket->ticket_code }}</span>
+                                    <span class="ticket-mini-status status-{{ $ticket->status }}">
+                                        @if ($ticket->status === 'valid') Aktif
+                                        @elseif ($ticket->status === 'used') Terpakai
+                                        @else Batal @endif
+                                    </span>
+                                </a>
+
+                                <div class="ticket-actions">
+                                    <a href="{{ $ticketUrl }}" class="ticket-action-btn">Detail</a>
+                                    <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener" class="ticket-action-btn whatsapp">Bagikan WA</a>
+                                    <button type="button" class="ticket-action-btn" data-ticket-code="{{ $ticket->ticket_code }}" data-event-title="{{ $ticket->event->title }}">
+                                        Download QR
+                                    </button>
+                                </div>
+                            </div>
                         @endforeach
                     </div>
                 </div>
@@ -70,6 +85,52 @@
     </main>
 
     <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        document.querySelectorAll('[data-ticket-code]').forEach(button => {
+            button.addEventListener('click', () => {
+                const ticketCode = button.dataset.ticketCode;
+                const eventTitle = button.dataset.eventTitle || 'event';
+                const qrHolder = document.createElement('div');
+
+                qrHolder.style.position = 'fixed';
+                qrHolder.style.left = '-9999px';
+                qrHolder.style.top = '-9999px';
+                document.body.appendChild(qrHolder);
+
+                new QRCode(qrHolder, {
+                    text: ticketCode,
+                    width: 320,
+                    height: 320,
+                    colorDark: '#0f1117',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H,
+                });
+
+                setTimeout(() => {
+                    const canvas = qrHolder.querySelector('canvas');
+                    const image = qrHolder.querySelector('img');
+                    const dataUrl = canvas ? canvas.toDataURL('image/png') : image?.src;
+
+                    if (!dataUrl) {
+                        qrHolder.remove();
+                        return;
+                    }
+
+                    const link = document.createElement('a');
+                    const safeEventTitle = eventTitle.toLowerCase().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+
+                    link.href = dataUrl;
+                    link.download = `qr-${safeEventTitle || 'event'}-${ticketCode}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    qrHolder.remove();
+                }, 100);
+            });
+        });
+    </script>
 
 </body>
 </html>
