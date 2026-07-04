@@ -16,7 +16,7 @@ use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminRefundController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\XenditWebhookController;
-use App\Http\Controllers\Eo\EoScanController;
+use App\Http\Controllers\EO\EOScanController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\EO\EOMapController;
 use App\Http\Controllers\ReviewController;
@@ -155,10 +155,10 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
         ->name('eo.events.reviews.summary');
 
     // ── EO: scan QR tiket
-    Route::get('/scan', [EoScanController::class, 'index'])
+    Route::get('/scan', [EOScanController::class, 'index'])
         ->name('eo.scan');
 
-    Route::post('/scan/validate', [EoScanController::class, 'validateTicket'])
+    Route::post('/scan/validate', [EOScanController::class, 'validateTicket'])
         ->name('eo.scan.validate');
 
 });
