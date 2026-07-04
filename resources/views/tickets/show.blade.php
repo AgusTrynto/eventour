@@ -4,20 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tiket - {{ $ticket->event->title }} - EvenTour</title>
-    @vite(['resources/css/tickets/tickets.css', 'resources/js/app.js'])
+    @vite(['resources/css/tickets/tickets.css', 'resources/css/user/navbar.css', 'resources/js/app.js'])
 </head>
 
 <body class="ticket-detail-page">
 
     <div class="bg-glow"></div>
 
-    <header class="container-custom">
-        <a href="/" class="logo">Even<span>Tour</span></a>
-        <a href="{{ route('tickets.index') }}" class="back-link">
-            <x-icon name="arrow-left" :size="16" />
-            Tiket Saya
-        </a>
-    </header>
+    @include('user.partials.navbar', ['active' => 'tickets'])
 
     <main class="main-content">
         <div class="ticket-card">

@@ -44,6 +44,12 @@
                     <span class="nav-badge">{{ $pendingSidebar['events'] }}</span>
                 @endif
             </a>
+
+            <a href="{{ route('admin.payouts.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.payouts.*') ? 'active' : '' }}">
+                <x-icon name="briefcase" :size="18" />
+                Payout
+            </a>
         </nav>
 
         <form action="{{ route('logout') }}" method="POST" class="sidebar-bottom">

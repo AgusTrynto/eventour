@@ -11,21 +11,7 @@
 
     <div class="bg-glow"></div>
 
-    <header class="navbar">
-        <div class="container-custom">
-            <a href="/" class="logo">Even<span>Tour</span></a>
-            <nav class="nav-links">
-                <a href="{{ route('eo.dashboard') }}" class="nav-link">Dashboard EO</a>
-                <a href="{{ route('eo.scan') }}" class="nav-link active">Scan Tiket</a>
-            </nav>
-            <div class="nav-right">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn-logout">Logout</button>
-                </form>
-            </div>
-        </div>
-    </header>
+    @include('eo.partials.navbar', ['active' => 'scan'])
 
     <main class="main-content">
         <div class="container-custom narrow">

@@ -8,93 +8,14 @@
     {{-- Leaflet CSS --}}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-    @vite(['resources/css/user/dashboard.css', 'resources/js/app.js'])
+    @vite(['resources/css/user/dashboard.css', 'resources/css/user/navbar.css', 'resources/js/app.js'])
 </head>
 
 <body class="dashboard-page">
 
     <div class="bg-glow"></div>
 
-    {{-- NAVBAR (desktop) --}}
-    <header class="navbar">
-        <div class="container-custom">
-            <button type="button" class="hamburger-btn" id="hamburger-btn" aria-label="Buka menu">
-                <span></span><span></span><span></span>
-            </button>
-
-            <a href="/" class="logo">Even<span>Tour</span></a>
-
-            <nav class="nav-links">
-                <a href="/dashboard" class="nav-link active">Dashboard</a>
-                <a href="#" class="nav-link">Event</a>
-                <a href="{{ route('tickets.index') }}" class="nav-link">Tiket Saya</a>
-                <a href="{{ route('reviews.index') }}" class="nav-link">Ulasan</a>
-            </nav>
-
-            <div class="nav-right">
-                @if (auth()->user()->role === 'eo')
-                    <a href="{{ route('eo.dashboard') }}" class="nav-link-eo-badge">
-                        <x-icon name="building" :size="15" />
-                        Dashboard EO
-                    </a>
-                @endif
-
-                <span class="user-name">{{ $user->name }}</span>
-
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn-logout">Logout</button>
-                </form>
-            </div>
-        </div>
-    </header>
-
-    {{-- SIDEBAR (mobile) --}}
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
-    <aside class="mobile-sidebar" id="mobile-sidebar">
-        <div class="sidebar-top">
-            <a href="/" class="logo">Even<span>Tour</span></a>
-            <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Tutup menu">
-                <x-icon name="x" :size="16" />
-            </button>
-        </div>
-
-        <div class="sidebar-user">
-            <span class="user-name">{{ $user->name }}</span>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="/dashboard" class="sidebar-link active">
-                <x-icon name="bar-chart" :size="18" />
-                Dashboard
-            </a>
-            <a href="#" class="sidebar-link">
-                <x-icon name="ticket" :size="18" />
-                Event
-            </a>
-            <a href="{{ route('tickets.index') }}" class="sidebar-link">
-                <x-icon name="ticket" :size="18" />
-                Tiket Saya
-            </a>
-            <a href="{{ route('reviews.index') }}" class="sidebar-link">
-                <x-icon name="star" :size="18" />
-                Ulasan
-            </a>
-
-            @if (auth()->user()->role === 'eo')
-                <a href="{{ route('eo.dashboard') }}" class="sidebar-link sidebar-link-eo">
-                    <x-icon name="building" :size="18" />
-                    Dashboard EO
-                </a>
-            @endif
-        </nav>
-
-        <form action="{{ route('logout') }}" method="POST" class="sidebar-logout">
-            @csrf
-            <button type="submit" class="btn-logout">Logout</button>
-        </form>
-    </aside>
+    @include('user.partials.navbar', ['active' => 'dashboard', 'user' => $user])
 
     <main class="main-content">
         <div class="container-custom">
@@ -158,7 +79,7 @@
             <div class="content-grid">
 
                 {{-- MAP CARD --}}
-                <div class="card">
+                <div class="card" id="event-map">
                     <div class="card-header">
                         <h2 id="map-title">Event di Sekitarmu</h2>
                         <div class="radius-control">
@@ -478,27 +399,6 @@
             });
         });
 
-        // ── Sidebar mobile toggle ───────────────────────────
-        const hamburgerBtn   = document.getElementById('hamburger-btn');
-        const sidebarClose   = document.getElementById('sidebar-close');
-        const mobileSidebar  = document.getElementById('mobile-sidebar');
-        const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-        function openSidebar() {
-            mobileSidebar.classList.add('open');
-            sidebarOverlay.classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeSidebar() {
-            mobileSidebar.classList.remove('open');
-            sidebarOverlay.classList.remove('open');
-            document.body.style.overflow = '';
-        }
-
-        hamburgerBtn.addEventListener('click', openSidebar);
-        sidebarClose.addEventListener('click', closeSidebar);
-        sidebarOverlay.addEventListener('click', closeSidebar);
     </script>
 
 </body>

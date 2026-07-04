@@ -14,30 +14,7 @@
 
     <div class="bg-glow"></div>
 
-    {{-- NAVBAR --}}
-    <header class="navbar">
-        <div class="container-custom">
-            <a href="/" class="logo">Even<span>Tour</span></a>
-
-            <nav class="nav-links">
-                <a href="{{ route('eo.dashboard') }}" class="nav-link">Dashboard EO</a>
-                <a href="{{ route('eo.events.create') }}" class="nav-link active">
-                    <x-icon name="circle-plus" :size="15" />
-                    Tambah Event
-                </a>
-            </nav>
-
-            <div class="nav-right">
-                <span class="user-name">{{ $organizer->org_name }}</span>
-                <span class="role-badge">EO</span>
-
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn-logout">Logout</button>
-                </form>
-            </div>
-        </div>
-    </header>
+    @include('eo.partials.navbar', ['active' => 'create', 'organizer' => $organizer])
 
     <main class="main-content">
         <div class="container-custom narrow">

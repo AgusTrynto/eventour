@@ -14,72 +14,7 @@
 
     <div class="bg-glow"></div>
 
-    {{-- NAVBAR (desktop) --}}
-    <header class="navbar">
-        <div class="container-custom">
-            <button type="button" class="hamburger-btn" id="hamburger-btn" aria-label="Buka menu">
-                <span></span><span></span><span></span>
-            </button>
-
-            <a href="/dashboard" class="logo">Even<span>Tour</span></a>
-
-            <nav class="nav-links">
-                <a href="{{ route('eo.dashboard') }}" class="nav-link active">Dashboard EO</a>
-                <a href="{{ route('eo.events.create') }}" class="nav-link">
-                    <x-icon name="circle-plus" :size="15" />
-                    Tambah Event
-                </a>
-                <a href="{{ route('eo.scan') }}" class="nav-link">Scan Tiket</a>
-            </nav>
-
-            <div class="nav-right">
-                <span class="user-name">{{ $organizer->org_name }}</span>
-                <span class="role-badge">EO</span>
-
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn-logout">Logout</button>
-                </form>
-            </div>
-        </div>
-    </header>
-
-    {{-- SIDEBAR (mobile) --}}
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
-    <aside class="mobile-sidebar" id="mobile-sidebar">
-        <div class="sidebar-top">
-            <a href="/dashboard" class="logo">Even<span>Tour</span></a>
-            <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Tutup menu">
-                <x-icon name="x" :size="16" />
-            </button>
-        </div>
-
-        <div class="sidebar-user">
-            <span class="user-name">{{ $organizer->org_name }}</span>
-            <span class="role-badge">EO</span>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="{{ route('eo.dashboard') }}" class="sidebar-link active">
-                <x-icon name="bar-chart" :size="18" />
-                Dashboard EO
-            </a>
-            <a href="{{ route('eo.events.create') }}" class="sidebar-link">
-                <x-icon name="circle-plus" :size="18" />
-                Tambah Event
-            </a>
-            <a href="{{ route('eo.scan') }}" class="sidebar-link">
-                <x-icon name="camera" :size="18" />
-                Scan Tiket
-            </a>
-        </nav>
-
-        <form action="{{ route('logout') }}" method="POST" class="sidebar-logout">
-            @csrf
-            <button type="submit" class="btn-logout">Logout</button>
-        </form>
-    </aside>
+    @include('eo.partials.navbar', ['active' => 'dashboard', 'organizer' => $organizer])
 
     <main class="main-content">
         <div class="container-custom">
@@ -128,7 +63,150 @@
                         <span class="stat-value">{{ $rejectedEvents->count() }}</span>
                     </div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><x-icon name="ticket" :size="28" /></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Tiket Terjual</span>
+                        <span class="stat-value">{{ number_format($ticketSoldCount, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><x-icon name="lock" :size="28" /></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Dana Belum Cair</span>
+                        <span class="stat-value money">Rp {{ number_format($escrowAmount, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><x-icon name="check-circle" :size="28" /></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Sudah Dicairkan</span>
+                        <span class="stat-value money">Rp {{ number_format($completedPayoutAmount, 0, ',', '.') }}</span>
+                    </div>
+                </div>
             </div>
+
+            <section class="payout-section" id="payout-section">
+                <div class="section-heading">
+                    <div>
+                        <span class="badge">PAYOUT</span>
+                        <h2>Pencairan Dana</h2>
+                    </div>
+                    <span class="section-subtitle">Dana dicairkan admin setelah event selesai.</span>
+                </div>
+
+                <div class="finance-grid">
+                    <div class="card finance-card">
+                        <div class="card-header">
+                            <h2>Rekening Pencairan</h2>
+                        </div>
+                        <div class="bank-details">
+                            <div class="bank-icon"><x-icon name="briefcase" :size="24" /></div>
+                            <div>
+                                <strong>{{ $organizer->bank_name ?? 'Bank belum diisi' }}</strong>
+                                <span>{{ $organizer->bank_account_number ?? '-' }}</span>
+                                <span>a.n. {{ $organizer->bank_account_name ?? '-' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card finance-card">
+                        <div class="card-header">
+                            <h2>Ringkasan Dana</h2>
+                        </div>
+                        <div class="finance-summary">
+                            <div>
+                                <span>Total transaksi tiket</span>
+                                <strong>Rp {{ number_format($grossRevenue, 0, ',', '.') }}</strong>
+                            </div>
+                            <div>
+                                <span>Sedang diproses admin</span>
+                                <strong>Rp {{ number_format($processingPayoutAmount, 0, ',', '.') }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card full-width">
+                    <div class="card-header">
+                        <h2>Event Siap Dicairkan ({{ $readyForPayoutEvents->count() }})</h2>
+                    </div>
+
+                    @if ($readyForPayoutEvents->isEmpty())
+                        <div class="empty-state compact">
+                            <span class="empty-state-icon"><x-icon name="check-circle" :size="38" /></span>
+                            <p>Belum ada event selesai yang menunggu pencairan.</p>
+                        </div>
+                    @else
+                        <div class="event-list">
+                            @foreach ($readyForPayoutEvents as $event)
+                                <div class="event-item payout-event">
+                                    <div class="event-icon pending"><x-icon name="lock" :size="20" /></div>
+                                    <div class="event-info">
+                                        <span class="event-title">{{ $event->title }}</span>
+                                        <span class="event-meta">
+                                            Selesai {{ $event->end_date?->translatedFormat('d M Y') ?? '-' }} ·
+                                            {{ $event->tickets_sold }} tiket
+                                        </span>
+                                    </div>
+                                    <div class="payout-amount">
+                                        <strong>Rp {{ number_format($event->escrow_amount, 0, ',', '.') }}</strong>
+                                        <span class="status-badge status-pending">Menunggu admin</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                <div class="card full-width">
+                    <div class="card-header">
+                        <h2>Riwayat Payout</h2>
+                    </div>
+
+                    @if ($recentPayouts->isEmpty())
+                        <div class="empty-state compact">
+                            <span class="empty-state-icon"><x-icon name="inbox" :size="38" /></span>
+                            <p>Belum ada payout yang dibuat admin.</p>
+                        </div>
+                    @else
+                        <div class="payout-table">
+                            <div class="payout-table-header">
+                                <span>Event</span>
+                                <span>Status</span>
+                                <span>Gross</span>
+                                <span>Fee</span>
+                                <span>Diterima</span>
+                                <span>Bukti</span>
+                            </div>
+
+                            @foreach ($recentPayouts as $payout)
+                                @php
+                                    $statusClass = match ($payout->status) {
+                                        'completed' => 'status-approved',
+                                        'failed' => 'status-rejected',
+                                        default => 'status-pending',
+                                    };
+                                @endphp
+                                <div class="payout-table-row">
+                                    <span class="event-name">{{ $payout->event->title ?? 'Event tidak ditemukan' }}</span>
+                                    <span><span class="status-badge {{ $statusClass }}">{{ ucfirst($payout->status) }}</span></span>
+                                    <span>Rp {{ number_format($payout->gross_amount, 0, ',', '.') }}</span>
+                                    <span>Rp {{ number_format($payout->platform_fee, 0, ',', '.') }}</span>
+                                    <span>Rp {{ number_format($payout->net_amount, 0, ',', '.') }}</span>
+                                    <span>
+                                        @if ($payout->transfer_proof)
+                                            <a href="{{ asset('storage/' . $payout->transfer_proof) }}" target="_blank" rel="noopener" class="btn-reviews">Lihat</a>
+                                        @else
+                                            -
+                                        @endif
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </section>
 
             <div class="content-grid">
 
@@ -192,7 +270,8 @@
                             <span>Tanggal</span>
                             <span>Lokasi</span>
                             <span>Harga</span>
-                            <span>Kuota</span>
+                            <span>Tiket</span>
+                            <span>Dana</span>
                             <span>Ulasan</span>
                         </div>
 
@@ -202,7 +281,8 @@
                                 <span>{{ $event->start_date->translatedFormat('d M Y, H:i') }}</span>
                                 <span>{{ $event->location_name }}</span>
                                 <span>{{ $event->price > 0 ? 'Rp ' . number_format($event->price, 0, ',', '.') : 'Gratis' }}</span>
-                                <span>{{ $event->quota ?? 'Tanpa batas' }}</span>
+                                <span>{{ $event->tickets_sold }} / {{ $event->quota ?? 'Tanpa batas' }}</span>
+                                <span>Rp {{ number_format($event->escrow_amount, 0, ',', '.') }}</span>
                                 <span>
                                     <a href="{{ route('eo.events.reviews', $event) }}" class="btn-reviews">Lihat</a>
                                 </span>
@@ -288,27 +368,6 @@
             map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
         }
 
-        // ── Sidebar mobile toggle ───────────────────────────
-        const hamburgerBtn   = document.getElementById('hamburger-btn');
-        const sidebarClose   = document.getElementById('sidebar-close');
-        const mobileSidebar  = document.getElementById('mobile-sidebar');
-        const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-        function openSidebar() {
-            mobileSidebar.classList.add('open');
-            sidebarOverlay.classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeSidebar() {
-            mobileSidebar.classList.remove('open');
-            sidebarOverlay.classList.remove('open');
-            document.body.style.overflow = '';
-        }
-
-        hamburgerBtn.addEventListener('click', openSidebar);
-        sidebarClose.addEventListener('click', closeSidebar);
-        sidebarOverlay.addEventListener('click', closeSidebar);
     </script>
 
 </body>

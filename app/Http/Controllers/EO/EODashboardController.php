@@ -4,6 +4,7 @@ namespace App\Http\Controllers\EO;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\Order;
 use App\Models\Review;
 use App\Models\ReviewSummary;
 use App\Services\ReviewSummaryService;
@@ -31,6 +32,7 @@ class EODashboardController extends Controller
 
         $approvedEvents = $organizer->events()
             ->where('status', 'approved')
+            ->with('payout')
             ->orderBy('start_date', 'asc')
             ->get();
 
@@ -44,8 +46,56 @@ class EODashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        $eventIds = $organizer->events()->pluck('id');
+
+        $paidStatuses = ['paid', 'disbursed'];
+
+        $ticketSoldCount = Order::whereIn('event_id', $eventIds)
+            ->whereIn('payment_status', $paidStatuses)
+            ->sum('quantity');
+
+        $grossRevenue = Order::whereIn('event_id', $eventIds)
+            ->whereIn('payment_status', $paidStatuses)
+            ->sum('total_amount');
+
+        $escrowAmount = Order::whereIn('event_id', $eventIds)
+            ->where('payment_status', 'paid')
+            ->sum('total_amount');
+
+        $processingPayoutAmount = $organizer->payouts()
+            ->whereIn('status', ['pending', 'processing'])
+            ->sum('net_amount');
+
+        $completedPayoutAmount = $organizer->payouts()
+            ->where('status', 'completed')
+            ->sum('net_amount');
+
+        $readyForPayoutEvents = $organizer->events()
+            ->where('status', 'approved')
+            ->where('end_date', '<', now())
+            ->whereDoesntHave('payout')
+            ->orderBy('end_date', 'desc')
+            ->get()
+            ->filter(fn ($event) => $event->escrow_amount > 0);
+
+        $recentPayouts = $organizer->payouts()
+            ->with('event')
+            ->latest()
+            ->take(8)
+            ->get();
+
         return view('eo.dashboard', compact(
-            'organizer', 'approvedEvents', 'pendingEvents', 'rejectedEvents'
+            'organizer',
+            'approvedEvents',
+            'pendingEvents',
+            'rejectedEvents',
+            'ticketSoldCount',
+            'grossRevenue',
+            'escrowAmount',
+            'processingPayoutAmount',
+            'completedPayoutAmount',
+            'readyForPayoutEvents',
+            'recentPayouts'
         ));
     }
 

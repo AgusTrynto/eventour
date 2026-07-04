@@ -11,19 +11,7 @@
 
     <div class="bg-glow"></div>
 
-    <header class="navbar">
-        <div class="container-custom">
-            <a href="/dashboard" class="logo">Even<span>Tour</span></a>
-            <nav class="nav-links">
-                <a href="{{ route('eo.dashboard') }}" class="nav-link">Dashboard EO</a>
-                <a href="{{ route('eo.events.reviews', $event) }}" class="nav-link active">Ulasan Event</a>
-            </nav>
-            <div class="nav-right">
-                <span class="user-name">{{ $event->organizer->org_name }}</span>
-                <span class="role-badge">EO</span>
-            </div>
-        </div>
-    </header>
+    @include('eo.partials.navbar', ['active' => 'reviews', 'organizer' => $event->organizer])
 
     <main class="main-content">
         <div class="container-custom narrow">

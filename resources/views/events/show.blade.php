@@ -6,23 +6,14 @@
     <title>{{ $event->title }} - EvenTour</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    @vite(['resources/css/event/show.css', 'resources/js/app.js'])
+    @vite(['resources/css/event/show.css', 'resources/css/user/navbar.css', 'resources/js/app.js'])
 </head>
 
 <body class="event-detail-page">
 
     <div class="bg-glow"></div>
 
-    {{-- NAVBAR --}}
-    <header class="navbar">
-        <div class="container-custom">
-            <a href="/" class="logo">Even<span>Tour</span></a>
-            <a href="{{ url()->previous('/dashboard') }}" class="back-link">
-                <x-icon name="arrow-left" :size="16" />
-                Kembali
-            </a>
-        </div>
-    </header>
+    @include('user.partials.navbar', ['active' => 'events'])
 
     <main class="main-content">
         <div class="container-custom narrow">

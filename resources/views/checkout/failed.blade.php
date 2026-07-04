@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pembayaran Gagal - EvenTour</title>
-    @vite(['resources/css/checkout/checkout.css', 'resources/js/app.js'])
+    @vite(['resources/css/checkout/checkout.css', 'resources/css/user/navbar.css', 'resources/js/app.js'])
 </head>
 
 <body class="checkout-page">
     <div class="bg-glow"></div>
 
-    <header class="container-custom">
-        <a href="/" class="logo">Even<span>Tour</span></a>
-    </header>
+    @include('user.partials.navbar', ['active' => 'events'])
 
     <main class="main-content">
         <div class="checkout-card result-card">
