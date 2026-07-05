@@ -90,6 +90,42 @@ body.event-detail-page {
     margin-bottom: 14px;
 }
 
+.event-state-badge {
+    border-radius: 20px;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    margin-left: 8px;
+    padding: 5px 14px;
+    text-transform: uppercase;
+}
+
+.event-state-badge.active {
+    background: rgba(216,255,79,.1);
+    border: 1px solid rgba(216,255,79,.25);
+    color: var(--accent);
+}
+
+.event-state-badge.ended {
+    background: rgba(255,80,80,.1);
+    border: 1px solid rgba(255,80,80,.25);
+    color: #ff6b6b;
+}
+
+.detail-alert {
+    border-radius: 12px;
+    font-size: 14px;
+    padding: 14px 18px;
+}
+
+.detail-alert-error {
+    background: rgba(255,80,80,.08);
+    border: 1px solid rgba(255,80,80,.2);
+    color: #ff6b6b;
+}
+
 .event-header h1 {
     font-family: "Syne", sans-serif;
     font-size: 36px;

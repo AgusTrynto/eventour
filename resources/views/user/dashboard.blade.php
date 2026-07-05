@@ -40,13 +40,71 @@
                 </div>
             </div>
 
+            {{-- Search & filters --}}
+            <div class="event-search-panel" id="event-search">
+                <div class="search-main">
+                    <div class="search-input-wrap">
+                        <x-icon name="search" :size="18" />
+                        <input
+                            type="search"
+                            id="event-search-input"
+                            class="event-search-input"
+                            placeholder="Cari nama event atau lokasi"
+                            autocomplete="off"
+                            aria-label="Cari event"
+                            aria-controls="event-search-suggestions"
+                        >
+                        <button type="button" id="event-search-clear" class="search-clear-btn" aria-label="Bersihkan pencarian" title="Bersihkan pencarian" hidden>
+                            <x-icon name="x" :size="16" />
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="filter-row">
+                    <div class="price-range-field">
+                        <div class="price-range-header">
+                            <label for="event-price-range">Range harga</label>
+                            <span id="event-price-range-label">
+                                Rp 0 - {{ $eventPriceMax > 0 ? 'Rp ' . number_format($eventPriceMax, 0, ',', '.') : 'Gratis' }}
+                            </span>
+                        </div>
+                        <input
+                            type="range"
+                            id="event-price-range"
+                            class="price-range-input"
+                            min="0"
+                            max="{{ $eventPriceMax }}"
+                            step="{{ $eventPriceStep }}"
+                            value="{{ $eventPriceMax }}"
+                            aria-label="Maksimum harga tiket"
+                        >
+                    </div>
+
+                    <label class="free-filter-check">
+                        <input type="checkbox" id="event-free-filter">
+                        <span>Gratis</span>
+                    </label>
+
+                    <button type="button" id="event-filter-reset" class="filter-reset-btn">
+                        Reset
+                    </button>
+                </div>
+
+                <div class="search-result-count" id="event-search-count">
+                    {{ $eventSearchItems->count() }} event tersedia
+                </div>
+
+                <div id="event-search-suggestions" class="search-suggestions" role="listbox" hidden></div>
+            </div>
+
             {{-- Stats --}}
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon"><x-icon name="ticket" :size="28" /></div>
                     <div class="stat-info">
                         <span class="stat-label">Tiket Dimiliki</span>
-                        <span class="stat-value">0</span>
+                        <span class="stat-value">{{ $ticketCount }}</span>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -115,7 +173,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h2>Rekomendasi untuk Anda</h2>
-                        <a href="#" class="card-link">
+                        <a href="#event-search" class="card-link">
                             Lihat semua
                             <x-icon name="arrow-right" size="14" />
                         </a>
@@ -159,8 +217,205 @@
         // ── Ambil lokasi dari session (kalau sudah ada) ─────────
         const savedLat = {{ session('user_location.lat', 'null') }};
         const savedLng = {{ session('user_location.lng', 'null') }};
+        const eventSearchItems = @json($eventSearchItems);
+        const eventPriceMax = {{ $eventPriceMax }};
+
+        const eventSearchInput = document.getElementById('event-search-input');
+        const eventSearchClear = document.getElementById('event-search-clear');
+        const eventSuggestions = document.getElementById('event-search-suggestions');
+        const eventPriceRange = document.getElementById('event-price-range');
+        const eventFreeFilter = document.getElementById('event-free-filter');
+        const eventPriceRangeLabel = document.getElementById('event-price-range-label');
+        const eventFilterReset = document.getElementById('event-filter-reset');
+        const eventSearchCount = document.getElementById('event-search-count');
+        let activeSuggestionIndex = -1;
+
+        function formatCategoryName(category) {
+            return (category || 'event')
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        function formatRupiah(value) {
+            const numericValue = Number(value);
+
+            return numericValue > 0
+                ? `Rp ${numericValue.toLocaleString('id-ID')}`
+                : 'Gratis';
+        }
+
+        function hasActiveEventFilter() {
+            return eventFreeFilter.checked || Number(eventPriceRange.value) < eventPriceMax;
+        }
+
+        function syncPriceRangeLabel() {
+            eventPriceRange.disabled = eventFreeFilter.checked || eventPriceMax <= 0;
+            eventPriceRangeLabel.textContent = eventFreeFilter.checked
+                ? 'Gratis saja'
+                : `Rp 0 - ${formatRupiah(eventPriceRange.value)}`;
+        }
+
+        function getFilteredSearchEvents() {
+            const query = eventSearchInput.value.trim().toLowerCase();
+            const priceLimit = Number(eventPriceRange.value);
+            const onlyFree = eventFreeFilter.checked;
+
+            return eventSearchItems.filter(event => {
+                const eventPrice = Number(event.price);
+                const searchableText = [
+                    event.title,
+                    event.location_name,
+                    formatCategoryName(event.category),
+                ].join(' ').toLowerCase();
+
+                const matchesQuery = !query || searchableText.includes(query);
+                const matchesPrice = onlyFree
+                    ? eventPrice <= 0
+                    : eventPrice <= priceLimit;
+
+                return matchesQuery && matchesPrice;
+            });
+        }
+
+        function updateSearchCount(count) {
+            eventSearchCount.textContent = count === eventSearchItems.length
+                ? `${count} event tersedia`
+                : `${count} event cocok`;
+        }
+
+        function setActiveSuggestion(items, index) {
+            items.forEach(item => item.classList.remove('active'));
+            activeSuggestionIndex = index;
+
+            if (items[activeSuggestionIndex]) {
+                items[activeSuggestionIndex].classList.add('active');
+            }
+        }
+
+        function appendSuggestion(event, index) {
+            const link = document.createElement('a');
+            link.href = event.url;
+            link.className = 'search-suggestion';
+            link.setAttribute('role', 'option');
+            link.dataset.index = index;
+
+            const title = document.createElement('span');
+            title.className = 'suggestion-title';
+            title.textContent = event.title;
+
+            const status = document.createElement('span');
+            status.className = `suggestion-status ${event.is_ended ? 'ended' : 'active'}`;
+            status.textContent = event.display_status;
+
+            const meta = document.createElement('span');
+            meta.className = 'suggestion-meta';
+            meta.textContent = `${formatCategoryName(event.category)} - ${event.location_name || '-'} - ${event.display_date}`;
+
+            const price = document.createElement('span');
+            price.className = 'suggestion-price';
+            price.textContent = event.price_label;
+
+            link.append(title, status, meta, price);
+            eventSuggestions.appendChild(link);
+        }
+
+        function renderEventSuggestions(forceOpen = false) {
+            const filteredEvents = getFilteredSearchEvents();
+            const shouldOpen = forceOpen
+                && (eventSearchInput.value.trim() || hasActiveEventFilter());
+
+            updateSearchCount(filteredEvents.length);
+            eventSuggestions.replaceChildren();
+            activeSuggestionIndex = -1;
+
+            if (!shouldOpen) {
+                eventSuggestions.hidden = true;
+                return;
+            }
+
+            if (!filteredEvents.length) {
+                const empty = document.createElement('div');
+                empty.className = 'search-suggestion-empty';
+                empty.textContent = 'Event tidak ditemukan';
+                eventSuggestions.appendChild(empty);
+                eventSuggestions.hidden = false;
+                return;
+            }
+
+            filteredEvents.slice(0, 8).forEach(appendSuggestion);
+            eventSuggestions.hidden = false;
+        }
+
+        eventSearchInput.addEventListener('input', () => {
+            eventSearchClear.hidden = !eventSearchInput.value.trim();
+            renderEventSuggestions(true);
+        });
+
+        eventSearchInput.addEventListener('focus', () => {
+            renderEventSuggestions(Boolean(eventSearchInput.value.trim() || hasActiveEventFilter()));
+        });
+
+        eventSearchInput.addEventListener('keydown', (event) => {
+            const items = Array.from(eventSuggestions.querySelectorAll('.search-suggestion'));
+            if (eventSuggestions.hidden || !items.length) return;
+
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                setActiveSuggestion(items, (activeSuggestionIndex + 1) % items.length);
+            }
+
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                setActiveSuggestion(items, activeSuggestionIndex <= 0 ? items.length - 1 : activeSuggestionIndex - 1);
+            }
+
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const target = items[activeSuggestionIndex] || items[0];
+                window.location.href = target.href;
+            }
+
+            if (event.key === 'Escape') {
+                eventSuggestions.hidden = true;
+            }
+        });
+
+        eventPriceRange.addEventListener('input', () => {
+            syncPriceRangeLabel();
+            renderEventSuggestions(true);
+        });
+
+        eventFreeFilter.addEventListener('change', () => {
+            syncPriceRangeLabel();
+            renderEventSuggestions(true);
+        });
+
+        eventSearchClear.addEventListener('click', () => {
+            eventSearchInput.value = '';
+            eventSearchClear.hidden = true;
+            renderEventSuggestions(hasActiveEventFilter());
+            eventSearchInput.focus();
+        });
+
+        eventFilterReset.addEventListener('click', () => {
+            eventSearchInput.value = '';
+            eventPriceRange.value = eventPriceMax;
+            eventFreeFilter.checked = false;
+            eventSearchClear.hidden = true;
+            syncPriceRangeLabel();
+            renderEventSuggestions(false);
+            eventSearchInput.focus();
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('#event-search')) {
+                eventSuggestions.hidden = true;
+            }
+        });
 
         // ── Init map ────────────────────────────────────────────
+        syncPriceRangeLabel();
+
         const defaultLat = -6.2088; // Jakarta sebagai fallback
         const defaultLng = 106.8456;
 

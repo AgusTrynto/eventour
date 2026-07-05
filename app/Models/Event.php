@@ -50,6 +50,54 @@ class Event extends Model
             ->orderByDistanceSphere('location', $point);
     }
 
+    public function scopeNotEnded(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query
+                ->where(function (Builder $query) {
+                    $query->whereNotNull('end_date')
+                        ->where('end_date', '>=', now());
+                })
+                ->orWhere(function (Builder $query) {
+                    $query->whereNull('end_date')
+                        ->where('start_date', '>=', now());
+                });
+        });
+    }
+
+    public function hasEnded(): bool
+    {
+        $finishedAt = $this->end_date ?? $this->start_date;
+
+        return $finishedAt ? $finishedAt->lt(now()) : false;
+    }
+
+    public function getIsEndedAttribute(): bool
+    {
+        return $this->hasEnded();
+    }
+
+    public function getDisplayStatusAttribute(): string
+    {
+        if ($this->status !== 'approved') {
+            return match ($this->status) {
+                'pending' => 'Menunggu Persetujuan',
+                'rejected' => 'Ditolak',
+                default => ucfirst($this->status),
+            };
+        }
+
+        if ($this->hasEnded()) {
+            return 'Berakhir';
+        }
+
+        if ($this->start_date && $this->start_date->gt(now())) {
+            return 'Akan Datang';
+        }
+
+        return 'Berlangsung';
+    }
+
     // Helper untuk akses lat/lng seperti sebelumnya
     public function getLatAttribute()
     {

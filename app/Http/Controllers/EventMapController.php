@@ -16,7 +16,8 @@ class EventMapController extends Controller
         $location = session('user_location');
         $radius   = (int) $request->input('radius', 10000);
 
-        $query = Event::where('status', 'approved');
+        $query = Event::where('status', 'approved')
+            ->notEnded();
 
         if ($location) {
             // Urutkan dari yang terdekat, sertakan jarak (meter)

@@ -21,6 +21,9 @@
             {{-- HEADER EVENT --}}
             <div class="event-header">
                 <span class="category-badge">{{ $event->category ?? 'Event' }}</span>
+                <span class="event-state-badge {{ $event->is_ended ? 'ended' : 'active' }}">
+                    {{ $event->display_status }}
+                </span>
                 <h1>{{ $event->title }}</h1>
 
                 <div class="event-meta-row">
@@ -54,6 +57,10 @@
                     </div>
                 </div>
             </div>
+
+            @if (session('error'))
+                <div class="detail-alert detail-alert-error">{{ session('error') }}</div>
+            @endif
 
             <div class="content-layout">
 
@@ -105,7 +112,9 @@
                         </div>
 
                         @auth
-                            @if ($event->quota !== null && ($event->quota - $event->tickets_sold) <= 0)
+                            @if ($event->is_ended)
+                                <button class="btn-buy" disabled>Event Berakhir</button>
+                            @elseif ($event->quota !== null && ($event->quota - $event->tickets_sold) <= 0)
                                 <button class="btn-buy" disabled>Tiket Habis</button>
                             @else
                                 <a href="{{ route('checkout.show', $event) }}" class="btn-buy">

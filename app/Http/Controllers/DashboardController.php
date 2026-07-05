@@ -35,6 +35,38 @@ class DashboardController extends Controller
             ->whereNull('refunded_at')
             ->sum('quantity');
 
-        return view('user.dashboard', compact('user', 'recommendedEvents', 'ticketCount'));
+        $eventSearchItems = Event::where('status', 'approved')
+            ->orderBy('start_date', 'asc')
+            ->get(['id', 'title', 'category', 'start_date', 'location_name', 'price'])
+            ->map(function (Event $event) {
+                return [
+                    'id' => $event->id,
+                    'title' => $event->title,
+                    'category' => $event->category ?? 'lainnya',
+                    'location_name' => $event->location_name,
+                    'start_date' => $event->start_date?->toDateString(),
+                    'display_date' => $event->start_date?->translatedFormat('d M Y') ?? '-',
+                    'price' => (float) $event->price,
+                    'price_label' => $event->price > 0
+                        ? 'Rp ' . number_format($event->price, 0, ',', '.')
+                        : 'Gratis',
+                    'is_ended' => $event->is_ended,
+                    'display_status' => $event->display_status,
+                    'url' => route('events.show', $event),
+                ];
+            })
+            ->values();
+
+        $eventPriceMax = (int) ceil(((float) $eventSearchItems->max('price')) / 10000) * 10000;
+        $eventPriceStep = $eventPriceMax > 0 && $eventPriceMax < 10000 ? 1000 : 10000;
+
+        return view('user.dashboard', compact(
+            'user',
+            'recommendedEvents',
+            'ticketCount',
+            'eventSearchItems',
+            'eventPriceMax',
+            'eventPriceStep'
+        ));
     }
 }

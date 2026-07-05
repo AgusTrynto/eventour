@@ -31,6 +31,11 @@ class CheckoutController extends Controller
             abort(404);
         }
 
+        if ($event->hasEnded()) {
+            return redirect()->route('events.show', $event)
+                ->with('error', 'Event sudah berakhir. Tiket tidak tersedia lagi.');
+        }
+
         return view('checkout.show', compact('event'));
     }
 
@@ -41,6 +46,11 @@ class CheckoutController extends Controller
     {
         if ($event->status !== 'approved') {
             abort(404);
+        }
+
+        if ($event->hasEnded()) {
+            return redirect()->route('events.show', $event)
+                ->with('error', 'Event sudah berakhir. Tiket tidak tersedia lagi.');
         }
 
         $request->validate([
