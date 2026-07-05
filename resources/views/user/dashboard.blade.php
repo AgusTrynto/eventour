@@ -111,7 +111,7 @@
                     <div class="stat-icon"><x-icon name="calendar" :size="28" /></div>
                     <div class="stat-info">
                         <span class="stat-label">Event Diikuti</span>
-                        <span class="stat-value">0</span>
+                        <span class="stat-value">{{ $eventCount }}</span>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -179,28 +179,11 @@
                         </a>
                     </div>
 
-                    <div class="recommendation-list" id="recommendation-list">
-                        @forelse ($recommendedEvents as $event)
-                            <div class="rec-item">
-                                <div class="rec-icon"><x-icon name="ticket" :size="22" /></div>
-                                <div class="rec-info">
-                                    <span class="rec-title">{{ $event->title }}</span>
-                                    <span class="rec-meta">
-                                        {{ $event->location_name }} ·
-                                        {{ $event->start_date->translatedFormat('d M Y') }}
-                                    </span>
-                                    <span class="rec-price">
-                                        {{ $event->price > 0 ? 'Rp ' . number_format($event->price, 0, ',', '.') : 'Gratis' }}
-                                    </span>
-                                </div>
-                                <a href="{{ route('events.show', $event->id) }}" class="rec-btn">Lihat</a>
-                            </div>
-                        @empty
-                            <div class="empty-state">
-                                <span class="empty-state-icon"><x-icon name="ticket" :size="38" /></span>
-                                <p>Belum ada event tersedia saat ini.</p>
-                            </div>
-                        @endforelse
+                    <div
+                        class="recommendation-list"
+                        id="recommendation-list"
+                    >
+                        @include('user.partials.recommendations', ['recommendedEvents' => $recommendedEvents])
                     </div>
                 </div>
 
@@ -622,7 +605,8 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         },
                         body: JSON.stringify({ lat, lng }),
-                    }).finally(() => {
+                    })
+                    .finally(() => {
                         if (onDone) onDone();
                     });
                 },

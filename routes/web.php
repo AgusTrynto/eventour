@@ -85,6 +85,10 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('dashboard')
     ->middleware('auth');
 
+Route::get('/dashboard/recommendations', [DashboardController::class, 'recommendations'])
+    ->name('dashboard.recommendations')
+    ->middleware('auth');
+
 Route::post('/location/save', [LocationController::class, 'save'])
     ->name('location.save')
     ->middleware('auth');

@@ -27,4 +27,14 @@ class Order extends Model
     {
         return $this->belongsTo(Event::class);
     }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    public function recommendationFeatureSnapshots()
+    {
+        return $this->hasMany(RecommendationFeatureSnapshot::class);
+    }
 }

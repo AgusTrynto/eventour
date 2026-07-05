@@ -644,13 +644,17 @@ footer {
 
 .rec-item {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 14px;
     padding: 14px;
     border-radius: 14px;
     border: 1px solid var(--border);
     background: rgba(255,255,255,.02);
     transition: .2s;
+}
+
+.rec-item + .rec-item {
+    margin-top: 10px;
 }
 
 .rec-item:hover {
@@ -668,24 +672,36 @@ footer {
     background: rgba(255,255,255,.04);
     color: var(--accent);
     border-radius: 12px;
+    margin-top: 2px;
 }
 
 .rec-info {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 6px;
+    min-width: 0;
+}
+
+.rec-title-row {
+    align-items: flex-start;
+    display: flex;
+    gap: 8px;
+    min-width: 0;
 }
 
 .rec-title {
     font-size: 14px;
     font-weight: 600;
     color: white;
+    line-height: 1.35;
+    min-width: 0;
 }
 
 .rec-meta {
     font-size: 12px;
     color: #6b7280;
+    line-height: 1.4;
 }
 
 .rec-price {
@@ -694,7 +710,40 @@ footer {
     font-weight: 600;
 }
 
+.rec-score {
+    align-self: flex-end;
+    background: rgba(216,255,79,.1);
+    border: 1px solid rgba(216,255,79,.2);
+    border-radius: 999px;
+    color: var(--accent);
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    padding: 5px 7px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.rec-signals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.rec-signal {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 999px;
+    color: #c7cbd1;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 5px 7px;
+}
+
 .rec-btn {
+    align-self: flex-end;
     flex-shrink: 0;
     padding: 6px 14px;
     border-radius: 8px;
@@ -709,6 +758,15 @@ footer {
 
 .rec-btn:hover {
     background: rgba(216,255,79,.2);
+}
+
+.rec-actions {
+    align-items: flex-end;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    justify-content: space-between;
+    min-height: 66px;
 }
 
 /* Leaflet dark override */
@@ -821,6 +879,10 @@ footer {
     }
 
     .welcome-text h1 { font-size: 26px; }
+
+    .rec-item {
+        align-items: stretch;
+    }
 }
 
 

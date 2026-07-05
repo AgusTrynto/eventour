@@ -167,4 +167,9 @@ class Event extends Model
     {
         return $this->hasOne(ReviewSummary::class);
     }
+
+    public function recommendationFeatureSnapshots()
+    {
+        return $this->hasMany(RecommendationFeatureSnapshot::class);
+    }
 }

@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use MatanYadaev\EloquentSpatial\Objects\Point;
 
 class User extends Authenticatable
 {
@@ -21,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'last_location',
     ];
 
     /**
@@ -43,6 +45,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_location' => Point::class,
         ];
     }
 
@@ -54,6 +57,11 @@ class User extends Authenticatable
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function recommendationFeatureSnapshots()
+    {
+        return $this->hasMany(RecommendationFeatureSnapshot::class);
     }
 
     // Helper cek role

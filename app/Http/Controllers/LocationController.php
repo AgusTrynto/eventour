@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use MatanYadaev\EloquentSpatial\Objects\Point;
 
 class LocationController extends Controller
 {
@@ -20,10 +22,9 @@ class LocationController extends Controller
             ]
         ]);
 
-        // // Opsional: simpan permanen ke kolom users.last_location
-        // Auth::user()->update([
-        //     'last_location' => new Point($request->lat, $request->lng),
-        // ]);
+        Auth::user()->update([
+            'last_location' => new Point((float) $request->lat, (float) $request->lng),
+        ]);
 
         return response()->json(['status' => 'ok']);
     }

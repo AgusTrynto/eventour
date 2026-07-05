@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libonig-dev \
     libxml2-dev \
+    python3 \
+    python3-venv \
     nodejs \
     npm \
     && docker-php-ext-install \
@@ -53,6 +55,15 @@ WORKDIR /var/www/html
 # Copy Project
 # ==========================
 COPY . .
+
+# ==========================
+# Install Python Dependencies for NCBF .h5 Prediction
+# ==========================
+ENV NCBF_PYTHON=/opt/ncbf-venv/bin/python
+
+RUN python3 -m venv /opt/ncbf-venv \
+    && /opt/ncbf-venv/bin/pip install --upgrade pip \
+    && /opt/ncbf-venv/bin/pip install --no-cache-dir -r tools/requirements-ncbf.txt
 
 # ==========================
 # Install PHP Dependencies

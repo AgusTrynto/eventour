@@ -36,6 +36,11 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'checked_in_by');
     }
 
+    public function recommendationFeatureSnapshot()
+    {
+        return $this->hasOne(RecommendationFeatureSnapshot::class);
+    }
+
     // Generate kode unik, contoh: ET-7F3K9X2A1B
     public static function generateCode(): string
     {

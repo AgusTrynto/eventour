@@ -1,4 +1,7 @@
 *
 !private/
 !public/
+!recommendation/
+!recommendation/ncbf_model.h5
+!recommendation/ncbf_model_meta.json
 !.gitignore

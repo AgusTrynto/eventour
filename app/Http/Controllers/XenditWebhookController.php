@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Ticket;
+use App\Services\RecommendationFeatureSnapshotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Xendit\Invoice\InvoiceCallback;
-use App\Models\Ticket;
 
 class XenditWebhookController extends Controller
 {
@@ -80,18 +81,20 @@ class XenditWebhookController extends Controller
     // =========================================================
     private function generateTickets(Order $order): void
     {
-        if (Ticket::where('order_id', $order->id)->exists()) {
-            return;
+        if (!Ticket::where('order_id', $order->id)->exists()) {
+            for ($i = 0; $i < $order->quantity; $i++) {
+                Ticket::create([
+                    'order_id'    => $order->id,
+                    'event_id'    => $order->event_id,
+                    'user_id'     => $order->user_id,
+                    'ticket_code' => Ticket::generateCode(),
+                    'status'      => 'valid',
+                ]);
+            }
         }
 
-        for ($i = 0; $i < $order->quantity; $i++) {
-            Ticket::create([
-                'order_id'    => $order->id,
-                'event_id'    => $order->event_id,
-                'user_id'     => $order->user_id,
-                'ticket_code' => Ticket::generateCode(),
-                'status'      => 'valid',
-            ]);
-        }
+        $order->refresh();
+
+        app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order);
     }
 }
