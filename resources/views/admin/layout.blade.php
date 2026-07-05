@@ -78,6 +78,16 @@
                     {{ session('error') }}
                 </div>
             @endif
+            @if ($errors->any())
+                <div class="alert alert-error">
+                    <x-icon name="alert-triangle" :size="18" />
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             @yield('content')
         </main>

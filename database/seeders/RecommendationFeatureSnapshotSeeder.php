@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Order;
 use App\Models\RecommendationFeatureSnapshot;
-use App\Models\Ticket;
 use App\Services\RecommendationFeatureSnapshotService;
 use Illuminate\Database\Seeder;
 
@@ -15,18 +15,13 @@ class RecommendationFeatureSnapshotSeeder extends Seeder
         $beforeCount = RecommendationFeatureSnapshot::count();
         $processedCount = 0;
 
-        Ticket::query()
-            ->where('status', '!=', 'cancelled')
-            ->whereHas('order', function ($query) {
-                $query->whereIn('payment_status', ['paid', 'disbursed'])
-                    ->whereNull('refunded_at');
-            })
-            ->with(['event', 'order', 'user'])
-            ->chunkById(100, function ($tickets) use ($snapshotService, &$processedCount) {
-                foreach ($tickets as $ticket) {
-                    if ($snapshotService->recordPurchasedTicket($ticket)) {
-                        $processedCount++;
-                    }
+        Order::query()
+            ->whereIn('payment_status', RecommendationFeatureSnapshotService::interestPaymentStatuses())
+            ->with(['event', 'user'])
+            ->chunkById(100, function ($orders) use ($snapshotService, &$processedCount) {
+                foreach ($orders as $order) {
+                    $snapshotService->recordPurchasedOrder($order);
+                    $processedCount++;
                 }
             });
 

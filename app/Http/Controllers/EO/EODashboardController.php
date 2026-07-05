@@ -5,6 +5,7 @@ namespace App\Http\Controllers\EO;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
+use App\Models\Payout;
 use App\Models\Review;
 use App\Models\ReviewSummary;
 use App\Services\ReviewSummaryService;
@@ -72,9 +73,10 @@ class EODashboardController extends Controller
 
         $readyForPayoutEvents = $organizer->events()
             ->where('status', 'approved')
-            ->where('end_date', '<', now())
-            ->whereDoesntHave('payout')
-            ->orderBy('end_date', 'desc')
+            ->whereDoesntHave('payouts', function ($query) {
+                $query->whereIn('status', ['pending', 'processing', 'completed']);
+            })
+            ->orderBy('start_date', 'desc')
             ->get()
             ->filter(fn ($event) => $event->escrow_amount > 0);
 
@@ -162,6 +164,64 @@ class EODashboardController extends Controller
 
         return redirect()->route('eo.dashboard')
             ->with('success', 'Event berhasil diajukan! Menunggu persetujuan admin.');
+    }
+
+    public function requestPayout(Request $request, Event $event)
+    {
+        $organizer = Auth::user()->eventOrganizer;
+
+        if (!$organizer || $event->event_organizer_id !== $organizer->id) {
+            abort(403, 'Event ini bukan milikmu.');
+        }
+
+        if ($event->status !== 'approved') {
+            return back()->with('error', 'Pencairan hanya bisa diajukan untuk event yang sudah disetujui.');
+        }
+
+        if ($event->payouts()->whereIn('status', ['pending', 'processing', 'completed'])->exists()) {
+            return back()->with('error', 'Event ini sudah memiliki pengajuan pencairan.');
+        }
+
+        $request->validate([
+            'request_reason' => ['required', 'string', 'min:10', 'max:1000'],
+            'request_attachment' => ['nullable', 'image', 'max:4096'],
+        ], [
+            'request_reason.required' => 'Alasan pengajuan wajib diisi.',
+            'request_reason.min' => 'Alasan pengajuan minimal 10 karakter.',
+            'request_attachment.image' => 'Lampiran harus berupa gambar.',
+            'request_attachment.max' => 'Ukuran lampiran maksimal 4 MB.',
+        ]);
+
+        $gross = $event->escrow_amount;
+
+        if ($gross <= 0) {
+            return back()->with('error', 'Belum ada dana tertahan dari tiket paid untuk event ini.');
+        }
+
+        if (!$organizer->bank_account_number) {
+            return back()->with('error', 'Lengkapi rekening bank EO sebelum mengajukan pencairan.');
+        }
+
+        $attachmentPath = $request->hasFile('request_attachment')
+            ? $request->file('request_attachment')->store('payout-requests', 'public')
+            : null;
+
+        $feePercent = 5;
+        $fee = round($gross * ($feePercent / 100), 2);
+
+        Payout::create([
+            'event_id' => $event->id,
+            'event_organizer_id' => $organizer->id,
+            'gross_amount' => $gross,
+            'platform_fee' => $fee,
+            'net_amount' => $gross - $fee,
+            'status' => 'pending',
+            'request_reason' => $request->request_reason,
+            'request_attachment' => $attachmentPath,
+            'requested_at' => now(),
+        ]);
+
+        return back()->with('success', 'Pengajuan pencairan berhasil dikirim. Menunggu review admin.');
     }
 
     // =========================================================

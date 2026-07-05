@@ -10,6 +10,18 @@ use App\Models\User;
 
 class RecommendationFeatureSnapshotService
 {
+    private const INTEREST_PAYMENT_STATUSES = [
+        'pending',
+        'paid',
+        'disbursed',
+        'expired',
+        'refunded',
+        'cancelled',
+        'canceled',
+        'cancel',
+        'failed',
+    ];
+
     private const CATEGORIES = [
         'musik',
         'seni',
@@ -21,9 +33,14 @@ class RecommendationFeatureSnapshotService
 
     private const DISTANCE_CLAMP_METERS = 100000.0;
 
+    public static function interestPaymentStatuses(): array
+    {
+        return self::INTEREST_PAYMENT_STATUSES;
+    }
+
     public function recordPurchasedOrder(Order $order): void
     {
-        if (!$this->isPaidOrder($order)) {
+        if (!$this->isInterestOrder($order)) {
             return;
         }
 
@@ -33,21 +50,37 @@ class RecommendationFeatureSnapshotService
             return;
         }
 
-        Ticket::query()
+        $tickets = Ticket::query()
             ->where('order_id', $order->id)
-            ->where('status', '!=', 'cancelled')
             ->with(['event', 'order', 'user'])
-            ->get()
-            ->each(fn (Ticket $ticket) => $this->recordPurchasedTicket($ticket));
+            ->get();
+
+        if ($tickets->isEmpty()) {
+            $this->recordOrderSnapshot($order);
+
+            return;
+        }
+
+        RecommendationFeatureSnapshot::query()
+            ->where('order_id', $order->id)
+            ->whereNull('ticket_id')
+            ->delete();
+
+        $tickets->each(fn (Ticket $ticket) => $this->recordPurchasedTicket($ticket));
     }
 
     public function recordPurchasedTicket(Ticket $ticket): ?RecommendationFeatureSnapshot
     {
         $ticket->loadMissing(['event', 'order', 'user']);
 
-        if (!$ticket->event || !$ticket->order || !$ticket->user || !$this->isPaidOrder($ticket->order)) {
+        if (!$ticket->event || !$ticket->order || !$ticket->user || !$this->isInterestOrder($ticket->order)) {
             return null;
         }
+
+        RecommendationFeatureSnapshot::query()
+            ->where('order_id', $ticket->order_id)
+            ->whereNull('ticket_id')
+            ->delete();
 
         return RecommendationFeatureSnapshot::updateOrCreate(
             ['ticket_id' => $ticket->id],
@@ -57,19 +90,32 @@ class RecommendationFeatureSnapshotService
 
     public function syncPurchasedTicketsForUser(User $user): void
     {
-        Ticket::query()
+        Order::query()
             ->where('user_id', $user->id)
-            ->where('status', '!=', 'cancelled')
-            ->whereHas('order', function ($query) {
-                $query->whereIn('payment_status', ['paid', 'disbursed'])
-                    ->whereNull('refunded_at');
-            })
-            ->with(['event', 'order', 'user'])
+            ->whereIn('payment_status', self::INTEREST_PAYMENT_STATUSES)
+            ->with(['event', 'user'])
             ->get()
-            ->each(fn (Ticket $ticket) => $this->recordPurchasedTicket($ticket));
+            ->each(fn (Order $order) => $this->recordPurchasedOrder($order));
     }
 
-    private function snapshotPayload(User $user, Event $event, Order $order, Ticket $ticket): array
+    private function recordOrderSnapshot(Order $order): ?RecommendationFeatureSnapshot
+    {
+        $order->loadMissing(['event', 'user']);
+
+        if (!$order->event || !$order->user || !$this->isInterestOrder($order)) {
+            return null;
+        }
+
+        return RecommendationFeatureSnapshot::updateOrCreate(
+            [
+                'order_id' => $order->id,
+                'ticket_id' => null,
+            ],
+            $this->snapshotPayload($order->user, $order->event, $order, null)
+        );
+    }
+
+    private function snapshotPayload(User $user, Event $event, Order $order, ?Ticket $ticket): array
     {
         $category = $this->normalizeCategory($event->category);
         $price = (float) ($event->price ?? $order->unit_price ?? 0);
@@ -83,7 +129,7 @@ class RecommendationFeatureSnapshotService
             'user_id' => $user->id,
             'event_id' => $event->id,
             'order_id' => $order->id,
-            'ticket_id' => $ticket->id,
+            'ticket_id' => $ticket?->id,
             'interaction_type' => 'purchased',
             'label' => 1,
             'event_category' => $category,
@@ -94,7 +140,7 @@ class RecommendationFeatureSnapshotService
             'event_day_of_week' => $dayOfWeek,
             'is_weekend' => $isWeekend,
             'order_quantity' => max(1, (int) $order->quantity),
-            'paid_at' => $order->paid_at,
+            'paid_at' => $order->paid_at ?? $order->created_at,
             'feature_vector' => $this->featureVector($category, $price, $distanceMeters, $hour, $dayOfWeek, $isWeekend),
         ];
     }
@@ -151,10 +197,9 @@ class RecommendationFeatureSnapshotService
         return 6371000 * $angle;
     }
 
-    private function isPaidOrder(Order $order): bool
+    private function isInterestOrder(Order $order): bool
     {
-        return in_array($order->payment_status, ['paid', 'disbursed'], true)
-            && $order->refunded_at === null;
+        return in_array($order->payment_status, self::INTEREST_PAYMENT_STATUSES, true);
     }
 
     private function normalizeCategory(?string $category): string

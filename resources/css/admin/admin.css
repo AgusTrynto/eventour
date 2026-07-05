@@ -213,6 +213,13 @@ body.admin-page {
     color: #ff6b6b;
 }
 
+.alert-error ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 /* ── STATS ───────────────────────────────────── */
 .stats-grid {
     display: grid;
@@ -521,6 +528,10 @@ body.admin-page {
     flex: 1;
 }
 
+.eo-actions .payout-form {
+    flex: 1;
+}
+
 .btn-approve-full {
     align-items: center;
     display: inline-flex;
@@ -703,6 +714,10 @@ body.admin-page {
 }
 
 .payout-form .btn-approve-full {
+    width: 100%;
+}
+
+.payout-form .btn-reject-full {
     width: 100%;
 }
 

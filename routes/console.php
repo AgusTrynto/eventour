@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Event;
+use App\Models\Order;
 use App\Models\RecommendationFeatureSnapshot;
 use App\Services\NcbfFeatureVectorService;
 use App\Services\RecommendationFeatureSnapshotService;
@@ -17,12 +18,20 @@ Artisan::command('recommendations:export-ncbf-training {--output=} {--negatives=
     $featureVectors = app(NcbfFeatureVectorService::class);
     $snapshotService = app(RecommendationFeatureSnapshotService::class);
 
+    Order::query()
+        ->whereIn('payment_status', RecommendationFeatureSnapshotService::interestPaymentStatuses())
+        ->with(['event', 'user'])
+        ->chunkById(100, function ($orders) use ($snapshotService) {
+            foreach ($orders as $order) {
+                $snapshotService->recordPurchasedOrder($order);
+            }
+        });
+
     $snapshots = RecommendationFeatureSnapshot::query()
         ->where('interaction_type', 'purchased')
         ->where('label', 1)
         ->whereHas('order', function ($query) {
-            $query->whereIn('payment_status', ['paid', 'disbursed'])
-                ->whereNull('refunded_at');
+            $query->whereIn('payment_status', RecommendationFeatureSnapshotService::interestPaymentStatuses());
         })
         ->with(['event', 'order', 'user'])
         ->get()

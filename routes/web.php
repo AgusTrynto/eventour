@@ -152,6 +152,9 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
     Route::post('/events', [EODashboardController::class, 'storeEvent'])
         ->name('eo.events.store');
 
+    Route::post('/events/{event}/payout-request', [EODashboardController::class, 'requestPayout'])
+        ->name('eo.events.payout.request');
+
     Route::get('/events/{event}/reviews', [EODashboardController::class, 'eventReviews'])
         ->name('eo.events.reviews');
 
@@ -202,6 +205,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     Route::post('/payouts/{event}/create', [AdminPayoutController::class, 'create'])
         ->name('admin.payouts.create');
+
+    Route::post('/payouts/{payout}/approve', [AdminPayoutController::class, 'approve'])
+        ->name('admin.payouts.approve');
+
+    Route::post('/payouts/{payout}/reject', [AdminPayoutController::class, 'reject'])
+        ->name('admin.payouts.reject');
 
     Route::post('/payouts/{payout}/complete', [AdminPayoutController::class, 'complete'])
         ->name('admin.payouts.complete');

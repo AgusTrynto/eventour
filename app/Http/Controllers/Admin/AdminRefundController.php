@@ -20,8 +20,8 @@ class AdminRefundController extends Controller
             'reason' => ['required', 'string', 'max:500'],
         ]);
 
-        if ($event->payout) {
-            return back()->with('error', 'Dana event ini sudah dicairkan ke EO, tidak bisa direfund otomatis. Hubungi tim finance.');
+        if ($event->payouts()->whereIn('status', ['pending', 'processing', 'completed'])->exists()) {
+            return back()->with('error', 'Event ini masih memiliki payout aktif. Tolak atau selesaikan payout dulu sebelum refund.');
         }
 
         $orders = Order::where('event_id', $event->id)

@@ -123,8 +123,7 @@ class NeuralContentRecommendationService
             ->where('interaction_type', 'purchased')
             ->where('label', 1)
             ->whereHas('order', function ($query) {
-                $query->whereIn('payment_status', ['paid', 'disbursed'])
-                    ->whereNull('refunded_at');
+                $query->whereIn('payment_status', RecommendationFeatureSnapshotService::interestPaymentStatuses());
             })
             ->with(['event', 'order'])
             ->get()

@@ -65,6 +65,7 @@ class XenditWebhookController extends Controller
             case 'EXPIRED':
                 if ($order->payment_status === 'pending') {
                     $order->update(['payment_status' => 'expired']);
+                    app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order);
                 }
                 break;
 

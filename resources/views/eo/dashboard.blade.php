@@ -25,6 +25,22 @@
                     {{ session('success') }}
                 </div>
             @endif
+            @if (session('error'))
+                <div class="alert alert-error">
+                    <x-icon name="alert-triangle" :size="18" />
+                    {{ session('error') }}
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="alert alert-error">
+                    <x-icon name="alert-triangle" :size="18" />
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             {{-- Welcome --}}
             <div class="welcome-section">
@@ -92,7 +108,7 @@
                         <span class="badge">PAYOUT</span>
                         <h2>Pencairan Dana</h2>
                     </div>
-                    <span class="section-subtitle">Dana dicairkan admin setelah event selesai.</span>
+                    <span class="section-subtitle">Dana tiket paid tertahan sampai pengajuan disetujui admin.</span>
                 </div>
 
                 <div class="finance-grid">
@@ -129,13 +145,13 @@
 
                 <div class="card full-width">
                     <div class="card-header">
-                        <h2>Event Siap Dicairkan ({{ $readyForPayoutEvents->count() }})</h2>
+                        <h2>Dana Tertahan Bisa Diajukan ({{ $readyForPayoutEvents->count() }})</h2>
                     </div>
 
                     @if ($readyForPayoutEvents->isEmpty())
                         <div class="empty-state compact">
                             <span class="empty-state-icon"><x-icon name="check-circle" :size="38" /></span>
-                            <p>Belum ada event selesai yang menunggu pencairan.</p>
+                            <p>Belum ada dana tertahan dari tiket paid yang bisa diajukan.</p>
                         </div>
                     @else
                         <div class="event-list">
@@ -145,13 +161,37 @@
                                     <div class="event-info">
                                         <span class="event-title">{{ $event->title }}</span>
                                         <span class="event-meta">
-                                            Selesai {{ $event->end_date?->translatedFormat('d M Y') ?? '-' }} ·
+                                            Event {{ $event->start_date?->translatedFormat('d M Y') ?? '-' }} -
                                             {{ $event->tickets_sold }} tiket
                                         </span>
+                                        <form
+                                            action="{{ route('eo.events.payout.request', $event) }}"
+                                            method="POST"
+                                            enctype="multipart/form-data"
+                                            class="payout-request-form"
+                                        >
+                                            @csrf
+                                            <textarea
+                                                name="request_reason"
+                                                rows="3"
+                                                maxlength="1000"
+                                                placeholder="Alasan pengajuan, contoh: DP vendor, sewa venue, atau kebutuhan operasional..."
+                                                required
+                                            ></textarea>
+                                            <div class="payout-request-actions">
+                                                <label class="payout-file-field">
+                                                    <span>Foto pendukung opsional</span>
+                                                    <input type="file" name="request_attachment" accept="image/*">
+                                                </label>
+                                                <button type="submit" class="btn-reviews">
+                                                    Ajukan Penarikan
+                                                </button>
+                                            </div>
+                                        </form>
                                     </div>
                                     <div class="payout-amount">
                                         <strong>Rp {{ number_format($event->escrow_amount, 0, ',', '.') }}</strong>
-                                        <span class="status-badge status-pending">Menunggu admin</span>
+                                        <span class="status-badge status-pending">Dana tertahan</span>
                                     </div>
                                 </div>
                             @endforeach
@@ -184,7 +224,7 @@
                                 @php
                                     $statusClass = match ($payout->status) {
                                         'completed' => 'status-approved',
-                                        'failed' => 'status-rejected',
+                                        'failed', 'rejected' => 'status-rejected',
                                         default => 'status-pending',
                                     };
                                 @endphp

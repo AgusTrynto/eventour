@@ -7,7 +7,7 @@
 
 <div class="tabs">
     <button class="tab active" data-tab="ready">
-        Siap Cair <span class="tab-count">{{ $readyForPayout->count() }}</span>
+        Pengajuan EO <span class="tab-count">{{ $pendingPayouts->count() }}</span>
     </button>
     <button class="tab" data-tab="processing">
         Diproses <span class="tab-count">{{ $processingPayouts->count() }}</span>
@@ -15,48 +15,75 @@
     <button class="tab" data-tab="completed">
         Selesai <span class="tab-count approved">{{ $completedPayouts->count() }}</span>
     </button>
+    <button class="tab" data-tab="rejected">
+        Ditolak <span class="tab-count">{{ $rejectedPayouts->count() }}</span>
+    </button>
 </div>
 
 <div class="tab-content active" id="tab-ready">
-    @forelse ($readyForPayout as $event)
+    @forelse ($pendingPayouts as $payout)
         <div class="card event-card">
             <div class="event-card-header">
                 <div class="event-card-info">
-                    <h3>{{ $event->title }}</h3>
-                    <span class="event-card-by">oleh {{ $event->organizer->org_name }}</span>
+                    <h3>{{ $payout->event->title ?? 'Event tidak ditemukan' }}</h3>
+                    <span class="event-card-by">oleh {{ $payout->organizer->org_name ?? '-' }}</span>
                 </div>
-                <span class="status-badge status-pending">Siap dicairkan</span>
+                <span class="status-badge status-pending">Menunggu review</span>
             </div>
 
             <div class="eo-details">
                 <div class="detail-row">
-                    <span class="detail-label">Tanggal selesai</span>
-                    <span>{{ $event->end_date?->translatedFormat('d M Y, H:i') ?? '-' }}</span>
+                    <span class="detail-label">Diajukan</span>
+                    <span>{{ $payout->requested_at?->translatedFormat('d M Y, H:i') ?? '-' }}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Dana escrow</span>
-                    <span>Rp {{ number_format($event->escrow_amount, 0, ',', '.') }}</span>
+                    <span class="detail-label">Dana tertahan</span>
+                    <span>Rp {{ number_format($payout->gross_amount, 0, ',', '.') }}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Tiket terjual</span>
-                    <span>{{ $event->tickets_sold }}</span>
+                    <span class="detail-label">Net transfer</span>
+                    <span>Rp {{ number_format($payout->net_amount, 0, ',', '.') }}</span>
                 </div>
+                @if ($payout->request_reason)
+                    <div class="detail-row full">
+                        <span class="detail-label">Alasan EO</span>
+                        <p class="detail-desc">{{ $payout->request_reason }}</p>
+                    </div>
+                @endif
+                @if ($payout->request_attachment)
+                    <div class="detail-row">
+                        <span class="detail-label">Foto pendukung</span>
+                        <a class="card-link" href="{{ asset('storage/' . $payout->request_attachment) }}" target="_blank" rel="noopener">
+                            Lihat foto
+                        </a>
+                    </div>
+                @endif
                 <div class="detail-row">
                     <span class="detail-label">Rekening EO</span>
                     <span>
-                        {{ $event->organizer->bank_name ?? '-' }}
-                        {{ $event->organizer->bank_account_number ? ' - ' . $event->organizer->bank_account_number : '' }}
-                        {{ $event->organizer->bank_account_name ? ' a.n. ' . $event->organizer->bank_account_name : '' }}
+                        {{ $payout->organizer->bank_name ?? '-' }}
+                        {{ $payout->organizer->bank_account_number ? ' - ' . $payout->organizer->bank_account_number : '' }}
+                        {{ $payout->organizer->bank_account_name ? ' a.n. ' . $payout->organizer->bank_account_name : '' }}
                     </span>
                 </div>
             </div>
 
             <div class="eo-actions">
-                <form action="{{ route('admin.payouts.create', $event) }}" method="POST" class="payout-action">
+                <form action="{{ route('admin.payouts.approve', $payout) }}" method="POST" class="payout-action">
                     @csrf
                     <button type="submit" class="btn-approve-full">
                         <x-icon name="check-circle" :size="17" />
-                        Buat Payout
+                        Setujui
+                    </button>
+                </form>
+                <form action="{{ route('admin.payouts.reject', $payout) }}" method="POST" class="payout-form">
+                    @csrf
+                    <label>
+                        Alasan penolakan
+                        <textarea name="admin_note" rows="3" maxlength="500" placeholder="Wajib diisi jika ditolak" required></textarea>
+                    </label>
+                    <button type="submit" class="btn-reject-full">
+                        Tolak
                     </button>
                 </form>
             </div>
@@ -64,7 +91,7 @@
     @empty
         <div class="empty-card">
             <span class="empty-card-icon"><x-icon name="check-circle" :size="38" /></span>
-            <p>Belum ada event yang siap dicairkan.</p>
+            <p>Belum ada pengajuan pencairan dari EO.</p>
         </div>
     @endforelse
 </div>
@@ -101,6 +128,20 @@
                         {{ $payout->organizer->bank_account_name ? ' a.n. ' . $payout->organizer->bank_account_name : '' }}
                     </span>
                 </div>
+                @if ($payout->request_reason)
+                    <div class="detail-row full">
+                        <span class="detail-label">Alasan EO</span>
+                        <p class="detail-desc">{{ $payout->request_reason }}</p>
+                    </div>
+                @endif
+                @if ($payout->request_attachment)
+                    <div class="detail-row">
+                        <span class="detail-label">Foto pendukung</span>
+                        <a class="card-link" href="{{ asset('storage/' . $payout->request_attachment) }}" target="_blank" rel="noopener">
+                            Lihat foto
+                        </a>
+                    </div>
+                @endif
             </div>
 
             <form action="{{ route('admin.payouts.complete', $payout) }}" method="POST" enctype="multipart/form-data" class="payout-form">
@@ -169,6 +210,48 @@
         <div class="empty-card">
             <span class="empty-card-icon"><x-icon name="inbox" :size="38" /></span>
             <p>Belum ada payout yang selesai.</p>
+        </div>
+    @endforelse
+</div>
+
+<div class="tab-content" id="tab-rejected">
+    @forelse ($rejectedPayouts as $payout)
+        <div class="card event-card">
+            <div class="event-card-header">
+                <div class="event-card-info">
+                    <h3>{{ $payout->event->title ?? 'Event tidak ditemukan' }}</h3>
+                    <span class="event-card-by">oleh {{ $payout->organizer->org_name ?? '-' }}</span>
+                </div>
+                <span class="status-badge status-rejected">Ditolak</span>
+            </div>
+
+            <div class="eo-details">
+                <div class="detail-row">
+                    <span class="detail-label">Dana diajukan</span>
+                    <span>Rp {{ number_format($payout->gross_amount, 0, ',', '.') }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Direview</span>
+                    <span>{{ $payout->reviewed_at?->translatedFormat('d M Y, H:i') ?? '-' }}</span>
+                </div>
+                @if ($payout->request_reason)
+                    <div class="detail-row full">
+                        <span class="detail-label">Alasan EO</span>
+                        <p class="detail-desc">{{ $payout->request_reason }}</p>
+                    </div>
+                @endif
+                @if ($payout->admin_note)
+                    <div class="detail-row full">
+                        <span class="detail-label">Alasan admin</span>
+                        <p class="detail-desc">{{ $payout->admin_note }}</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @empty
+        <div class="empty-card">
+            <span class="empty-card-icon"><x-icon name="inbox" :size="38" /></span>
+            <p>Belum ada pengajuan yang ditolak.</p>
         </div>
     @endforelse
 </div>

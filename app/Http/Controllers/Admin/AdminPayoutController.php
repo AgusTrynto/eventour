@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
-use App\Models\Payout;
 use App\Models\Order;
+use App\Models\Payout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,27 +17,27 @@ class AdminPayoutController extends Controller
     // =========================================================
     public function index()
     {
-        // Event yang sudah lewat tanggalnya, approved, dan punya order paid,
-        // tapi belum punya payout
-        $readyForPayout = Event::where('status', 'approved')
-            ->where('end_date', '<', now())
-            ->whereDoesntHave('payout')
-            ->with('organizer.user')
-            ->get()
-            ->filter(fn ($event) => $event->escrow_amount > 0);
+        $pendingPayouts = Payout::where('status', 'pending')
+            ->with(['event', 'organizer.user'])
+            ->latest('requested_at')
+            ->get();
 
-        $processingPayouts = Payout::where('status', 'pending')
-            ->orWhere('status', 'processing')
-            ->with('event', 'organizer.user')
+        $processingPayouts = Payout::where('status', 'processing')
+            ->with(['event', 'organizer.user'])
             ->latest()
             ->get();
 
         $completedPayouts = Payout::where('status', 'completed')
-            ->with('event', 'organizer.user')
+            ->with(['event', 'organizer.user'])
             ->latest()
             ->get();
 
-        return view('admin.payouts', compact('readyForPayout', 'processingPayouts', 'completedPayouts'));
+        $rejectedPayouts = Payout::where('status', 'rejected')
+            ->with(['event', 'organizer.user'])
+            ->latest('reviewed_at')
+            ->get();
+
+        return view('admin.payouts', compact('pendingPayouts', 'processingPayouts', 'completedPayouts', 'rejectedPayouts'));
     }
 
     // =========================================================
@@ -46,7 +46,7 @@ class AdminPayoutController extends Controller
     // =========================================================
     public function create(Event $event)
     {
-        if ($event->payout) {
+        if ($event->payouts()->whereIn('status', ['pending', 'processing', 'completed'])->exists()) {
             return back()->with('error', 'Event ini sudah memiliki payout.');
         }
 
@@ -79,11 +79,52 @@ class AdminPayoutController extends Controller
             ->with('success', "Payout untuk \"{$event->title}\" berhasil dibuat. Silakan proses transfer.");
     }
 
+    public function approve(Payout $payout)
+    {
+        if ($payout->status !== 'pending') {
+            return back()->with('error', 'Pengajuan ini sudah direview.');
+        }
+
+        $payout->update([
+            'status' => 'processing',
+            'reviewed_at' => now(),
+            'admin_note' => null,
+        ]);
+
+        return back()->with('success', 'Pengajuan pencairan disetujui. Silakan proses transfer.');
+    }
+
+    public function reject(Request $request, Payout $payout)
+    {
+        if ($payout->status !== 'pending') {
+            return back()->with('error', 'Pengajuan ini sudah direview.');
+        }
+
+        $request->validate([
+            'admin_note' => ['required', 'string', 'min:5', 'max:500'],
+        ], [
+            'admin_note.required' => 'Alasan penolakan wajib diisi.',
+            'admin_note.min' => 'Alasan penolakan minimal 5 karakter.',
+        ]);
+
+        $payout->update([
+            'status' => 'rejected',
+            'reviewed_at' => now(),
+            'admin_note' => $request->admin_note,
+        ]);
+
+        return back()->with('success', 'Pengajuan pencairan ditolak.');
+    }
+
     // =========================================================
     // Admin tandai sudah transfer manual (upload bukti)
     // =========================================================
     public function complete(Request $request, Payout $payout)
     {
+        if ($payout->status !== 'processing') {
+            return back()->with('error', 'Pengajuan harus disetujui sebelum ditandai selesai transfer.');
+        }
+
         $request->validate([
             'transfer_proof' => ['required', 'image', 'max:4096'],
             'admin_note'     => ['nullable', 'string', 'max:500'],

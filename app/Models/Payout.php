@@ -8,10 +8,13 @@ class Payout extends Model
 {
     protected $fillable = [
         'event_id', 'event_organizer_id', 'gross_amount', 'platform_fee',
-        'net_amount', 'status', 'transfer_proof', 'admin_note', 'processed_at',
+        'net_amount', 'status', 'request_reason', 'request_attachment',
+        'requested_at', 'reviewed_at', 'transfer_proof', 'admin_note', 'processed_at',
     ];
 
     protected $casts = [
+        'requested_at' => 'datetime',
+        'reviewed_at' => 'datetime',
         'processed_at' => 'datetime',
     ];
 

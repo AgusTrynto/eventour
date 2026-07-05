@@ -141,6 +141,11 @@ class Event extends Model
         return $this->hasOne(Payout::class);
     }
 
+    public function payouts()
+    {
+        return $this->hasMany(Payout::class);
+    }
+
     // Total dana yang sudah dibayar user & DITAHAN platform (belum dicairkan)
     public function getEscrowAmountAttribute(): float
     {

@@ -82,6 +82,8 @@ class CheckoutController extends Controller
             'external_id'    => $externalId,
         ]);
 
+        app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order);
+
         // ── Free event: tidak perlu bayar, langsung tandai paid ──
         if ($total <= 0) {
             $order->update([
