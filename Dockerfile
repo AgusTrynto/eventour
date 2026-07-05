@@ -82,7 +82,12 @@ RUN npm run build
 RUN mkdir -p storage/framework/cache \
     storage/framework/sessions \
     storage/framework/views \
-    storage/logs
+    storage/logs \
+    storage/app/public/payout-proofs \
+    storage/app/public/payout-requests
+
+RUN rm -rf public/storage \
+    && php artisan storage:link
 
 # ==========================
 # Permission
