@@ -1022,13 +1022,20 @@ footer {
 }
 
 .search-suggestion {
+    appearance: none;
+    background: transparent;
+    border: 0;
     border-radius: 10px;
     color: white;
+    cursor: pointer;
     display: grid;
+    font: inherit;
     gap: 4px;
     padding: 11px 12px;
+    text-align: left;
     text-decoration: none;
     transition: .2s;
+    width: 100%;
 }
 
 .search-suggestion:hover,
@@ -1068,6 +1075,20 @@ footer {
 
 .suggestion-price {
     color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.suggestion-footer {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    justify-content: space-between;
+}
+
+.suggestion-distance {
+    color: #d1d5db;
     font-size: 12px;
     font-weight: 700;
 }

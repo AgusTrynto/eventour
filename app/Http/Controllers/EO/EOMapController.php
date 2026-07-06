@@ -16,7 +16,7 @@ class EOMapController extends Controller
     // =========================================================
     public function nearby(Request $request)
     {
-        $location = session('user_location');
+        $location = $this->locationFromRequest($request) ?? session('user_location');
         $radius   = (int) $request->input('radius', 10000);
 
         $query = EventOrganizer::where('status', 'approved')
@@ -53,5 +53,24 @@ class EOMapController extends Controller
             'count_in_radius' => $eos->where('in_radius', true)->count(),
             'count_total'     => $eos->count(),
         ]);
+    }
+
+    private function locationFromRequest(Request $request): ?array
+    {
+        $lat = $request->query('lat');
+        $lng = $request->query('lng');
+
+        if (!is_numeric($lat) || !is_numeric($lng)) {
+            return null;
+        }
+
+        $lat = (float) $lat;
+        $lng = (float) $lng;
+
+        if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            return null;
+        }
+
+        return compact('lat', 'lng');
     }
 }

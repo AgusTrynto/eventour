@@ -58,7 +58,6 @@
                             <x-icon name="x" :size="16" />
                         </button>
                     </div>
-
                 </div>
 
                 <div class="filter-row">
@@ -197,9 +196,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // ── Ambil lokasi dari session (kalau sudah ada) ─────────
-        const savedLat = {{ session('user_location.lat', 'null') }};
-        const savedLng = {{ session('user_location.lng', 'null') }};
+        const savedLat = @json(session('user_location.lat'));
+        const savedLng = @json(session('user_location.lng'));
         const eventSearchItems = @json($eventSearchItems);
         const eventPriceMax = {{ $eventPriceMax }};
 
@@ -211,7 +209,112 @@
         const eventPriceRangeLabel = document.getElementById('event-price-range-label');
         const eventFilterReset = document.getElementById('event-filter-reset');
         const eventSearchCount = document.getElementById('event-search-count');
+        const mapInfoText = document.getElementById('map-info-text');
+        const radiusSelect = document.getElementById('radius-select');
+        const mapCard = document.getElementById('event-map');
+        const popupOptions = { autoClose: false, closeOnClick: false, maxWidth: 260 };
+
         let activeSuggestionIndex = -1;
+        let userLat = toFiniteNumber(savedLat);
+        let userLng = toFiniteNumber(savedLng);
+        let userMarker = null;
+        let radiusCircle = null;
+        let dataMarkers = [];
+        let currentMode = 'events';
+        let focusedSearchMarker = null;
+        let mapRequestSequence = 0;
+
+        const eventMarkerById = new Map();
+        const eventDistancesById = new Map();
+
+        function toFiniteNumber(value) {
+            const number = Number(value);
+
+            return Number.isFinite(number) ? number : null;
+        }
+
+        function hasValidCoordinates(lat, lng) {
+            return Number.isFinite(lat)
+                && Number.isFinite(lng)
+                && lat >= -90
+                && lat <= 90
+                && lng >= -180
+                && lng <= 180;
+        }
+
+        function hasUserLocation() {
+            return hasValidCoordinates(userLat, userLng);
+        }
+
+        function getEventLatLng(event) {
+            const lat = toFiniteNumber(event?.lat);
+            const lng = toFiniteNumber(event?.lng);
+
+            return hasValidCoordinates(lat, lng) ? [lat, lng] : null;
+        }
+
+        function distanceBetweenMeters(fromLat, fromLng, toLat, toLng) {
+            const earthRadius = 6371000;
+            const toRadians = degrees => degrees * Math.PI / 180;
+            const deltaLat = toRadians(toLat - fromLat);
+            const deltaLng = toRadians(toLng - fromLng);
+            const startLat = toRadians(fromLat);
+            const endLat = toRadians(toLat);
+            const a = Math.sin(deltaLat / 2) ** 2
+                + Math.cos(startLat) * Math.cos(endLat) * Math.sin(deltaLng / 2) ** 2;
+
+            return 2 * earthRadius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function normalizeDistance(value) {
+            const distance = Number(value);
+
+            return Number.isFinite(distance) ? distance : null;
+        }
+
+        function getEventDistanceMeters(event) {
+            if (!event) return null;
+
+            const directDistance = normalizeDistance(event.distance);
+            if (directDistance !== null) return directDistance;
+
+            const cachedDistance = eventDistancesById.get(Number(event.id));
+            if (cachedDistance !== undefined) return cachedDistance;
+
+            const coords = getEventLatLng(event);
+            if (!coords || !hasUserLocation()) return null;
+
+            const calculatedDistance = distanceBetweenMeters(userLat, userLng, coords[0], coords[1]);
+            eventDistancesById.set(Number(event.id), calculatedDistance);
+
+            return calculatedDistance;
+        }
+
+        function formatDistanceMeters(distance) {
+            if (distance === null) return null;
+
+            if (distance < 1000) {
+                return `${Math.round(distance)} m`;
+            }
+
+            return `${(distance / 1000).toFixed(distance < 10000 ? 1 : 0)} km`;
+        }
+
+        function formatEventDistance(event) {
+            const distance = formatDistanceMeters(getEventDistanceMeters(event));
+
+            return distance ? `${distance} dari kamu` : 'Jarak belum tersedia';
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            }[char]));
+        }
 
         function formatCategoryName(category) {
             return (category || 'event')
@@ -227,6 +330,10 @@
                 : 'Gratis';
         }
 
+        function getRadius() {
+            return parseInt(radiusSelect.value, 10);
+        }
+
         function hasActiveEventFilter() {
             return eventFreeFilter.checked || Number(eventPriceRange.value) < eventPriceMax;
         }
@@ -236,6 +343,10 @@
             eventPriceRangeLabel.textContent = eventFreeFilter.checked
                 ? 'Gratis saja'
                 : `Rp 0 - ${formatRupiah(eventPriceRange.value)}`;
+        }
+
+        function findSearchEvent(eventId) {
+            return eventSearchItems.find(event => Number(event.id) === Number(eventId));
         }
 
         function getFilteredSearchEvents() {
@@ -276,11 +387,12 @@
         }
 
         function appendSuggestion(event, index) {
-            const link = document.createElement('a');
-            link.href = event.url;
-            link.className = 'search-suggestion';
-            link.setAttribute('role', 'option');
-            link.dataset.index = index;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'search-suggestion';
+            button.setAttribute('role', 'option');
+            button.dataset.index = index;
+            button.dataset.eventId = event.id;
 
             const title = document.createElement('span');
             title.className = 'suggestion-title';
@@ -294,12 +406,21 @@
             meta.className = 'suggestion-meta';
             meta.textContent = `${formatCategoryName(event.category)} - ${event.location_name || '-'} - ${event.display_date}`;
 
+            const footer = document.createElement('span');
+            footer.className = 'suggestion-footer';
+
             const price = document.createElement('span');
             price.className = 'suggestion-price';
             price.textContent = event.price_label;
 
-            link.append(title, status, meta, price);
-            eventSuggestions.appendChild(link);
+            const distance = document.createElement('span');
+            distance.className = 'suggestion-distance';
+            distance.textContent = formatEventDistance(event);
+
+            footer.append(price, distance);
+            button.append(title, status, meta, footer);
+            button.addEventListener('click', () => focusEventFromSearch(event.id));
+            eventSuggestions.appendChild(button);
         }
 
         function renderEventSuggestions(forceOpen = false) {
@@ -329,6 +450,320 @@
             eventSuggestions.hidden = false;
         }
 
+        function buildNearbyUrl(baseUrl) {
+            const params = new URLSearchParams({ radius: String(getRadius()) });
+
+            if (hasUserLocation()) {
+                params.set('lat', String(userLat));
+                params.set('lng', String(userLng));
+            }
+
+            return `${baseUrl}?${params.toString()}`;
+        }
+
+        function buildEventPopup(event) {
+            const priceLabel = event.price_label || formatRupiah(event.price);
+            const distance = formatDistanceMeters(getEventDistanceMeters(event));
+            const detailUrl = event.url || `/events/${event.id}`;
+
+            return `<div class="popup-event">` +
+                `<strong>${escapeHtml(event.title || 'Event')}</strong><br>` +
+                `${escapeHtml(event.date || event.display_date || '-')}<br>` +
+                `${escapeHtml(priceLabel)}` +
+                (event.location_name ? `<br><small>${escapeHtml(event.location_name)}</small>` : '') +
+                (distance ? `<br><small>${escapeHtml(distance)} dari kamu</small>` : '') +
+                `<br><a href="${escapeHtml(detailUrl)}" class="popup-link">Lihat Detail</a>` +
+            `</div>`;
+        }
+
+        function buildEOPopup(eo) {
+            const ratingText = eo.review_count > 0
+                ? `Rating ${Number(eo.average_rating).toFixed(1)} / 5 (${eo.review_count} ulasan)`
+                : 'Belum ada ulasan';
+            const distance = formatDistanceMeters(normalizeDistance(eo.distance));
+
+            return `<div class="popup-event">` +
+                `<strong>${escapeHtml(eo.name)}</strong><br>` +
+                `${Number(eo.total_events)} event terdaftar<br>` +
+                `${escapeHtml(ratingText)}<br>` +
+                `Telepon: ${escapeHtml(eo.phone || '-')}` +
+                (distance ? `<br><small>${escapeHtml(distance)} dari kamu</small>` : '') +
+            `</div>`;
+        }
+
+        function openNearestEventPopups(events) {
+            const nearest = events
+                .map(event => ({
+                    event,
+                    marker: eventMarkerById.get(Number(event.id)),
+                    distance: getEventDistanceMeters(event),
+                }))
+                .filter(item => item.marker && item.distance !== null)
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 3);
+
+            if (!nearest.length) return;
+
+            nearest.forEach(item => item.marker.openPopup());
+
+            const boundsItems = nearest.map(item => item.marker.getLatLng());
+            if (userMarker) boundsItems.push(userMarker.getLatLng());
+
+            map.fitBounds(L.latLngBounds(boundsItems), {
+                padding: [40, 80],
+                maxZoom: 13,
+            });
+        }
+
+        function focusEventFromSearch(eventId) {
+            const event = findSearchEvent(eventId);
+            eventSuggestions.hidden = true;
+            eventSearchInput.blur();
+
+            if (!event) return;
+
+            if (currentMode !== 'events' || !eventMarkerById.size) {
+                setMapMode('events', { focusEventId: event.id, openNearest: false });
+                return;
+            }
+
+            focusEventOnMap(event.id);
+        }
+
+        function focusEventOnMap(eventId) {
+            const event = findSearchEvent(eventId);
+            const marker = eventMarkerById.get(Number(eventId));
+            const coords = marker ? marker.getLatLng() : getEventLatLng(event);
+
+            if (!coords) {
+                mapInfoText.textContent = 'Lokasi event belum tersedia di peta.';
+                return;
+            }
+
+            const latlng = marker ? coords : L.latLng(coords[0], coords[1]);
+            const targetZoom = Math.max(map.getZoom(), 14);
+            let popupOpened = false;
+
+            mapCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            const openPopup = () => {
+                if (popupOpened) return;
+                popupOpened = true;
+
+                if (marker) {
+                    if (focusedSearchMarker) {
+                        map.removeLayer(focusedSearchMarker);
+                        focusedSearchMarker = null;
+                    }
+
+                    marker.openPopup();
+                    return;
+                }
+
+                if (event) {
+                    openTemporaryEventMarker(event, latlng);
+                }
+            };
+
+            map.once('moveend', openPopup);
+            map.flyTo(latlng, targetZoom, { duration: 0.8 });
+            window.setTimeout(openPopup, 900);
+        }
+
+        function openTemporaryEventMarker(event, latlng) {
+            if (focusedSearchMarker) {
+                map.removeLayer(focusedSearchMarker);
+            }
+
+            focusedSearchMarker = L.circleMarker(latlng, {
+                radius: 10,
+                fillColor: '#d8ff4f',
+                color: '#ffffff',
+                weight: 2.5,
+                fillOpacity: 0.95,
+            })
+            .addTo(map)
+            .bindPopup(buildEventPopup(event), popupOptions);
+
+            focusedSearchMarker.openPopup();
+        }
+
+        function updateMapInfo(total, inRadius, label) {
+            mapInfoText.textContent =
+                `Menampilkan ${total} ${label}` +
+                (inRadius !== null ? ` - ${inRadius} dalam radius ${getRadius() / 1000} km` : '');
+        }
+
+        function setMapMode(mode, options = {}) {
+            currentMode = mode;
+            document.querySelectorAll('.map-toggle-btn').forEach(button => {
+                button.classList.toggle('active', button.dataset.mode === mode);
+            });
+
+            document.getElementById('map-title').textContent =
+                currentMode === 'events' ? 'Event di Sekitarmu' : 'Event Organizer di Sekitarmu';
+
+            return loadMapData(options);
+        }
+
+        function clearMapDataMarkers() {
+            dataMarkers.forEach(marker => map.removeLayer(marker));
+            dataMarkers = [];
+            eventMarkerById.clear();
+
+            if (focusedSearchMarker) {
+                map.removeLayer(focusedSearchMarker);
+                focusedSearchMarker = null;
+            }
+        }
+
+        function loadMapData(options = {}) {
+            const requestId = ++mapRequestSequence;
+            const openNearest = options.openNearest ?? currentMode === 'events';
+            const focusEventId = options.focusEventId ?? null;
+
+            clearMapDataMarkers();
+
+            const baseUrl = currentMode === 'events'
+                ? `{{ route('events.nearby', [], false) }}`
+                : `{{ route('eo.nearby', [], false) }}`;
+
+            return fetch(buildNearbyUrl(baseUrl))
+                .then(res => {
+                    if (!res.ok) throw new Error('Gagal memuat data peta.');
+                    return res.json();
+                })
+                .then(data => {
+                    if (requestId !== mapRequestSequence) return null;
+
+                    if (currentMode === 'events') {
+                        const events = data.events || [];
+                        renderEventMarkers(events, { openNearest: openNearest && !focusEventId });
+                        updateMapInfo(data.count_total, data.count_in_radius, 'event');
+
+                        if (focusEventId) {
+                            focusEventOnMap(focusEventId);
+                        }
+                    } else {
+                        renderEOMarkers(data.organizers || []);
+                        updateMapInfo(data.count_total, data.count_in_radius, 'EO');
+                    }
+
+                    if (!eventSuggestions.hidden) {
+                        renderEventSuggestions(true);
+                    }
+
+                    return data;
+                })
+                .catch(() => {
+                    mapInfoText.textContent = 'Gagal memuat data.';
+                });
+        }
+
+        function renderEventMarkers(events, options = {}) {
+            events.forEach(event => {
+                const coords = getEventLatLng(event);
+                if (!coords) return;
+
+                const distance = getEventDistanceMeters(event);
+                if (distance !== null) {
+                    eventDistancesById.set(Number(event.id), distance);
+                }
+
+                const inRadius = event.in_radius === true || event.in_radius === null;
+                const marker = L.circleMarker(coords, {
+                    radius: inRadius ? 9 : 6,
+                    fillColor: inRadius ? '#ff5da2' : '#9ca3af',
+                    color: inRadius ? '#ffffff' : '#d1d5db',
+                    weight: inRadius ? 2.5 : 1.5,
+                    fillOpacity: inRadius ? 0.95 : 0.6,
+                    opacity: inRadius ? 1 : 0.7,
+                })
+                .addTo(map)
+                .bindPopup(buildEventPopup(event), popupOptions);
+
+                eventMarkerById.set(Number(event.id), marker);
+                dataMarkers.push(marker);
+            });
+
+            if (options.openNearest) {
+                openNearestEventPopups(events);
+            }
+        }
+
+        function renderEOMarkers(organizers) {
+            organizers.forEach(eo => {
+                const lat = toFiniteNumber(eo.lat);
+                const lng = toFiniteNumber(eo.lng);
+                if (!hasValidCoordinates(lat, lng)) return;
+
+                const inRadius = eo.in_radius === true || eo.in_radius === null;
+                const marker = L.circleMarker([lat, lng], {
+                    radius: inRadius ? 9 : 6,
+                    fillColor: inRadius ? '#60a5fa' : '#9ca3af',
+                    color: inRadius ? '#ffffff' : '#d1d5db',
+                    weight: inRadius ? 2.5 : 1.5,
+                    fillOpacity: inRadius ? 0.95 : 0.6,
+                    opacity: inRadius ? 1 : 0.7,
+                })
+                .addTo(map)
+                .bindPopup(buildEOPopup(eo), popupOptions);
+
+                dataMarkers.push(marker);
+            });
+        }
+
+        function placeUserOnMap(lat, lng) {
+            userLat = toFiniteNumber(lat);
+            userLng = toFiniteNumber(lng);
+            eventDistancesById.clear();
+
+            if (userMarker) map.removeLayer(userMarker);
+            if (radiusCircle) map.removeLayer(radiusCircle);
+
+            userMarker = L.circleMarker([userLat, userLng], {
+                radius: 8,
+                fillColor: '#d8ff4f',
+                color: '#0f1117',
+                weight: 2,
+                fillOpacity: 1,
+            }).addTo(map).bindPopup('Lokasi kamu');
+
+            radiusCircle = L.circle([userLat, userLng], {
+                radius: getRadius(),
+                color: '#d8ff4f',
+                fillColor: '#d8ff4f',
+                fillOpacity: 0.06,
+                weight: 1.5,
+                dashArray: '6, 6',
+            }).addTo(map);
+
+            map.setView([userLat, userLng], 12);
+            mapInfoText.textContent = `Memuat data dalam radius ${getRadius() / 1000} km...`;
+            loadMapData();
+
+            if (!eventSuggestions.hidden) {
+                renderEventSuggestions(true);
+            }
+        }
+
+        syncPriceRangeLabel();
+
+        const defaultLat = -6.2088;
+        const defaultLng = 106.8456;
+        const initialLat = hasUserLocation() ? userLat : defaultLat;
+        const initialLng = hasUserLocation() ? userLng : defaultLng;
+
+        const map = L.map('map', { zoomControl: true }).setView(
+            [initialLat, initialLng],
+            hasUserLocation() ? 12 : 5
+        );
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+            maxZoom: 19,
+        }).addTo(map);
+
         eventSearchInput.addEventListener('input', () => {
             eventSearchClear.hidden = !eventSearchInput.value.trim();
             renderEventSuggestions(true);
@@ -355,7 +790,7 @@
             if (event.key === 'Enter') {
                 event.preventDefault();
                 const target = items[activeSuggestionIndex] || items[0];
-                window.location.href = target.href;
+                target.click();
             }
 
             if (event.key === 'Escape') {
@@ -396,165 +831,11 @@
             }
         });
 
-        // ── Init map ────────────────────────────────────────────
-        syncPriceRangeLabel();
-
-        const defaultLat = -6.2088; // Jakarta sebagai fallback
-        const defaultLng = 106.8456;
-
-        const map = L.map('map', { zoomControl: true }).setView(
-            [savedLat ?? defaultLat, savedLng ?? defaultLng],
-            savedLat ? 12 : 5
-        );
-
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-            maxZoom: 19,
-        }).addTo(map);
-
-        // ── Marker & lingkaran radius ───────────────────────────
-        let userMarker  = null;
-        let radiusCircle = null;
-        let dataMarkers = [];
-        let currentMode = 'events'; // 'events' | 'eo'
-
-        function getRadius() {
-            return parseInt(document.getElementById('radius-select').value);
-        }
-
-        function placeUserOnMap(lat, lng) {
-            if (userMarker) map.removeLayer(userMarker);
-            if (radiusCircle) map.removeLayer(radiusCircle);
-
-            userMarker = L.circleMarker([lat, lng], {
-                radius: 8,
-                fillColor: '#d8ff4f',
-                color: '#0f1117',
-                weight: 2,
-                fillOpacity: 1,
-            }).addTo(map).bindPopup('Lokasi kamu').openPopup();
-
-            radiusCircle = L.circle([lat, lng], {
-                radius: getRadius(),
-                color: '#d8ff4f',
-                fillColor: '#d8ff4f',
-                fillOpacity: 0.06,
-                weight: 1.5,
-                dashArray: '6, 6',
-            }).addTo(map);
-
-            map.setView([lat, lng], 12);
-
-            document.getElementById('map-info-text').textContent =
-                `Memuat data dalam radius ${getRadius() / 1000} km...`;
-
-            loadMapData();
-        }
-
-        function loadMapData() {
-            dataMarkers.forEach(m => map.removeLayer(m));
-            dataMarkers = [];
-
-            const url = currentMode === 'events'
-                ? `{{ route('events.nearby', [], false) }}?radius=${getRadius()}`
-                : `{{ route('eo.nearby', [], false) }}?radius=${getRadius()}`;
-
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    if (currentMode === 'events') {
-                        renderEventMarkers(data.events || []);
-                        updateMapInfo(data.count_total, data.count_in_radius, 'event');
-                    } else {
-                        renderEOMarkers(data.organizers || []);
-                        updateMapInfo(data.count_total, data.count_in_radius, 'EO');
-                    }
-                })
-                .catch(() => {
-                    document.getElementById('map-info-text').textContent =
-                        'Gagal memuat data.';
-                });
-        }
-
-        function renderEventMarkers(events) {
-            events.forEach(ev => {
-                const inRadius = ev.in_radius === true || ev.in_radius === null;
-
-                const marker = L.circleMarker([ev.lat, ev.lng], {
-                    radius: inRadius ? 9 : 6,
-                    fillColor: inRadius ? '#ff5da2' : '#9ca3af',
-                    color: inRadius ? '#ffffff' : '#d1d5db',
-                    weight: inRadius ? 2.5 : 1.5,
-                    fillOpacity: inRadius ? 0.95 : 0.6,
-                    opacity: inRadius ? 1 : 0.7,
-                })
-                .addTo(map)
-                .bindPopup(
-                    `<div class="popup-event">` +
-                        `<strong>${ev.title}</strong><br>` +
-                        `${ev.date}<br>` +
-                        (ev.price > 0 ? `Rp ${Number(ev.price).toLocaleString('id-ID')}` : 'Gratis') +
-                        (ev.distance !== null ? `<br><small>${(ev.distance / 1000).toFixed(1)} km dari kamu</small>` : '') +
-                        `<br><a href="/events/${ev.id}" class="popup-link">Lihat Detail</a>` +
-                    `</div>`
-                );
-
-                dataMarkers.push(marker);
-            });
-        }
-
-        function renderEOMarkers(organizers) {
-            organizers.forEach(eo => {
-                const inRadius = eo.in_radius === true || eo.in_radius === null;
-                const ratingText = eo.review_count > 0
-                    ? `Rating ${Number(eo.average_rating).toFixed(1)} / 5 (${eo.review_count} ulasan)`
-                    : 'Belum ada ulasan';
-
-                const marker = L.circleMarker([eo.lat, eo.lng], {
-                    radius: inRadius ? 9 : 6,
-                    fillColor: inRadius ? '#60a5fa' : '#9ca3af',
-                    color: inRadius ? '#ffffff' : '#d1d5db',
-                    weight: inRadius ? 2.5 : 1.5,
-                    fillOpacity: inRadius ? 0.95 : 0.6,
-                    opacity: inRadius ? 1 : 0.7,
-                })
-                .addTo(map)
-                .bindPopup(
-                    `<div class="popup-event">` +
-                        `<strong>${eo.name}</strong><br>` +
-                        `${eo.total_events} event terdaftar<br>` +
-                        `${ratingText}<br>` +
-                        `Telepon: ${eo.phone}` +
-                        (eo.distance !== null ? `<br><small>${(eo.distance / 1000).toFixed(1)} km dari kamu</small>` : '') +
-                    `</div>`
-                );
-
-                dataMarkers.push(marker);
-            });
-        }
-
-        function updateMapInfo(total, inRadius, label) {
-            document.getElementById('map-info-text').textContent =
-                `Menampilkan ${total} ${label}` +
-                (inRadius !== null ? ` · ${inRadius} dalam radius ${getRadius() / 1000} km` : '');
-        }
-
-        // ── Toggle Event / EO ────────────────────────────────────
-        document.querySelectorAll('.map-toggle-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.map-toggle-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                currentMode = btn.dataset.mode;
-                document.getElementById('map-title').textContent =
-                    currentMode === 'events' ? 'Event di Sekitarmu' : 'Event Organizer di Sekitarmu';
-
-                loadMapData();
-            });
+        document.querySelectorAll('.map-toggle-btn').forEach(button => {
+            button.addEventListener('click', () => setMapMode(button.dataset.mode));
         });
 
-        // ── Update radius saat select berubah ───────────────────
-        document.getElementById('radius-select').addEventListener('change', () => {
+        radiusSelect.addEventListener('change', () => {
             if (userMarker) {
                 const latlng = userMarker.getLatLng();
                 if (radiusCircle) map.removeLayer(radiusCircle);
@@ -567,20 +848,18 @@
                     weight: 1.5,
                     dashArray: '6, 6',
                 }).addTo(map);
-
-                loadMapData();
             }
+
+            loadMapData();
         });
 
-        // ── Kalau sudah ada lokasi di session, langsung pakai ───
-        if (savedLat && savedLng) {
-            placeUserOnMap(savedLat, savedLng);
+        if (hasUserLocation()) {
+            placeUserOnMap(userLat, userLng);
             document.getElementById('location-status').textContent = 'Terdeteksi';
         } else {
             requestUserLocation();
         }
 
-        // ── Fungsi minta GPS dari browser ────────────────────────
         function requestUserLocation(onDone) {
             if (!('geolocation' in navigator)) {
                 document.getElementById('location-status').textContent = 'Tidak didukung';
@@ -597,7 +876,6 @@
                     placeUserOnMap(lat, lng);
                     document.getElementById('location-status').textContent = 'Terdeteksi';
 
-                    // Kirim ke server untuk disimpan di session
                     fetch('{{ route("location.save", [], false) }}', {
                         method: 'POST',
                         headers: {
@@ -610,34 +888,34 @@
                         if (onDone) onDone();
                     });
                 },
-                (err) => {
+                () => {
+                    userLat = null;
+                    userLng = null;
+                    eventDistancesById.clear();
                     document.getElementById('location-status').textContent = 'Ditolak';
-                    document.getElementById('map-info-text').textContent =
-                        'Izin lokasi ditolak. Aktifkan GPS untuk fitur ini.';
+                    mapInfoText.textContent = 'Izin lokasi ditolak. Aktifkan GPS untuk fitur ini.';
                     map.setView([defaultLat, defaultLng], 5);
-                    loadMapData(); // tetap tampilkan data walau lokasi ditolak
+                    loadMapData();
                     if (onDone) onDone();
                 },
                 { enableHighAccuracy: true, timeout: 10000 }
             );
         }
 
-        // ── Tombol refresh lokasi ─────────────────────────────────
-        const refreshBtn  = document.getElementById('refresh-location-btn');
+        const refreshBtn = document.getElementById('refresh-location-btn');
         const refreshIcon = document.getElementById('refresh-icon');
 
         refreshBtn.addEventListener('click', () => {
             refreshBtn.disabled = true;
             refreshIcon.classList.add('spinning');
             document.getElementById('location-status').textContent = 'Memperbarui...';
-            document.getElementById('map-info-text').textContent = 'Mendeteksi lokasi kamu...';
+            mapInfoText.textContent = 'Mendeteksi lokasi kamu...';
 
             requestUserLocation(() => {
                 refreshBtn.disabled = false;
                 refreshIcon.classList.remove('spinning');
             });
         });
-
     </script>
 
 </body>

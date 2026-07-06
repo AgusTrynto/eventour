@@ -29,13 +29,15 @@ class DashboardController extends Controller
 
         $eventSearchItems = Event::where('status', 'approved')
             ->orderBy('start_date', 'asc')
-            ->get(['id', 'title', 'category', 'start_date', 'location_name', 'price'])
+            ->get(['id', 'title', 'category', 'start_date', 'end_date', 'location_name', 'location', 'price', 'status'])
             ->map(function (Event $event) {
                 return [
                     'id' => $event->id,
                     'title' => $event->title,
                     'category' => $event->category ?? 'lainnya',
                     'location_name' => $event->location_name,
+                    'lat' => $event->lat,
+                    'lng' => $event->lng,
                     'start_date' => $event->start_date?->toDateString(),
                     'display_date' => $event->start_date?->translatedFormat('d M Y') ?? '-',
                     'price' => (float) $event->price,
