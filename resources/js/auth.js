@@ -41,15 +41,18 @@ function checkPasswordMatch(passwordId, confirmId, statusId) {
     }
 
     if (value === password.value) {
-        status.textContent = '✓ Password cocok';
+        status.textContent = 'Password cocok';
         status.className = 'password-match match';
         confirm.setCustomValidity('');
     } else {
-        status.textContent = '✗ Password tidak cocok';
+        status.textContent = 'Password tidak cocok';
         status.className = 'password-match mismatch';
         confirm.setCustomValidity('Password tidak cocok');
     }
 }
+
+window.togglePassword = togglePassword;
+window.checkPasswordMatch = checkPasswordMatch;
 
 // Auto-bind on page load
 document.addEventListener('DOMContentLoaded', function () {
