@@ -144,6 +144,36 @@ body.login-page {
     box-shadow: 0 0 0 4px rgba(216,255,79,.15);
 }
 
+/* Password toggle button */
+.password-wrapper {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: .3s;
+}
+
+.password-toggle:hover {
+    color: var(--accent);
+}
+
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
 .form-options {
     display: flex;
     justify-content: space-between;

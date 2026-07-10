@@ -144,6 +144,58 @@ body.register-page {
     box-shadow: 0 0 0 4px rgba(216,255,79,.15);
 }
 
+/* Password toggle button */
+.password-wrapper {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: .3s;
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    color: var(--accent);
+}
+
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+.password-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.password-match {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+}
+
+.password-match.match {
+    color: #22c55e;
+}
+
+.password-match.mismatch {
+    color: #ff6b6b;
+}
+
 .checkbox {
     display: flex;
     gap: 10px;

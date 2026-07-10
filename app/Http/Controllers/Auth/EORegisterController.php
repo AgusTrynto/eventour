@@ -39,7 +39,7 @@ class EORegisterController extends Controller
             'bank_name'            => ['required', 'string', 'max:50'],   // ← baru
             'bank_account_number'  => ['required', 'string', 'max:50'],   // ← baru
             'bank_account_name'    => ['required', 'string', 'max:255'],  // ← baru
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ], [
             'org_name.required' => 'Nama organisasi/EO wajib diisi.',
             'name.required'     => 'Nama penanggung jawab wajib diisi.',
@@ -52,6 +52,7 @@ class EORegisterController extends Controller
             'bank_account_name.required'    => 'Nama pemilik rekening wajib diisi.',
             'password.required' => 'Password wajib diisi.',
             'password.min'      => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         $otp = $this->generateOtp($request->email);
