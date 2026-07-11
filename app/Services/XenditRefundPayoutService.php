@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\ProcessRefundPayout;
+use App\Jobs\SyncRefundPayoutStatus;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -110,6 +111,8 @@ class XenditRefundPayoutService
                 'xendit_payout_status' => $status,
                 'xendit_payout_failure_code' => null,
             ]);
+
+            $this->scheduleStatusSync($order->refresh());
         } catch (Throwable $e) {
             $this->markPayoutFailed($order, $this->failureCodeFromException($e), $e->getMessage());
 
@@ -117,6 +120,75 @@ class XenditRefundPayoutService
                 'order_id' => $order->id,
                 'message' => $e->getMessage(),
             ]);
+        }
+    }
+
+    public function syncStatusFromXendit(Order $order, bool $scheduleAgain = false, int $attempt = 1): void
+    {
+        $order->refresh();
+
+        if ($order->payment_status !== 'refund_payout_pending') {
+            return;
+        }
+
+        if (! $order->xendit_payout_id && ! $order->xendit_payout_reference_id) {
+            return;
+        }
+
+        Configuration::setXenditKey(config('services.xendit.secret_key'));
+
+        try {
+            $payout = $this->fetchPayout($order);
+
+            if (! $payout) {
+                if ($scheduleAgain) {
+                    $this->scheduleStatusSync($order, $attempt + 1);
+                }
+
+                return;
+            }
+
+            $payoutId = $this->readPayoutField($payout, 'id');
+            $referenceId = $this->readPayoutField($payout, 'reference_id');
+            $status = strtoupper((string) $this->readPayoutField($payout, 'status'));
+            $failureCode = $this->readPayoutField($payout, 'failure_code');
+
+            if ($this->isSuccessfulStatus($status)) {
+                $this->markPayoutSucceeded($order, $payoutId, $status);
+
+                return;
+            }
+
+            if ($this->isFailedStatus($status)) {
+                $order->update([
+                    'xendit_payout_id' => $payoutId ?? $order->xendit_payout_id,
+                    'xendit_payout_reference_id' => $referenceId ?? $order->xendit_payout_reference_id,
+                ]);
+
+                $this->markPayoutFailed($order->refresh(), $failureCode, 'Xendit payout status sync failed.');
+
+                return;
+            }
+
+            $order->update([
+                'xendit_payout_id' => $payoutId ?? $order->xendit_payout_id,
+                'xendit_payout_reference_id' => $referenceId ?? $order->xendit_payout_reference_id,
+                'xendit_payout_status' => $status ?: $order->xendit_payout_status,
+                'xendit_payout_failure_code' => null,
+            ]);
+
+            if ($scheduleAgain) {
+                $this->scheduleStatusSync($order->refresh(), $attempt + 1);
+            }
+        } catch (Throwable $e) {
+            Log::warning('Xendit refund payout status sync failed', [
+                'order_id' => $order->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            if ($scheduleAgain) {
+                $this->scheduleStatusSync($order, $attempt + 1);
+            }
         }
     }
 
@@ -167,6 +239,7 @@ class XenditRefundPayoutService
             'SUCCESSFUL',
             'COMPLETED',
             'PAID',
+            'SUCCESSFUL_DISBURSEMENT',
         ], true);
     }
 
@@ -178,8 +251,55 @@ class XenditRefundPayoutService
             'CANCELED',
             'REJECTED',
             'RETURNED',
+            'REVERSED',
             'VOIDED',
         ], true);
+    }
+
+    private function fetchPayout(Order $order): mixed
+    {
+        $payoutApi = new PayoutApi;
+
+        if ($order->xendit_payout_id) {
+            return $payoutApi->getPayoutById($order->xendit_payout_id);
+        }
+
+        $response = $payoutApi->getPayouts($order->xendit_payout_reference_id, 1);
+
+        if (is_object($response) && method_exists($response, 'getData')) {
+            $data = $response->getData();
+        } elseif (is_array($response)) {
+            $data = $response['data'] ?? [];
+        } else {
+            $data = [];
+        }
+
+        return $data[0] ?? null;
+    }
+
+    private function readPayoutField(mixed $payout, string $field): mixed
+    {
+        $getter = 'get'.Str::studly($field);
+
+        if (is_object($payout) && method_exists($payout, $getter)) {
+            return $payout->{$getter}();
+        }
+
+        if (is_array($payout)) {
+            return $payout[$field] ?? null;
+        }
+
+        return null;
+    }
+
+    private function scheduleStatusSync(Order $order, int $attempt = 1): void
+    {
+        if ($attempt > 8 || $order->payment_status !== 'refund_payout_pending') {
+            return;
+        }
+
+        SyncRefundPayoutStatus::dispatch($order->id, $attempt)
+            ->delay(now()->addSeconds(min(300, 15 * $attempt)));
     }
 
     private function ensurePayoutDestinationIsReady(Order $order): void

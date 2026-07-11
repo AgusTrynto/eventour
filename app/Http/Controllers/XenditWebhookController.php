@@ -109,7 +109,10 @@ class XenditWebhookController extends Controller
         $failureCode = $data['failure_code'] ?? null;
 
         if (is_string($event)) {
-            if (str_contains($event, 'succeeded') || str_contains($event, 'completed')) {
+            if (str_contains($event, 'succeeded')
+                || str_contains($event, 'successful')
+                || str_contains($event, 'completed')
+            ) {
                 $status = 'SUCCEEDED';
             } elseif (str_contains($event, 'failed')) {
                 $status = 'FAILED';

@@ -26,6 +26,8 @@ class AdminRefundController extends Controller
 
     public function manualIndex()
     {
+        $this->syncPendingPayoutStatuses();
+
         $awaitingDestination = Order::where('payment_status', 'refund_manual_pending')
             ->with(['user', 'event'])
             ->latest('refund_requested_at')
@@ -405,5 +407,29 @@ class AdminRefundController extends Controller
             'refund_destination_account_number' => $order->user->refund_destination_account_number,
             'refund_destination_account_name' => $order->user->refund_destination_account_name,
         ];
+    }
+
+    private function syncPendingPayoutStatuses(): void
+    {
+        $payoutService = app(XenditRefundPayoutService::class);
+
+        Order::where('payment_status', 'refund_payout_pending')
+            ->where(function ($query) {
+                $query->whereNotNull('xendit_payout_id')
+                    ->orWhereNotNull('xendit_payout_reference_id');
+            })
+            ->latest('xendit_payout_requested_at')
+            ->limit(25)
+            ->get()
+            ->each(function (Order $order) use ($payoutService) {
+                try {
+                    $payoutService->syncStatusFromXendit($order);
+                } catch (\Throwable $e) {
+                    Log::warning('Unable to sync admin refund payout status', [
+                        'order_id' => $order->id,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+            });
     }
 }
