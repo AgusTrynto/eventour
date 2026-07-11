@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OtpMail;
+use App\Models\EventOrganizer;
 use App\Models\OtpCode;
 use App\Models\User;
-use App\Models\EventOrganizer;
-use App\Mail\OtpMail;
+use App\Support\XenditPayoutChannels;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 use MatanYadaev\EloquentSpatial\Objects\Point;
 
 class EORegisterController extends Controller
@@ -20,7 +22,9 @@ class EORegisterController extends Controller
     // =========================================================
     public function showForm()
     {
-        return view('auth.EoRegister');
+        return view('auth.EoRegister', [
+            'bankChannels' => XenditPayoutChannels::bankChannels(),
+        ]);
     }
 
     // =========================================================
@@ -30,52 +34,57 @@ class EORegisterController extends Controller
     {
         $request->validate([
             'org_name' => ['required', 'string', 'max:255'],
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'unique:users,email'],
-            'phone'    => ['required', 'string', 'max:20'],
-            'address'  => ['nullable', 'string', 'max:500'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'unique:users,email'],
+            'phone' => ['required', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:500'],
             'lat' => ['required', 'numeric', 'between:-90,90'],
             'lng' => ['required', 'numeric', 'between:-180,180'],
-            'bank_name'            => ['required', 'string', 'max:50'],   // ← baru
-            'bank_account_number'  => ['required', 'string', 'max:50'],   // ← baru
-            'bank_account_name'    => ['required', 'string', 'max:255'],  // ← baru
+            'bank_channel_code' => ['required', Rule::in(array_keys(XenditPayoutChannels::bankChannels()))],
+            'bank_name' => ['required', 'string', 'max:50'],   // ← baru
+            'bank_account_number' => ['required', 'string', 'max:50'],   // ← baru
+            'bank_account_name' => ['required', 'string', 'max:255'],  // ← baru
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ], [
             'org_name.required' => 'Nama organisasi/EO wajib diisi.',
-            'name.required'     => 'Nama penanggung jawab wajib diisi.',
-            'email.required'    => 'Email wajib diisi.',
-            'email.email'       => 'Format email tidak valid.',
-            'email.unique'      => 'Email ini sudah terdaftar.',
-            'phone.required'    => 'Nomor telepon wajib diisi.',
-            'bank_name.required'            => 'Nama bank wajib diisi.',
-            'bank_account_number.required'  => 'Nomor rekening bank wajib diisi.',
-            'bank_account_name.required'    => 'Nama pemilik rekening wajib diisi.',
+            'name.required' => 'Nama penanggung jawab wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email ini sudah terdaftar.',
+            'phone.required' => 'Nomor telepon wajib diisi.',
+            'bank_channel_code.required' => 'Bank tujuan payout wajib dipilih.',
+            'bank_channel_code.in' => 'Bank tujuan payout tidak valid.',
+            'bank_name.required' => 'Nama bank wajib diisi.',
+            'bank_account_number.required' => 'Nomor rekening bank wajib diisi.',
+            'bank_account_name.required' => 'Nama pemilik rekening wajib diisi.',
             'password.required' => 'Password wajib diisi.',
-            'password.min'      => 'Password minimal 8 karakter.',
+            'password.min' => 'Password minimal 8 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
+        $selectedBankName = XenditPayoutChannels::bankNameFor($request->bank_channel_code);
         $otp = $this->generateOtp($request->email);
 
         // Simpan semua data EO ke session, password sudah di-hash
         Session::put('eo_register_pending', [
             'org_name' => $request->org_name,
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'phone'    => $request->phone,
-            'address'  => $request->address,
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'address' => $request->address,
             'lat' => $request->lat,
             'lng' => $request->lng,
-            'bank_name'           => $request->bank_name,
+            'bank_name' => $selectedBankName,
+            'bank_channel_code' => $request->bank_channel_code,
             'bank_account_number' => $request->bank_account_number,
-            'bank_account_name'   => $request->bank_account_name,
+            'bank_account_name' => $request->bank_account_name,
             'password' => Hash::make($request->password),
         ]);
 
         Mail::to($request->email)->send(new OtpMail($otp, $request->name));
 
         return redirect()->route('eo.register.otp')
-            ->with('success', 'Kode OTP telah dikirim ke ' . $request->email);
+            ->with('success', 'Kode OTP telah dikirim ke '.$request->email);
     }
 
     // =========================================================
@@ -83,7 +92,7 @@ class EORegisterController extends Controller
     // =========================================================
     public function showOtpForm()
     {
-        if (!Session::has('eo_register_pending')) {
+        if (! Session::has('eo_register_pending')) {
             return redirect()->route('eo.register')
                 ->with('error', 'Sesi pendaftaran tidak ditemukan. Silakan daftar ulang.');
         }
@@ -102,19 +111,19 @@ class EORegisterController extends Controller
             'otp' => ['required', 'digits:6'],
         ], [
             'otp.required' => 'Kode OTP wajib diisi.',
-            'otp.digits'   => 'Kode OTP harus 6 digit angka.',
+            'otp.digits' => 'Kode OTP harus 6 digit angka.',
         ]);
 
         $pending = Session::get('eo_register_pending');
 
-        if (!$pending) {
+        if (! $pending) {
             return redirect()->route('eo.register')
                 ->with('error', 'Sesi habis. Silakan daftar ulang.');
         }
 
         $otpRecord = OtpCode::where('email', $pending['email'])->latest()->first();
 
-        if (!$otpRecord) {
+        if (! $otpRecord) {
             return redirect()->route('eo.register')
                 ->with('error', 'Kode OTP tidak ditemukan. Silakan daftar ulang.');
         }
@@ -135,7 +144,7 @@ class EORegisterController extends Controller
                 ->with('error', 'Kode OTP sudah kedaluwarsa. Silakan daftar ulang.');
         }
 
-        $inputOtp  = trim($request->otp);
+        $inputOtp = trim($request->otp);
         $recordOtp = trim($otpRecord->code);
 
         if ($inputOtp !== $recordOtp) {
@@ -147,23 +156,24 @@ class EORegisterController extends Controller
 
         // ✅ OTP valid — buat user dengan role 'eo'
         $user = User::create([
-            'name'     => $pending['name'],
-            'email'    => $pending['email'],
+            'name' => $pending['name'],
+            'email' => $pending['email'],
             'password' => $pending['password'],
-            'role'     => 'eo',
+            'role' => 'eo',
         ]);
 
         // Buat data EO terkait (status pending menunggu approval admin)
         EventOrganizer::create([
-            'user_id'  => $user->id,
+            'user_id' => $user->id,
             'org_name' => $pending['org_name'],
-            'phone'    => $pending['phone'],
-            'address'  => $pending['address'],
+            'phone' => $pending['phone'],
+            'address' => $pending['address'],
             'location' => new Point((float) $pending['lat'], (float) $pending['lng']),
-            'bank_name'           => $pending['bank_name'],
+            'bank_name' => $pending['bank_name'],
+            'bank_channel_code' => $pending['bank_channel_code'],
             'bank_account_number' => $pending['bank_account_number'],
-            'bank_account_name'   => $pending['bank_account_name'],
-            'status'   => 'pending',
+            'bank_account_name' => $pending['bank_account_name'],
+            'status' => 'pending',
         ]);
 
         $otpRecord->delete();
@@ -180,7 +190,7 @@ class EORegisterController extends Controller
     {
         $pending = Session::get('eo_register_pending');
 
-        if (!$pending) {
+        if (! $pending) {
             return redirect()->route('eo.register')
                 ->with('error', 'Sesi tidak ditemukan. Silakan daftar ulang.');
         }
@@ -210,8 +220,8 @@ class EORegisterController extends Controller
         $otp = (string) random_int(100000, 999999);
 
         OtpCode::create([
-            'email'      => $email,
-            'code'       => $otp,
+            'email' => $email,
+            'code' => $otp,
             'expires_at' => now()->addMinutes(10),
         ]);
 

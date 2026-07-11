@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use MatanYadaev\EloquentSpatial\Objects\Point;
 use MatanYadaev\EloquentSpatial\Traits\HasSpatial;
 
@@ -12,7 +14,7 @@ class EventOrganizer extends Model
 
     protected $fillable = [
         'user_id', 'org_name', 'phone', 'address', 'status', 'reject_reason',
-        'bank_name', 'bank_account_number', 'bank_account_name', 'location',
+        'bank_name', 'bank_channel_code', 'bank_account_number', 'bank_account_name', 'location',
     ];
 
     protected $casts = [
@@ -56,12 +58,12 @@ class EventOrganizer extends Model
         return $this->location?->longitude;
     }
 
-    public function scopeSelectDistance(\Illuminate\Database\Eloquent\Builder $query, float $lat, float $lng): \Illuminate\Database\Eloquent\Builder
+    public function scopeSelectDistance(Builder $query, float $lat, float $lng): Builder
     {
         return $query
             ->select('event_organizers.*')
             ->addSelect([
-                \Illuminate\Support\Facades\DB::raw("ST_Distance(location, ST_SetSRID(ST_MakePoint({$lng}, {$lat}), 4326)::geography) as distance")
+                DB::raw("ST_Distance(location, ST_SetSRID(ST_MakePoint({$lng}, {$lat}), 4326)::geography) as distance"),
             ])
             ->orderBy('distance');
     }

@@ -23,7 +23,7 @@ class EODashboardController extends Controller
     {
         $organizer = Auth::user()->eventOrganizer;
 
-        if (!$organizer) {
+        if (! $organizer) {
             abort(403, 'Akun ini tidak terdaftar sebagai Event Organizer.');
         }
 
@@ -74,7 +74,7 @@ class EODashboardController extends Controller
         $readyForPayoutEvents = $organizer->events()
             ->where('status', 'approved')
             ->whereDoesntHave('payouts', function ($query) {
-                $query->whereIn('status', ['pending', 'processing', 'completed']);
+                $query->whereIn('status', ['pending', 'processing', 'completed', 'failed']);
             })
             ->orderBy('start_date', 'desc')
             ->get()
@@ -108,7 +108,7 @@ class EODashboardController extends Controller
     {
         $organizer = Auth::user()->eventOrganizer;
 
-        if (!$organizer || $organizer->status !== 'approved') {
+        if (! $organizer || $organizer->status !== 'approved') {
             abort(403, 'Akun EO kamu belum disetujui.');
         }
 
@@ -122,44 +122,44 @@ class EODashboardController extends Controller
     {
         $organizer = Auth::user()->eventOrganizer;
 
-        if (!$organizer || $organizer->status !== 'approved') {
+        if (! $organizer || $organizer->status !== 'approved') {
             abort(403, 'Akun EO kamu belum disetujui.');
         }
 
         $request->validate([
-            'title'         => ['required', 'string', 'max:255'],
-            'description'   => ['nullable', 'string'],
-            'category'      => ['nullable', 'string', 'max:100'],
-            'start_date'    => ['required', 'date'],
-            'end_date'      => ['nullable', 'date', 'after_or_equal:start_date'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'category' => ['nullable', 'string', 'max:100'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'location_name' => ['required', 'string', 'max:255'],
-            'lat'           => ['required', 'numeric', 'between:-90,90'],
-            'lng'           => ['required', 'numeric', 'between:-180,180'],
-            'price'         => ['required', 'numeric', 'min:0'],
-            'quota'         => ['nullable', 'integer', 'min:1'],
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'quota' => ['nullable', 'integer', 'min:1'],
         ], [
-            'title.required'         => 'Nama event wajib diisi.',
-            'start_date.required'    => 'Tanggal mulai wajib diisi.',
+            'title.required' => 'Nama event wajib diisi.',
+            'start_date.required' => 'Tanggal mulai wajib diisi.',
             'end_date.after_or_equal' => 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
             'location_name.required' => 'Nama lokasi wajib diisi.',
-            'lat.required'           => 'Titik lokasi di map wajib dipilih.',
-            'lng.required'           => 'Titik lokasi di map wajib dipilih.',
-            'price.required'         => 'Harga tiket wajib diisi (isi 0 jika gratis).',
+            'lat.required' => 'Titik lokasi di map wajib dipilih.',
+            'lng.required' => 'Titik lokasi di map wajib dipilih.',
+            'price.required' => 'Harga tiket wajib diisi (isi 0 jika gratis).',
         ]);
 
         Event::create([
             'event_organizer_id' => $organizer->id,
-            'title'         => $request->title,
-            'description'   => $request->description,
-            'category'      => $request->category,
-            'start_date'    => $request->start_date,
-            'end_date'      => $request->end_date,
+            'title' => $request->title,
+            'description' => $request->description,
+            'category' => $request->category,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
             'location_name' => $request->location_name,
             // ── PostGIS: simpan sebagai Point, bukan lat/lng terpisah ──
-            'location'      => new Point((float) $request->lat, (float) $request->lng),
-            'price'         => $request->price,
-            'quota'         => $request->quota,
-            'status'        => 'pending',
+            'location' => new Point((float) $request->lat, (float) $request->lng),
+            'price' => $request->price,
+            'quota' => $request->quota,
+            'status' => 'pending',
         ]);
 
         return redirect()->route('eo.dashboard')
@@ -170,7 +170,7 @@ class EODashboardController extends Controller
     {
         $organizer = Auth::user()->eventOrganizer;
 
-        if (!$organizer || $event->event_organizer_id !== $organizer->id) {
+        if (! $organizer || $event->event_organizer_id !== $organizer->id) {
             abort(403, 'Event ini bukan milikmu.');
         }
 
@@ -178,7 +178,7 @@ class EODashboardController extends Controller
             return back()->with('error', 'Pencairan hanya bisa diajukan untuk event yang sudah disetujui.');
         }
 
-        if ($event->payouts()->whereIn('status', ['pending', 'processing', 'completed'])->exists()) {
+        if ($event->payouts()->whereIn('status', ['pending', 'processing', 'completed', 'failed'])->exists()) {
             return back()->with('error', 'Event ini sudah memiliki pengajuan pencairan.');
         }
 
@@ -198,7 +198,7 @@ class EODashboardController extends Controller
             return back()->with('error', 'Belum ada dana tertahan dari tiket paid untuk event ini.');
         }
 
-        if (!$organizer->bank_account_number) {
+        if (! $organizer->bank_channel_code || ! $organizer->bank_account_number) {
             return back()->with('error', 'Lengkapi rekening bank EO sebelum mengajukan pencairan.');
         }
 
@@ -231,7 +231,7 @@ class EODashboardController extends Controller
     {
         $organizer = Auth::user()->eventOrganizer;
 
-        if (!$organizer || $event->event_organizer_id !== $organizer->id) {
+        if (! $organizer || $event->event_organizer_id !== $organizer->id) {
             abort(403, 'Event ini bukan milikmu.');
         }
 
@@ -257,7 +257,7 @@ class EODashboardController extends Controller
     {
         $organizer = Auth::user()->eventOrganizer;
 
-        if (!$organizer || $event->event_organizer_id !== $organizer->id) {
+        if (! $organizer || $event->event_organizer_id !== $organizer->id) {
             abort(403, 'Event ini bukan milikmu.');
         }
 

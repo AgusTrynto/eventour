@@ -104,16 +104,18 @@
 
                 <div class="form-group">
                     <label>Nama Bank</label>
-                    <select name="bank_name" required>
+                    <input type="hidden" name="bank_name" id="bank-name-input" value="{{ old('bank_name') }}">
+                    <select name="bank_channel_code" id="bank-channel-select" required>
                         <option value="">Pilih bank</option>
-                        <option value="BCA" {{ old('bank_name') === 'BCA' ? 'selected' : '' }}>BCA</option>
-                        <option value="BNI" {{ old('bank_name') === 'BNI' ? 'selected' : '' }}>BNI</option>
-                        <option value="BRI" {{ old('bank_name') === 'BRI' ? 'selected' : '' }}>BRI</option>
-                        <option value="Mandiri" {{ old('bank_name') === 'Mandiri' ? 'selected' : '' }}>Mandiri</option>
-                        <option value="CIMB Niaga" {{ old('bank_name') === 'CIMB Niaga' ? 'selected' : '' }}>CIMB Niaga
-                        </option>
-                        <option value="Lainnya" {{ old('bank_name') === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                        @foreach ($bankChannels as $channelCode => $bankName)
+                            <option value="{{ $channelCode }}" data-bank-name="{{ $bankName }}" {{ old('bank_channel_code') === $channelCode ? 'selected' : '' }}>
+                                {{ $bankName }} ({{ $channelCode }})
+                            </option>
+                        @endforeach
                     </select>
+                    @error('bank_channel_code')
+                        <span class="field-error">{{ $message }}</span>
+                    @enderror
                     @error('bank_name')
                         <span class="field-error">{{ $message }}</span>
                     @enderror
@@ -229,6 +231,17 @@
             lngInput.value = lng.toFixed(7);
             coordText.textContent = `Koordinat: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         }
+
+        const bankSelect = document.getElementById('bank-channel-select');
+        const bankNameInput = document.getElementById('bank-name-input');
+
+        function syncBankName() {
+            const selected = bankSelect.options[bankSelect.selectedIndex];
+            bankNameInput.value = selected?.dataset.bankName || '';
+        }
+
+        bankSelect.addEventListener('change', syncBankName);
+        syncBankName();
     </script>
 
 </body>

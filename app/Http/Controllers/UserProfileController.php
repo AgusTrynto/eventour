@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\XenditPayoutChannels;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -12,13 +13,13 @@ class UserProfileController extends Controller
     {
         return view('user.profile', [
             'user' => Auth::user(),
-            'refundChannels' => $this->refundChannels(),
+            'refundChannels' => XenditPayoutChannels::refundChannels(),
         ]);
     }
 
     public function updateRefundDestination(Request $request)
     {
-        $channels = $this->flatRefundChannels();
+        $channels = XenditPayoutChannels::flatRefundChannels();
 
         $data = $request->validate([
             'refund_destination_channel_code' => ['required', Rule::in(array_keys($channels))],
@@ -51,50 +52,5 @@ class UserProfileController extends Controller
 
         return redirect()->route('profile.edit')
             ->with('success', 'Data tujuan refund berhasil disimpan.');
-    }
-
-    private function refundChannels(): array
-    {
-        return [
-            'bank' => [
-                'label' => 'Bank',
-                'channels' => [
-                    'ID_BCA' => 'BCA',
-                    'ID_BNI' => 'BNI',
-                    'ID_BRI' => 'BRI',
-                    'ID_MANDIRI' => 'Mandiri',
-                    'ID_BSI' => 'BSI',
-                    'ID_CIMB' => 'CIMB Niaga',
-                    'ID_DANAMON' => 'Danamon',
-                    'ID_PERMATA' => 'Permata',
-                ],
-            ],
-            'ewallet' => [
-                'label' => 'E-wallet',
-                'channels' => [
-                    'ID_DANA' => 'DANA',
-                    'ID_OVO' => 'OVO',
-                    'ID_GOPAY' => 'GoPay',
-                    'ID_LINKAJA' => 'LinkAja',
-                    'ID_SHOPEEPAY' => 'ShopeePay',
-                ],
-            ],
-        ];
-    }
-
-    private function flatRefundChannels(): array
-    {
-        $flatChannels = [];
-
-        foreach ($this->refundChannels() as $type => $group) {
-            foreach ($group['channels'] as $code => $label) {
-                $flatChannels[$code] = [
-                    'type' => $type,
-                    'label' => $label,
-                ];
-            }
-        }
-
-        return $flatChannels;
     }
 }

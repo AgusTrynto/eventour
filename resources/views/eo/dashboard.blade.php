@@ -120,6 +120,7 @@
                             <div class="bank-icon"><x-icon name="briefcase" :size="24" /></div>
                             <div>
                                 <strong>{{ $organizer->bank_name ?? 'Bank belum diisi' }}</strong>
+                                <span>{{ $organizer->bank_channel_code ?? 'Channel belum diisi' }}</span>
                                 <span>{{ $organizer->bank_account_number ?? '-' }}</span>
                                 <span>a.n. {{ $organizer->bank_account_name ?? '-' }}</span>
                             </div>
@@ -217,7 +218,7 @@
                                 <span>Gross</span>
                                 <span>Fee</span>
                                 <span>Diterima</span>
-                                <span>Bukti</span>
+                                <span>Reference</span>
                             </div>
 
                             @foreach ($recentPayouts as $payout)
@@ -230,12 +231,18 @@
                                 @endphp
                                 <div class="payout-table-row">
                                     <span class="event-name">{{ $payout->event->title ?? 'Event tidak ditemukan' }}</span>
-                                    <span><span class="status-badge {{ $statusClass }}">{{ ucfirst($payout->status) }}</span></span>
+                                    <span>
+                                        <span class="status-badge {{ $statusClass }}">
+                                            {{ $payout->status === 'processing' && $payout->xendit_payout_status ? $payout->xendit_payout_status : ucfirst($payout->status) }}
+                                        </span>
+                                    </span>
                                     <span>Rp {{ number_format($payout->gross_amount, 0, ',', '.') }}</span>
                                     <span>Rp {{ number_format($payout->platform_fee, 0, ',', '.') }}</span>
                                     <span>Rp {{ number_format($payout->net_amount, 0, ',', '.') }}</span>
                                     <span>
-                                        @if ($payout->transfer_proof)
+                                        @if ($payout->xendit_payout_reference_id)
+                                            {{ $payout->xendit_payout_reference_id }}
+                                        @elseif ($payout->transfer_proof)
                                             <a href="{{ asset('storage/' . $payout->transfer_proof) }}" target="_blank" rel="noopener" class="btn-reviews">Lihat</a>
                                         @else
                                             -

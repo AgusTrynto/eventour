@@ -236,6 +236,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/payouts/{payout}/approve', [AdminPayoutController::class, 'approve'])
         ->name('admin.payouts.approve');
 
+    Route::post('/payouts/{payout}/retry', [AdminPayoutController::class, 'retry'])
+        ->name('admin.payouts.retry');
+
     Route::post('/payouts/{payout}/reject', [AdminPayoutController::class, 'reject'])
         ->name('admin.payouts.reject');
 

@@ -49,6 +49,9 @@
                class="sidebar-link {{ request()->routeIs('admin.payouts.*') ? 'active' : '' }}">
                 <x-icon name="briefcase" :size="18" />
                 Payout
+                @if (($pendingSidebar['payouts'] ?? 0) > 0)
+                    <span class="nav-badge">{{ $pendingSidebar['payouts'] }}</span>
+                @endif
             </a>
 
             <a href="{{ route('admin.refunds.index') }}"

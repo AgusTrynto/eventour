@@ -30,6 +30,7 @@ class EventDummySeeder extends Seeder
                 'address' => 'Jl. Sudirman No. 10, Jakarta',
                 'status' => 'approved',
                 'bank_name' => 'BCA',
+                'bank_channel_code' => 'ID_BCA',
                 'bank_account_number' => '1234567890',
                 'bank_account_name' => 'EvenTour Creative Organizer',
                 'location' => new Point(-6.2088, 106.8456),

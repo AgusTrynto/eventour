@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
 use App\Models\Payout;
+use App\Services\XenditEOPayoutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdminPayoutController extends Controller
 {
@@ -17,6 +19,8 @@ class AdminPayoutController extends Controller
     // =========================================================
     public function index()
     {
+        $this->syncProcessingPayoutStatuses();
+
         $pendingPayouts = Payout::where('status', 'pending')
             ->with(['event', 'organizer.user'])
             ->latest('requested_at')
@@ -32,12 +36,17 @@ class AdminPayoutController extends Controller
             ->latest()
             ->get();
 
+        $failedPayouts = Payout::where('status', 'failed')
+            ->with(['event', 'organizer.user'])
+            ->latest()
+            ->get();
+
         $rejectedPayouts = Payout::where('status', 'rejected')
             ->with(['event', 'organizer.user'])
             ->latest('reviewed_at')
             ->get();
 
-        return view('admin.payouts', compact('pendingPayouts', 'processingPayouts', 'completedPayouts', 'rejectedPayouts'));
+        return view('admin.payouts', compact('pendingPayouts', 'processingPayouts', 'completedPayouts', 'failedPayouts', 'rejectedPayouts'));
     }
 
     // =========================================================
@@ -46,13 +55,13 @@ class AdminPayoutController extends Controller
     // =========================================================
     public function create(Event $event)
     {
-        if ($event->payouts()->whereIn('status', ['pending', 'processing', 'completed'])->exists()) {
+        if ($event->payouts()->whereIn('status', ['pending', 'processing', 'completed', 'failed'])->exists()) {
             return back()->with('error', 'Event ini sudah memiliki payout.');
         }
 
         $organizer = $event->organizer;
 
-        if (!$organizer->bank_account_number) {
+        if (! $organizer->bank_channel_code || ! $organizer->bank_account_number) {
             return back()->with('error', 'EO belum melengkapi data rekening bank.');
         }
 
@@ -63,20 +72,20 @@ class AdminPayoutController extends Controller
         }
 
         $feePercent = 5; // contoh: platform ambil 5%, sesuaikan kebijakan
-        $fee   = round($gross * ($feePercent / 100), 2);
-        $net   = $gross - $fee;
+        $fee = round($gross * ($feePercent / 100), 2);
+        $net = $gross - $fee;
 
         Payout::create([
-            'event_id'            => $event->id,
-            'event_organizer_id'  => $organizer->id,
-            'gross_amount'        => $gross,
-            'platform_fee'        => $fee,
-            'net_amount'          => $net,
-            'status'              => 'pending',
+            'event_id' => $event->id,
+            'event_organizer_id' => $organizer->id,
+            'gross_amount' => $gross,
+            'platform_fee' => $fee,
+            'net_amount' => $net,
+            'status' => 'pending',
         ]);
 
         return redirect()->route('admin.payouts.index')
-            ->with('success', "Payout untuk \"{$event->title}\" berhasil dibuat. Silakan proses transfer.");
+            ->with('success', "Payout untuk \"{$event->title}\" berhasil dibuat. Silakan review dan kirim otomatis.");
     }
 
     public function approve(Payout $payout)
@@ -85,13 +94,38 @@ class AdminPayoutController extends Controller
             return back()->with('error', 'Pengajuan ini sudah direview.');
         }
 
-        $payout->update([
-            'status' => 'processing',
-            'reviewed_at' => now(),
-            'admin_note' => null,
-        ]);
+        try {
+            app(XenditEOPayoutService::class)->queue($payout);
+        } catch (\Throwable $e) {
+            Log::error('Unable to queue EO payout', [
+                'payout_id' => $payout->id,
+                'message' => $e->getMessage(),
+            ]);
 
-        return back()->with('success', 'Pengajuan pencairan disetujui. Silakan proses transfer.');
+            return back()->with('error', 'Auto payout EO gagal dimulai: '.$e->getMessage());
+        }
+
+        return back()->with('success', 'Pengajuan pencairan disetujui. Auto payout ke rekening EO masuk antrean.');
+    }
+
+    public function retry(Payout $payout)
+    {
+        if ($payout->status !== 'failed') {
+            return back()->with('error', 'Payout EO ini tidak bisa di-retry.');
+        }
+
+        try {
+            app(XenditEOPayoutService::class)->queue($payout, true);
+        } catch (\Throwable $e) {
+            Log::error('Unable to retry EO payout', [
+                'payout_id' => $payout->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Retry auto payout EO gagal: '.$e->getMessage());
+        }
+
+        return back()->with('success', 'Auto payout EO masuk antrean ulang.');
     }
 
     public function reject(Request $request, Payout $payout)
@@ -125,19 +159,23 @@ class AdminPayoutController extends Controller
             return back()->with('error', 'Pengajuan harus disetujui sebelum ditandai selesai transfer.');
         }
 
+        if ($payout->xendit_payout_reference_id) {
+            return back()->with('error', 'Payout ini diproses otomatis lewat Xendit. Tunggu webhook atau gunakan retry jika gagal.');
+        }
+
         $request->validate([
             'transfer_proof' => ['required', 'image', 'max:4096'],
-            'admin_note'     => ['nullable', 'string', 'max:500'],
+            'admin_note' => ['nullable', 'string', 'max:500'],
         ]);
 
         $path = $request->file('transfer_proof')->store('payout-proofs', 'public');
 
         DB::transaction(function () use ($payout, $path, $request) {
             $payout->update([
-                'status'         => 'completed',
+                'status' => 'completed',
                 'transfer_proof' => $path,
-                'admin_note'     => $request->admin_note,
-                'processed_at'   => now(),
+                'admin_note' => $request->admin_note,
+                'processed_at' => now(),
             ]);
 
             // Tandai semua order terkait event ini sebagai 'disbursed'
@@ -147,5 +185,29 @@ class AdminPayoutController extends Controller
         });
 
         return back()->with('success', 'Payout berhasil ditandai selesai.');
+    }
+
+    private function syncProcessingPayoutStatuses(): void
+    {
+        $payoutService = app(XenditEOPayoutService::class);
+
+        Payout::where('status', 'processing')
+            ->where(function ($query) {
+                $query->whereNotNull('xendit_payout_id')
+                    ->orWhereNotNull('xendit_payout_reference_id');
+            })
+            ->latest('xendit_payout_requested_at')
+            ->limit(25)
+            ->get()
+            ->each(function (Payout $payout) use ($payoutService) {
+                try {
+                    $payoutService->syncStatusFromXendit($payout);
+                } catch (\Throwable $e) {
+                    Log::warning('Unable to sync EO payout status from admin page', [
+                        'payout_id' => $payout->id,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
+            });
     }
 }

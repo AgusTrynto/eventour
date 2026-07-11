@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Payout as OrganizerPayout;
 use App\Models\Ticket;
 use App\Services\RecommendationFeatureSnapshotService;
+use App\Services\XenditEOPayoutService;
 use App\Services\XenditRefundPayoutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -121,15 +123,26 @@ class XenditWebhookController extends Controller
 
         $order = $this->findPayoutOrder($payoutId, $referenceId);
 
-        if (! $order) {
-            Log::warning('Xendit payout webhook: order not found', [
-                'payout_id' => $payoutId,
-                'reference_id' => $referenceId,
-            ]);
-
-            return response()->json(['message' => 'OK']);
+        if ($order) {
+            return $this->handleRefundPayoutWebhook($order, $payoutId, $referenceId, $status, $failureCode);
         }
 
+        $organizerPayout = $this->findOrganizerPayout($payoutId, $referenceId);
+
+        if ($organizerPayout) {
+            return $this->handleOrganizerPayoutWebhook($organizerPayout, $payoutId, $referenceId, $status, $failureCode);
+        }
+
+        Log::warning('Xendit payout webhook: payout target not found', [
+            'payout_id' => $payoutId,
+            'reference_id' => $referenceId,
+        ]);
+
+        return response()->json(['message' => 'OK']);
+    }
+
+    private function handleRefundPayoutWebhook(Order $order, ?string $payoutId, ?string $referenceId, ?string $status, ?string $failureCode)
+    {
         if ($this->isStalePayoutWebhook($order, $payoutId, $referenceId)) {
             Log::info('Xendit payout webhook ignored because it belongs to an older payout attempt', [
                 'order_id' => $order->id,
@@ -166,6 +179,50 @@ class XenditWebhookController extends Controller
             'xendit_payout_id' => $payoutId ?? $order->xendit_payout_id,
             'xendit_payout_reference_id' => $referenceId ?? $order->xendit_payout_reference_id,
             'xendit_payout_status' => $status ?: $order->xendit_payout_status,
+            'xendit_payout_failure_code' => null,
+        ]);
+
+        return response()->json(['message' => 'OK']);
+    }
+
+    private function handleOrganizerPayoutWebhook(OrganizerPayout $payout, ?string $payoutId, ?string $referenceId, ?string $status, ?string $failureCode)
+    {
+        if ($this->isStaleOrganizerPayoutWebhook($payout, $payoutId, $referenceId)) {
+            Log::info('Xendit payout webhook ignored because it belongs to an older EO payout attempt', [
+                'payout_id' => $payout->id,
+                'xendit_payout_id' => $payoutId,
+                'reference_id' => $referenceId,
+            ]);
+
+            return response()->json(['message' => 'OK']);
+        }
+
+        $payoutService = app(XenditEOPayoutService::class);
+
+        if ($payoutService->isSuccessfulStatus($status)) {
+            $payoutService->markPayoutSucceeded($payout, $payoutId, $status);
+
+            Log::info("EO payout {$payout->id} marked as completed via payout webhook");
+
+            return response()->json(['message' => 'OK']);
+        }
+
+        if ($payoutService->isFailedStatus($status)) {
+            $payout->update([
+                'xendit_payout_id' => $payoutId ?? $payout->xendit_payout_id,
+                'xendit_payout_reference_id' => $referenceId ?? $payout->xendit_payout_reference_id,
+            ]);
+
+            $payoutService->markPayoutFailed($payout->refresh(), $failureCode, 'Xendit EO payout webhook failed.');
+
+            return response()->json(['message' => 'OK']);
+        }
+
+        $payout->update([
+            'status' => 'processing',
+            'xendit_payout_id' => $payoutId ?? $payout->xendit_payout_id,
+            'xendit_payout_reference_id' => $referenceId ?? $payout->xendit_payout_reference_id,
+            'xendit_payout_status' => $status ?: $payout->xendit_payout_status,
             'xendit_payout_failure_code' => null,
         ]);
 
@@ -306,6 +363,23 @@ class XenditWebhookController extends Controller
         return null;
     }
 
+    private function findOrganizerPayout(?string $payoutId, ?string $referenceId): ?OrganizerPayout
+    {
+        if ($payoutId) {
+            $payout = OrganizerPayout::where('xendit_payout_id', $payoutId)->first();
+
+            if ($payout) {
+                return $payout;
+            }
+        }
+
+        if ($referenceId) {
+            return OrganizerPayout::where('xendit_payout_reference_id', $referenceId)->first();
+        }
+
+        return null;
+    }
+
     private function isStaleRefundWebhook(Order $order, ?string $refundId, ?string $referenceId): bool
     {
         if ($refundId && $order->xendit_refund_id && $refundId !== $order->xendit_refund_id) {
@@ -326,6 +400,19 @@ class XenditWebhookController extends Controller
         }
 
         if ($referenceId && $order->xendit_payout_reference_id && $referenceId !== $order->xendit_payout_reference_id) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function isStaleOrganizerPayoutWebhook(OrganizerPayout $payout, ?string $payoutId, ?string $referenceId): bool
+    {
+        if ($payoutId && $payout->xendit_payout_id && $payoutId !== $payout->xendit_payout_id) {
+            return true;
+        }
+
+        if ($referenceId && $payout->xendit_payout_reference_id && $referenceId !== $payout->xendit_payout_reference_id) {
             return true;
         }
 
