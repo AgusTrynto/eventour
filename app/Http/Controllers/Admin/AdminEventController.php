@@ -11,7 +11,17 @@ class AdminEventController extends Controller
     public function index()
     {
         $pendingEvents  = Event::where('status', 'pending')->with('organizer.user')->latest()->get();
-        $approvedEvents = Event::where('status', 'approved')->with('organizer.user')->latest()->get();
+        $approvedEvents = Event::where('status', 'approved')
+            ->with('organizer.user')
+            ->withCount([
+                'orders as paid_orders_count' => fn ($query) => $query->where('payment_status', 'paid'),
+                'payouts as active_payouts_count' => fn ($query) => $query->whereIn('status', ['pending', 'processing', 'completed']),
+            ])
+            ->withSum([
+                'orders as paid_orders_total_amount' => fn ($query) => $query->where('payment_status', 'paid'),
+            ], 'total_amount')
+            ->latest()
+            ->get();
         $rejectedEvents = Event::where('status', 'rejected')->with('organizer.user')->latest()->get();
 
         return view('admin.events', compact('pendingEvents', 'approvedEvents', 'rejectedEvents'));

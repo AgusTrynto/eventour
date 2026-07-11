@@ -90,7 +90,7 @@
                         <span>Ingat saya</span>
                     </label>
 
-                    <a href="/forgot-password" class="forgot-link">Lupa password?</a>
+                    <a href="{{ route('password.request') }}" class="forgot-link">Lupa password?</a>
                 </div>
 
                 <button type="submit" class="btn-login">

@@ -647,17 +647,22 @@ body.admin-page {
 }
 
 /* ── EVENT TABLE ─────────────────────────────── */
-.event-table { display: flex; flex-direction: column; }
+.event-table {
+    display: flex;
+    flex-direction: column;
+    overflow-x: auto;
+}
 
 .event-table-header,
 .event-table-row {
     display: grid;
-    grid-template-columns: 2fr 1.5fr 1.2fr 1.5fr 1fr;
+    grid-template-columns: minmax(160px, 2fr) minmax(120px, 1.3fr) minmax(90px, 1fr) minmax(130px, 1.3fr) minmax(90px, .9fr) minmax(120px, 1fr) minmax(150px, 1.1fr);
     gap: 12px;
     padding: 12px 4px;
     font-size: 13px;
     align-items: center;
     border-bottom: 1px solid var(--border);
+    min-width: 960px;
 }
 
 .event-table-header {
@@ -669,6 +674,63 @@ body.admin-page {
 
 .event-table-row:last-child { border-bottom: none; }
 .event-name { font-weight: 600; }
+
+.event-money {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.event-money strong {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.event-money small,
+.muted-text {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.btn-refund-open {
+    align-items: center;
+    background: rgba(96,165,250,.08);
+    border: 1px solid rgba(96,165,250,.25);
+    border-radius: 10px;
+    color: #93c5fd;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    gap: 7px;
+    justify-content: center;
+    min-height: 36px;
+    padding: 8px 10px;
+    transition: .2s;
+    width: 100%;
+}
+
+.btn-refund-open:hover {
+    background: rgba(96,165,250,.16);
+}
+
+.btn-refund-confirm {
+    background: rgba(96,165,250,.14);
+    border: 1px solid rgba(96,165,250,.3);
+    border-radius: 10px;
+    color: #93c5fd;
+    cursor: pointer;
+    flex: 1;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 11px;
+    transition: .2s;
+}
+
+.btn-refund-confirm:hover {
+    background: rgba(96,165,250,.24);
+}
 
 /* Payout */
 .payout-form {

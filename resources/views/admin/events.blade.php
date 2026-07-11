@@ -96,14 +96,45 @@
             <span>Tanggal</span>
             <span>Lokasi</span>
             <span>Harga</span>
+            <span>Dana Paid</span>
+            <span>Refund</span>
         </div>
         @forelse ($approvedEvents as $event)
+            @php
+                $paidOrdersCount = (int) ($event->paid_orders_count ?? 0);
+                $paidAmount = (float) ($event->paid_orders_total_amount ?? 0);
+                $hasActivePayout = (int) ($event->active_payouts_count ?? 0) > 0;
+                $formattedPaidAmount = 'Rp ' . number_format($paidAmount, 0, ',', '.');
+            @endphp
             <div class="event-table-row">
                 <span class="event-name">{{ $event->title }}</span>
                 <span>{{ $event->organizer->org_name }}</span>
                 <span>{{ $event->start_date?->translatedFormat('d M Y') ?? '-' }}</span>
                 <span>{{ $event->location_name }}</span>
                 <span>{{ $event->price > 0 ? 'Rp ' . number_format($event->price, 0, ',', '.') : 'Gratis' }}</span>
+                <span class="event-money">
+                    <strong>{{ $formattedPaidAmount }}</strong>
+                    <small>{{ $paidOrdersCount }} transaksi paid</small>
+                </span>
+                <span>
+                    @if ($hasActivePayout)
+                        <span class="status-badge status-pending">Payout aktif</span>
+                    @elseif ($paidOrdersCount > 0)
+                        <button
+                            type="button"
+                            class="btn-refund-open"
+                            data-refund-url="{{ route('admin.events.refund', $event) }}"
+                            data-refund-title="{{ $event->title }}"
+                            data-refund-orders="{{ $paidOrdersCount }}"
+                            data-refund-amount="{{ $formattedPaidAmount }}"
+                        >
+                            <x-icon name="refresh" :size="15" />
+                            Simulasi Refund
+                        </button>
+                    @else
+                        <span class="muted-text">-</span>
+                    @endif
+                </span>
             </div>
         @empty
             <div class="empty-card">
@@ -139,6 +170,25 @@
     @endforelse
 </div>
 
+<div id="refund-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <h3 id="refund-modal-title">Simulasi Refund</h3>
+        <p id="refund-modal-desc" class="modal-desc"></p>
+
+        <form id="refund-form" method="POST">
+            @csrf
+            <div class="form-group">
+                <label>Alasan refund</label>
+                <textarea name="reason" rows="3" maxlength="500" placeholder="Contoh: Event dibatalkan oleh admin setelah verifikasi." required></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="refund-modal-cancel" class="btn-cancel">Batal</button>
+                <button type="submit" class="btn-refund-confirm">Jalankan Refund</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -149,6 +199,30 @@
             tab.classList.add('active');
             document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
         });
+    });
+
+    const refundModal = document.getElementById('refund-modal');
+    const refundForm = document.getElementById('refund-form');
+    const refundTitle = document.getElementById('refund-modal-title');
+    const refundDesc = document.getElementById('refund-modal-desc');
+
+    document.querySelectorAll('[data-refund-url]').forEach(button => {
+        button.addEventListener('click', () => {
+            refundForm.action = button.dataset.refundUrl;
+            refundTitle.textContent = `Simulasi Refund "${button.dataset.refundTitle}"`;
+            refundDesc.textContent = `${button.dataset.refundOrders} transaksi paid senilai ${button.dataset.refundAmount} akan ditandai refunded dan semua tiketnya dibatalkan.`;
+            refundModal.style.display = 'flex';
+        });
+    });
+
+    document.getElementById('refund-modal-cancel').addEventListener('click', () => {
+        refundModal.style.display = 'none';
+    });
+
+    refundModal.addEventListener('click', (event) => {
+        if (event.target === event.currentTarget) {
+            refundModal.style.display = 'none';
+        }
     });
 </script>
 @endpush

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\EORegisterController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\EO\EODashboardController;
@@ -37,6 +38,22 @@ Route::post('/login', [LoginController::class, 'submit'])
 Route::post('/logout', [LoginController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
+
+Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])
+    ->name('password.request')
+    ->middleware('guest');
+
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
+    ->name('password.email')
+    ->middleware('guest');
+
+Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])
+    ->name('password.reset')
+    ->middleware('guest');
+
+Route::post('/reset-password', [PasswordResetController::class, 'reset'])
+    ->name('password.update')
+    ->middleware('guest');
 
 //===== REGISTER ROUTES =====================================================================
 Route::get('/register', [RegisterController::class, 'showForm'])

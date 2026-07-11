@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
+use App\Services\RecommendationFeatureSnapshotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -39,8 +40,14 @@ class AdminRefundController extends Controller
                     'refunded_at'    => now(),
                     'refund_reason'  => $request->reason,
                 ]);
-                // TODO: integrasi payment gateway untuk transfer balik otomatis,
-                // atau proses manual oleh tim finance berdasarkan data ini.
+
+                $order->tickets()->update([
+                    'status'        => 'cancelled',
+                    'checked_in_at' => null,
+                    'checked_in_by' => null,
+                ]);
+
+                app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order->refresh());
             }
 
             // Event otomatis ditolak/dinonaktifkan agar tidak tampil lagi di map
@@ -50,7 +57,7 @@ class AdminRefundController extends Controller
             ]);
         });
 
-        return back()->with('success', "Berhasil refund {$orders->count()} transaksi untuk event \"{$event->title}\".");
+        return back()->with('success', "Simulasi refund berhasil untuk {$orders->count()} transaksi pada event \"{$event->title}\". Tiket terkait sudah dibatalkan.");
     }
 
     // =========================================================
@@ -66,12 +73,22 @@ class AdminRefundController extends Controller
             return back()->with('error', 'Order ini tidak bisa direfund (status bukan "paid").');
         }
 
-        $order->update([
-            'payment_status' => 'refunded',
-            'refunded_at'    => now(),
-            'refund_reason'  => $request->reason,
-        ]);
+        DB::transaction(function () use ($order, $request) {
+            $order->update([
+                'payment_status' => 'refunded',
+                'refunded_at'    => now(),
+                'refund_reason'  => $request->reason,
+            ]);
 
-        return back()->with('success', 'Order berhasil direfund.');
+            $order->tickets()->update([
+                'status'        => 'cancelled',
+                'checked_in_at' => null,
+                'checked_in_by' => null,
+            ]);
+
+            app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order->refresh());
+        });
+
+        return back()->with('success', 'Simulasi refund order berhasil. Tiket terkait sudah dibatalkan.');
     }
 }
