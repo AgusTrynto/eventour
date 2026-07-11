@@ -22,8 +22,30 @@
                 <p>Semua tiket yang sudah kamu beli atau klaim.</p>
             </div>
 
+            @if (session('success'))
+                <div class="ticket-alert ticket-alert-success">
+                    <x-icon name="check-circle" :size="18" />
+                    {{ session('success') }}
+                </div>
+            @endif
+            @if (session('error'))
+                <div class="ticket-alert ticket-alert-error">
+                    <x-icon name="alert-triangle" :size="18" />
+                    {{ session('error') }}
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="ticket-alert ticket-alert-error">
+                    <x-icon name="alert-triangle" :size="18" />
+                    <span>{{ $errors->first() }}</span>
+                </div>
+            @endif
+
             @forelse ($tickets as $orderId => $group)
-                @php $first = $group->first(); @endphp
+                @php
+                    $first = $group->first();
+                    $order = $first->order;
+                @endphp
 
                 <div class="order-group">
                     <div class="order-group-header">
@@ -35,9 +57,61 @@
                             </span>
                         </div>
                         <span class="order-total">
-                            Rp {{ number_format($first->order->total_amount, 0, ',', '.') }}
+                            Rp {{ number_format($order->total_amount, 0, ',', '.') }}
                         </span>
                     </div>
+
+                    @if ($order->payment_status === 'refund_manual_pending')
+                        <div class="refund-request-box">
+                            <div class="refund-request-head">
+                                <span class="refund-request-icon"><x-icon name="alert-triangle" :size="18" /></span>
+                                <div>
+                                    <strong>Refund manual membutuhkan tujuan transfer</strong>
+                                    <p>Channel pembayaran tiket ini tidak mendukung refund otomatis. Isi rekening atau e-wallet agar admin bisa mengembalikan dana.</p>
+                                </div>
+                            </div>
+
+                            <form action="{{ route('orders.refund-destination.store', $order) }}" method="POST" class="refund-destination-form">
+                                @csrf
+                                <div class="refund-form-grid">
+                                    <label>
+                                        Jenis tujuan
+                                        <select name="refund_destination_type" required>
+                                            <option value="">Pilih tujuan</option>
+                                            <option value="bank" {{ old('refund_destination_type', $order->refund_destination_type) === 'bank' ? 'selected' : '' }}>Bank</option>
+                                            <option value="ewallet" {{ old('refund_destination_type', $order->refund_destination_type) === 'ewallet' ? 'selected' : '' }}>E-wallet</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Nama bank/e-wallet
+                                        <input type="text" name="refund_destination_provider" maxlength="50" placeholder="Contoh: BCA, DANA, OVO" value="{{ old('refund_destination_provider', $order->refund_destination_provider) }}" required>
+                                    </label>
+                                    <label>
+                                        Nomor rekening/e-wallet
+                                        <input type="text" name="refund_destination_account_number" maxlength="50" placeholder="Nomor tujuan refund" value="{{ old('refund_destination_account_number', $order->refund_destination_account_number) }}" required>
+                                    </label>
+                                    <label>
+                                        Nama pemilik
+                                        <input type="text" name="refund_destination_account_name" maxlength="255" placeholder="Nama sesuai rekening/e-wallet" value="{{ old('refund_destination_account_name', $order->refund_destination_account_name) }}" required>
+                                    </label>
+                                </div>
+                                <button type="submit" class="refund-submit-btn">
+                                    <x-icon name="send" :size="16" />
+                                    Kirim Data Refund
+                                </button>
+                            </form>
+                        </div>
+                    @elseif ($order->payment_status === 'refund_manual_processing')
+                        <div class="refund-status-note processing">
+                            <x-icon name="clock" :size="17" />
+                            Data refund sudah dikirim. Admin sedang memproses transfer manual.
+                        </div>
+                    @elseif ($order->manual_refunded_at)
+                        <div class="refund-status-note completed">
+                            <x-icon name="check-circle" :size="17" />
+                            Refund manual selesai pada {{ $order->manual_refunded_at->translatedFormat('d M Y, H:i') }}.
+                        </div>
+                    @endif
 
                     <div class="ticket-mini-list">
                         @foreach ($group as $ticket)

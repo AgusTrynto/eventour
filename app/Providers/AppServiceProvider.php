@@ -2,10 +2,11 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
-use App\Models\EventOrganizer;
 use App\Models\Event;
+use App\Models\EventOrganizer;
+use App\Models\Order;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,8 +26,12 @@ class AppServiceProvider extends ServiceProvider
         // View Composer: inject pending counts ke semua view admin.*
         View::composer('admin.*', function ($view) {
             $view->with('pendingSidebar', [
-                'eo'     => EventOrganizer::where('status', 'pending')->count(),
+                'eo' => EventOrganizer::where('status', 'pending')->count(),
                 'events' => Event::where('status', 'pending')->count(),
+                'refunds' => Order::whereIn('payment_status', [
+                    'refund_manual_pending',
+                    'refund_manual_processing',
+                ])->count(),
             ]);
         });
     }

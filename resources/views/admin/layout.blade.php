@@ -50,6 +50,15 @@
                 <x-icon name="briefcase" :size="18" />
                 Payout
             </a>
+
+            <a href="{{ route('admin.refunds.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.refunds.*') ? 'active' : '' }}">
+                <x-icon name="refresh" :size="18" />
+                Refund Manual
+                @if (($pendingSidebar['refunds'] ?? 0) > 0)
+                    <span class="nav-badge">{{ $pendingSidebar['refunds'] }}</span>
+                @endif
+            </a>
         </nav>
 
         <form action="{{ route('logout') }}" method="POST" class="sidebar-bottom">

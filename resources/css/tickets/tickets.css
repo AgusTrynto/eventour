@@ -1,6 +1,7 @@
 @import '../app.css';
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -223,6 +224,156 @@ body.ticket-list-page {
     color: var(--accent);
 }
 
+.ticket-alert {
+    align-items: center;
+    border-radius: 14px;
+    display: flex;
+    font-size: 13px;
+    gap: 10px;
+    padding: 13px 15px;
+}
+
+.ticket-alert-success {
+    background: rgba(216,255,79,.08);
+    border: 1px solid rgba(216,255,79,.2);
+    color: var(--accent);
+}
+
+.ticket-alert-error {
+    background: rgba(255,80,80,.08);
+    border: 1px solid rgba(255,80,80,.2);
+    color: #ff6b6b;
+}
+
+.refund-request-box {
+    background: rgba(96,165,250,.06);
+    border: 1px solid rgba(96,165,250,.22);
+    border-radius: 16px;
+    margin-bottom: 16px;
+    padding: 16px;
+}
+
+.refund-request-head {
+    align-items: flex-start;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.refund-request-icon {
+    align-items: center;
+    background: rgba(96,165,250,.12);
+    border: 1px solid rgba(96,165,250,.28);
+    border-radius: 10px;
+    color: #93c5fd;
+    display: inline-flex;
+    flex-shrink: 0;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
+}
+
+.refund-request-head strong {
+    color: #e5e7eb;
+    display: block;
+    font-size: 14px;
+}
+
+.refund-request-head p {
+    color: #9ca3af;
+    font-size: 12px;
+    line-height: 1.5;
+    margin-top: 4px;
+}
+
+.refund-destination-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.refund-form-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr 1fr;
+}
+
+.refund-form-grid label {
+    color: #c4c4c4;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    gap: 7px;
+}
+
+.refund-form-grid input,
+.refund-form-grid select {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: white;
+    font-family: "DM Sans", sans-serif;
+    font-size: 13px;
+    min-height: 40px;
+    outline: none;
+    padding: 10px 11px;
+}
+
+.refund-form-grid select option {
+    color: #0f1117;
+}
+
+.refund-form-grid input:focus,
+.refund-form-grid select:focus {
+    border-color: rgba(96,165,250,.45);
+    box-shadow: 0 0 0 3px rgba(96,165,250,.12);
+}
+
+.refund-submit-btn {
+    align-items: center;
+    align-self: flex-start;
+    background: rgba(96,165,250,.14);
+    border: 1px solid rgba(96,165,250,.3);
+    border-radius: 10px;
+    color: #93c5fd;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    gap: 8px;
+    justify-content: center;
+    padding: 10px 14px;
+    transition: .2s;
+}
+
+.refund-submit-btn:hover {
+    background: rgba(96,165,250,.24);
+}
+
+.refund-status-note {
+    align-items: center;
+    border-radius: 12px;
+    display: flex;
+    font-size: 12px;
+    gap: 9px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    padding: 11px 12px;
+}
+
+.refund-status-note.processing {
+    background: rgba(250,204,21,.08);
+    border: 1px solid rgba(250,204,21,.2);
+    color: #fde68a;
+}
+
+.refund-status-note.completed {
+    background: rgba(74,222,128,.08);
+    border: 1px solid rgba(74,222,128,.2);
+    color: #4ade80;
+}
+
 .ticket-mini-list {
     display: flex;
     flex-direction: column;
@@ -334,4 +485,14 @@ footer {
     color: #6b7280;
     padding: 20px;
     font-size: 13px;
+}
+
+@media (max-width: 640px) {
+    .refund-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .refund-submit-btn {
+        width: 100%;
+    }
 }

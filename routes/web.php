@@ -1,27 +1,27 @@
 <?php
 
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\EORegisterController;
-use App\Http\Controllers\Auth\PasswordResetController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\LocationController;
-use App\Http\Controllers\EO\EODashboardController;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\EventMapController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminEOController;
 use App\Http\Controllers\Admin\AdminEventController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminRefundController;
+use App\Http\Controllers\Auth\EORegisterController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\XenditWebhookController;
-use App\Http\Controllers\EO\EOScanController;
-use App\Http\Controllers\TicketController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EO\EODashboardController;
 use App\Http\Controllers\EO\EOMapController;
+use App\Http\Controllers\EO\EOScanController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventMapController;
+use App\Http\Controllers\LocationController;
+use App\Http\Controllers\RefundDestinationController;
 use App\Http\Controllers\ReviewController;
-
+use App\Http\Controllers\TicketController;
+use App\Http\Controllers\XenditWebhookController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -55,7 +55,7 @@ Route::post('/reset-password', [PasswordResetController::class, 'reset'])
     ->name('password.update')
     ->middleware('guest');
 
-//===== REGISTER ROUTES =====================================================================
+// ===== REGISTER ROUTES =====================================================================
 Route::get('/register', [RegisterController::class, 'showForm'])
     ->name('register')
     ->middleware('guest');
@@ -144,6 +144,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])
         ->name('tickets.show');
 
+    Route::post('/orders/{order}/refund-destination', [RefundDestinationController::class, 'store'])
+        ->name('orders.refund-destination.store');
+
     Route::get('/reviews', [ReviewController::class, 'index'])
         ->name('reviews.index');
 
@@ -187,7 +190,6 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
 
 });
 
-
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
@@ -202,7 +204,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     Route::post('/eo/{organizer}/reject', [AdminEOController::class, 'reject'])
         ->name('admin.eo.reject');
-
 
     // (checkout & webhook moved to public routes)
 
@@ -233,6 +234,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         ->name('admin.payouts.complete');
 
     // ── Refund (kembalikan dana ke user) ─────────────
+    Route::get('/refunds', [AdminRefundController::class, 'manualIndex'])
+        ->name('admin.refunds.index');
+
+    Route::post('/orders/{order}/manual-refund/complete', [AdminRefundController::class, 'completeManualRefund'])
+        ->name('admin.refunds.complete');
+
     Route::post('/events/{event}/refund', [AdminRefundController::class, 'refundEvent'])
         ->name('admin.events.refund');
 

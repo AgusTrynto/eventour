@@ -14,12 +14,71 @@ use RuntimeException;
 use Xendit\Configuration;
 use Xendit\Refund\CreateRefund;
 use Xendit\Refund\RefundApi;
+use Xendit\XenditSdkException;
 
 class AdminRefundController extends Controller
 {
     public function __construct()
     {
         Configuration::setXenditKey(config('services.xendit.secret_key'));
+    }
+
+    public function manualIndex()
+    {
+        $awaitingDestination = Order::where('payment_status', 'refund_manual_pending')
+            ->with(['user', 'event'])
+            ->latest('refund_requested_at')
+            ->get();
+
+        $readyToTransfer = Order::where('payment_status', 'refund_manual_processing')
+            ->with(['user', 'event'])
+            ->latest('refund_destination_submitted_at')
+            ->get();
+
+        $completedManualRefunds = Order::where('payment_status', 'refunded')
+            ->whereNotNull('manual_refunded_at')
+            ->with(['user', 'event'])
+            ->latest('manual_refunded_at')
+            ->get();
+
+        return view('admin.refunds', compact(
+            'awaitingDestination',
+            'readyToTransfer',
+            'completedManualRefunds'
+        ));
+    }
+
+    public function completeManualRefund(Request $request, Order $order)
+    {
+        if ($order->payment_status !== 'refund_manual_processing') {
+            return back()->with('error', 'Refund manual ini belum siap ditandai selesai.');
+        }
+
+        if (! $order->refund_destination_submitted_at) {
+            return back()->with('error', 'User belum mengirim data tujuan refund.');
+        }
+
+        $data = $request->validate([
+            'manual_refund_proof' => ['required', 'image', 'max:4096'],
+            'manual_refund_admin_note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $path = $request->file('manual_refund_proof')->store('refund-proofs', 'public');
+
+        DB::transaction(function () use ($order, $data, $path) {
+            $order->update([
+                'payment_status' => 'refunded',
+                'refunded_at' => now(),
+                'manual_refunded_at' => now(),
+                'manual_refund_proof' => $path,
+                'manual_refund_admin_note' => $data['manual_refund_admin_note'] ?? null,
+                'xendit_refund_status' => 'MANUAL_COMPLETED',
+            ]);
+
+            app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order->refresh());
+        });
+
+        return back()->with('success', 'Refund manual berhasil ditandai selesai.');
     }
 
     // =========================================================
@@ -44,13 +103,22 @@ class AdminRefundController extends Controller
             return back()->with('error', 'Tidak ada transaksi yang bisa direfund pada event ini.');
         }
 
-        $processed = 0;
+        $xenditProcessed = 0;
+        $manualPending = 0;
+        $localRefunded = 0;
         $failed = [];
 
         foreach ($orders as $order) {
             try {
-                $this->startRefund($order, $request->reason, CreateRefund::REASON_CANCELLATION);
-                $processed++;
+                $state = $this->startRefund($order, $request->reason, CreateRefund::REASON_CANCELLATION);
+
+                if ($state === 'manual_pending') {
+                    $manualPending++;
+                } elseif ($state === 'refunded') {
+                    $localRefunded++;
+                } else {
+                    $xenditProcessed++;
+                }
             } catch (\Throwable $e) {
                 Log::error('Xendit refund request failed', [
                     'order_id' => $order->id,
@@ -62,11 +130,13 @@ class AdminRefundController extends Controller
             }
         }
 
+        $processed = $xenditProcessed + $manualPending + $localRefunded;
+
         if ($processed > 0 && empty($failed)) {
             // Event otomatis ditolak/dinonaktifkan agar tidak tampil lagi di map.
             $event->update([
                 'status' => 'rejected',
-                'reject_reason' => 'Event dibatalkan & refund Xendit diproses: '.$request->reason,
+                'reject_reason' => 'Event dibatalkan & refund diproses: '.$request->reason,
             ]);
         }
 
@@ -78,7 +148,21 @@ class AdminRefundController extends Controller
             return back()->with('error', "Refund berhasil diajukan untuk {$processed} transaksi, tapi ".count($failed).' transaksi gagal: '.implode(' | ', array_slice($failed, 0, 3)));
         }
 
-        return back()->with('success', "Refund Xendit diproses untuk {$processed} transaksi pada event \"{$event->title}\". Status final akan diperbarui lewat webhook.");
+        $details = [];
+
+        if ($xenditProcessed > 0) {
+            $details[] = "{$xenditProcessed} lewat Xendit";
+        }
+
+        if ($manualPending > 0) {
+            $details[] = "{$manualPending} perlu refund manual";
+        }
+
+        if ($localRefunded > 0) {
+            $details[] = "{$localRefunded} refund lokal";
+        }
+
+        return back()->with('success', "Refund diproses untuk {$processed} transaksi pada event \"{$event->title}\" (".implode(', ', $details).'). Tiket terkait sudah dibatalkan.');
     }
 
     // =========================================================
@@ -105,6 +189,10 @@ class AdminRefundController extends Controller
             return back()->with('error', 'Refund gagal dimulai: '.$e->getMessage());
         }
 
+        if ($state === 'manual_pending') {
+            return back()->with('success', 'Channel pembayaran order ini tidak mendukung refund otomatis Xendit. Order ditandai perlu refund manual dan tiket terkait sudah dibatalkan.');
+        }
+
         if ($state === 'refunded') {
             return back()->with('success', 'Refund order lokal berhasil. Tiket terkait sudah dibatalkan.');
         }
@@ -129,22 +217,33 @@ class AdminRefundController extends Controller
         }
 
         $referenceId = $this->refundReferenceId($order);
-        $refund = (new RefundApi)->createRefund(
-            $referenceId,
-            null,
-            new CreateRefund([
-                'invoice_id' => $order->xendit_invoice_id,
-                'reference_id' => $referenceId,
-                'amount' => (float) $order->total_amount,
-                'currency' => 'IDR',
-                'reason' => $xenditReason,
-                'metadata' => (object) [
-                    'order_id' => (string) $order->id,
-                    'event_id' => (string) $order->event_id,
-                    'admin_reason' => $adminReason,
-                ],
-            ])
-        );
+
+        try {
+            $refund = (new RefundApi)->createRefund(
+                $referenceId,
+                null,
+                new CreateRefund([
+                    'invoice_id' => $order->xendit_invoice_id,
+                    'reference_id' => $referenceId,
+                    'amount' => (float) $order->total_amount,
+                    'currency' => 'IDR',
+                    'reason' => $xenditReason,
+                    'metadata' => (object) [
+                        'order_id' => (string) $order->id,
+                        'event_id' => (string) $order->event_id,
+                        'admin_reason' => $adminReason,
+                    ],
+                ])
+            );
+        } catch (\Throwable $e) {
+            if ($this->isRefundNotSupported($e)) {
+                $this->markManualRefundRequired($order, $adminReason, $referenceId);
+
+                return 'manual_pending';
+            }
+
+            throw $e;
+        }
 
         DB::transaction(function () use ($order, $adminReason, $referenceId, $refund) {
             $order->update([
@@ -163,6 +262,23 @@ class AdminRefundController extends Controller
         });
 
         return 'pending';
+    }
+
+    private function isRefundNotSupported(\Throwable $e): bool
+    {
+        if ($e instanceof XenditSdkException) {
+            $fullError = (array) ($e->getFullError() ?? []);
+            $errorCode = $e->getErrorCode()
+                ?: ($fullError['error_code'] ?? null)
+                ?: ($fullError['errorCode'] ?? null);
+
+            if ($errorCode === 'REFUND_NOT_SUPPORTED') {
+                return true;
+            }
+        }
+
+        return str_contains(strtolower($e->getMessage()), 'refunds are not supported')
+            || str_contains(strtolower($e->getMessage()), 'refund feature is not available');
     }
 
     private function refundReferenceId(Order $order): string
@@ -190,6 +306,25 @@ class AdminRefundController extends Controller
                 'xendit_refund_reference_id' => $referenceId,
                 'xendit_refund_status' => 'SUCCEEDED',
                 'xendit_refund_failure_code' => null,
+            ]);
+
+            $this->cancelTickets($order);
+
+            app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order->refresh());
+        });
+    }
+
+    private function markManualRefundRequired(Order $order, string $adminReason, string $referenceId): void
+    {
+        DB::transaction(function () use ($order, $adminReason, $referenceId) {
+            $order->update([
+                'payment_status' => 'refund_manual_pending',
+                'refund_requested_at' => now(),
+                'refund_reason' => $adminReason,
+                'xendit_refund_id' => null,
+                'xendit_refund_reference_id' => $referenceId,
+                'xendit_refund_status' => 'NOT_SUPPORTED',
+                'xendit_refund_failure_code' => 'REFUND_NOT_SUPPORTED',
             ]);
 
             $this->cancelTickets($order);

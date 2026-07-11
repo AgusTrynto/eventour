@@ -16,6 +16,8 @@ class RecommendationFeatureSnapshotService
         'disbursed',
         'expired',
         'refund_pending',
+        'refund_manual_pending',
+        'refund_manual_processing',
         'refunded',
         'cancelled',
         'canceled',

@@ -176,7 +176,7 @@
             <span class="refund-modal-icon"><x-icon name="refresh" :size="20" /></span>
             <div>
                 <h3 id="refund-modal-title">Refund Xendit</h3>
-                <p class="refund-modal-subtitle">Dana dikembalikan lewat payment method asal.</p>
+                <p class="refund-modal-subtitle">Sistem mencoba refund otomatis via Xendit.</p>
             </div>
         </div>
 
@@ -195,7 +195,7 @@
 
         <div class="refund-warning">
             <x-icon name="alert-triangle" :size="16" />
-            <span>Status akhir refund akan diperbarui otomatis setelah webhook Xendit diterima.</span>
+            <span>Jika channel pembayaran tidak mendukung refund otomatis, order akan ditandai perlu refund manual.</span>
         </div>
 
         <form id="refund-form" method="POST">
