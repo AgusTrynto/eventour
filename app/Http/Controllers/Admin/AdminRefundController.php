@@ -283,15 +283,7 @@ class AdminRefundController extends Controller
 
     private function refundReferenceId(Order $order): string
     {
-        if ($order->xendit_refund_reference_id && $order->xendit_refund_status !== 'FAILED') {
-            return $order->xendit_refund_reference_id;
-        }
-
-        if ($order->xendit_refund_status === 'FAILED') {
-            return 'REFUND-ORDER-'.$order->id.'-'.Str::upper(Str::random(8));
-        }
-
-        return 'REFUND-ORDER-'.$order->id;
+        return 'REFUND-ORDER-'.$order->id.'-'.now()->format('YmdHis').'-'.Str::upper(Str::random(8));
     }
 
     private function markRefundSucceeded(Order $order, string $adminReason, ?string $refundId, ?string $referenceId): void
