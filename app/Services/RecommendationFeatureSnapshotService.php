@@ -15,6 +15,7 @@ class RecommendationFeatureSnapshotService
         'paid',
         'disbursed',
         'expired',
+        'refund_pending',
         'refunded',
         'cancelled',
         'canceled',
@@ -40,13 +41,13 @@ class RecommendationFeatureSnapshotService
 
     public function recordPurchasedOrder(Order $order): void
     {
-        if (!$this->isInterestOrder($order)) {
+        if (! $this->isInterestOrder($order)) {
             return;
         }
 
         $order->loadMissing(['event', 'user']);
 
-        if (!$order->event || !$order->user) {
+        if (! $order->event || ! $order->user) {
             return;
         }
 
@@ -73,7 +74,7 @@ class RecommendationFeatureSnapshotService
     {
         $ticket->loadMissing(['event', 'order', 'user']);
 
-        if (!$ticket->event || !$ticket->order || !$ticket->user || !$this->isInterestOrder($ticket->order)) {
+        if (! $ticket->event || ! $ticket->order || ! $ticket->user || ! $this->isInterestOrder($ticket->order)) {
             return null;
         }
 
@@ -102,7 +103,7 @@ class RecommendationFeatureSnapshotService
     {
         $order->loadMissing(['event', 'user']);
 
-        if (!$order->event || !$order->user || !$this->isInterestOrder($order)) {
+        if (! $order->event || ! $order->user || ! $this->isInterestOrder($order)) {
             return null;
         }
 
@@ -177,7 +178,7 @@ class RecommendationFeatureSnapshotService
 
     public function distanceFromUser(User $user, Event $event): ?float
     {
-        if (!$user->last_location || $event->lat === null || $event->lng === null) {
+        if (! $user->last_location || $event->lat === null || $event->lng === null) {
             return null;
         }
 

@@ -129,7 +129,7 @@
                             data-refund-amount="{{ $formattedPaidAmount }}"
                         >
                             <x-icon name="refresh" :size="15" />
-                            Simulasi Refund
+                            Refund Xendit
                         </button>
                     @else
                         <span class="muted-text">-</span>
@@ -171,9 +171,32 @@
 </div>
 
 <div id="refund-modal" class="modal-overlay" style="display:none;">
-    <div class="modal-box">
-        <h3 id="refund-modal-title">Simulasi Refund</h3>
+    <div class="modal-box refund-modal-box">
+        <div class="refund-modal-head">
+            <span class="refund-modal-icon"><x-icon name="refresh" :size="20" /></span>
+            <div>
+                <h3 id="refund-modal-title">Refund Xendit</h3>
+                <p class="refund-modal-subtitle">Dana dikembalikan lewat payment method asal.</p>
+            </div>
+        </div>
+
         <p id="refund-modal-desc" class="modal-desc"></p>
+
+        <div class="refund-summary">
+            <div>
+                <span>Transaksi</span>
+                <strong id="refund-modal-orders">-</strong>
+            </div>
+            <div>
+                <span>Nilai refund</span>
+                <strong id="refund-modal-amount">-</strong>
+            </div>
+        </div>
+
+        <div class="refund-warning">
+            <x-icon name="alert-triangle" :size="16" />
+            <span>Status akhir refund akan diperbarui otomatis setelah webhook Xendit diterima.</span>
+        </div>
 
         <form id="refund-form" method="POST">
             @csrf
@@ -182,8 +205,14 @@
                 <textarea name="reason" rows="3" maxlength="500" placeholder="Contoh: Event dibatalkan oleh admin setelah verifikasi." required></textarea>
             </div>
             <div class="modal-actions">
-                <button type="button" id="refund-modal-cancel" class="btn-cancel">Batal</button>
-                <button type="submit" class="btn-refund-confirm">Jalankan Refund</button>
+                <button type="button" id="refund-modal-cancel" class="btn-cancel">
+                    <x-icon name="x" :size="16" />
+                    Batal
+                </button>
+                <button type="submit" class="btn-refund-confirm">
+                    <x-icon name="send" :size="16" />
+                    Ajukan Refund
+                </button>
             </div>
         </form>
     </div>
@@ -205,14 +234,24 @@
     const refundForm = document.getElementById('refund-form');
     const refundTitle = document.getElementById('refund-modal-title');
     const refundDesc = document.getElementById('refund-modal-desc');
+    const refundOrders = document.getElementById('refund-modal-orders');
+    const refundAmount = document.getElementById('refund-modal-amount');
+    const refundSubmitButton = refundForm.querySelector('.btn-refund-confirm');
 
     document.querySelectorAll('[data-refund-url]').forEach(button => {
         button.addEventListener('click', () => {
             refundForm.action = button.dataset.refundUrl;
-            refundTitle.textContent = `Simulasi Refund "${button.dataset.refundTitle}"`;
-            refundDesc.textContent = `${button.dataset.refundOrders} transaksi paid senilai ${button.dataset.refundAmount} akan ditandai refunded dan semua tiketnya dibatalkan.`;
+            refundTitle.textContent = `Refund Xendit "${button.dataset.refundTitle}"`;
+            refundDesc.textContent = 'Refund akan diajukan ke Xendit dan tiket terkait dibatalkan agar tidak bisa digunakan.';
+            refundOrders.textContent = `${button.dataset.refundOrders} paid`;
+            refundAmount.textContent = button.dataset.refundAmount;
+            refundSubmitButton.disabled = false;
             refundModal.style.display = 'flex';
         });
+    });
+
+    refundForm.addEventListener('submit', () => {
+        refundSubmitButton.disabled = true;
     });
 
     document.getElementById('refund-modal-cancel').addEventListener('click', () => {
