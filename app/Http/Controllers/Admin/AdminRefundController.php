@@ -309,14 +309,19 @@ class AdminRefundController extends Controller
     private function markManualRefundRequired(Order $order, string $adminReason, string $referenceId): void
     {
         DB::transaction(function () use ($order, $adminReason, $referenceId) {
+            $refundDestination = $this->refundDestinationFromUserProfile($order);
+            $hasRefundDestination = ! empty($refundDestination);
+
             $order->update([
-                'payment_status' => 'refund_manual_pending',
+                'payment_status' => $hasRefundDestination ? 'refund_manual_processing' : 'refund_manual_pending',
                 'refund_requested_at' => now(),
                 'refund_reason' => $adminReason,
                 'xendit_refund_id' => null,
                 'xendit_refund_reference_id' => $referenceId,
                 'xendit_refund_status' => 'NOT_SUPPORTED',
                 'xendit_refund_failure_code' => 'REFUND_NOT_SUPPORTED',
+                'refund_destination_submitted_at' => $hasRefundDestination ? now() : null,
+                ...$refundDestination,
             ]);
 
             $this->cancelTickets($order);
@@ -332,5 +337,22 @@ class AdminRefundController extends Controller
             'checked_in_at' => null,
             'checked_in_by' => null,
         ]);
+    }
+
+    private function refundDestinationFromUserProfile(Order $order): array
+    {
+        $order->loadMissing('user');
+
+        if (! $order->user?->hasRefundDestination()) {
+            return [];
+        }
+
+        return [
+            'refund_destination_type' => $order->user->refund_destination_type,
+            'refund_destination_provider' => $order->user->refund_destination_provider,
+            'refund_destination_channel_code' => $order->user->refund_destination_channel_code,
+            'refund_destination_account_number' => $order->user->refund_destination_account_number,
+            'refund_destination_account_name' => $order->user->refund_destination_account_name,
+        ];
     }
 }

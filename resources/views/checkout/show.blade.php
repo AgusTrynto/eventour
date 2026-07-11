@@ -27,6 +27,9 @@
             @if (session('error'))
                 <div class="error-box">{{ session('error') }}</div>
             @endif
+            @if (session('success'))
+                <div class="success-box">{{ session('success') }}</div>
+            @endif
 
             <form action="{{ route('checkout.store', $event) }}" method="POST" class="checkout-form">
                 @csrf

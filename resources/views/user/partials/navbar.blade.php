@@ -31,6 +31,12 @@
             'href' => route('reviews.index'),
             'icon' => 'star',
         ],
+        [
+            'key' => 'profile',
+            'label' => 'Profil',
+            'href' => route('profile.edit'),
+            'icon' => 'user',
+        ],
     ];
 @endphp
 

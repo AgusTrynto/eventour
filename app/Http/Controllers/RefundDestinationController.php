@@ -36,6 +36,6 @@ class RefundDestinationController extends Controller
             'refund_destination_submitted_at' => now(),
         ]);
 
-        return back()->with('success', 'Data refund berhasil dikirim. Admin akan memproses transfer manual.');
+        return back()->with('success', 'Data refund berhasil dikirim. Admin akan memproses pengembalian dana.');
     }
 }
