@@ -38,6 +38,7 @@ return [
     'xendit' => [
         'secret_key' => env('XENDIT_SECRET_KEY'),
         'webhook_token' => env('XENDIT_WEBHOOK_TOKEN'),
+        'refund_auto_payout' => env('XENDIT_REFUND_AUTO_PAYOUT', true),
     ],
 
     'gemini' => [

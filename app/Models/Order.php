@@ -18,6 +18,9 @@ class Order extends Model
         'xendit_invoice_id', 'xendit_invoice_url', 'external_id',
         'xendit_refund_id', 'xendit_refund_reference_id',
         'xendit_refund_status', 'xendit_refund_failure_code',
+        'xendit_payout_id', 'xendit_payout_reference_id',
+        'xendit_payout_status', 'xendit_payout_failure_code',
+        'xendit_payout_requested_at', 'xendit_payout_completed_at',
     ];
 
     protected $casts = [
@@ -26,6 +29,8 @@ class Order extends Model
         'refund_requested_at' => 'datetime',
         'refund_destination_submitted_at' => 'datetime',
         'manual_refunded_at' => 'datetime',
+        'xendit_payout_requested_at' => 'datetime',
+        'xendit_payout_completed_at' => 'datetime',
     ];
 
     public function user()

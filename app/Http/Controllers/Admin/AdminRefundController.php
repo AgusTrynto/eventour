@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
 use App\Services\RecommendationFeatureSnapshotService;
+use App\Services\XenditRefundPayoutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -30,22 +31,52 @@ class AdminRefundController extends Controller
             ->latest('refund_requested_at')
             ->get();
 
+        $payoutProcessing = Order::where('payment_status', 'refund_payout_pending')
+            ->with(['user', 'event'])
+            ->latest('xendit_payout_requested_at')
+            ->get();
+
+        $payoutFailed = Order::where('payment_status', 'refund_payout_failed')
+            ->with(['user', 'event'])
+            ->latest('updated_at')
+            ->get();
+
         $readyToTransfer = Order::where('payment_status', 'refund_manual_processing')
             ->with(['user', 'event'])
             ->latest('refund_destination_submitted_at')
             ->get();
 
         $completedManualRefunds = Order::where('payment_status', 'refunded')
-            ->whereNotNull('manual_refunded_at')
+            ->where(function ($query) {
+                $query->whereNotNull('manual_refunded_at')
+                    ->orWhereNotNull('xendit_payout_completed_at');
+            })
             ->with(['user', 'event'])
-            ->latest('manual_refunded_at')
+            ->latest('updated_at')
             ->get();
 
         return view('admin.refunds', compact(
             'awaitingDestination',
+            'payoutProcessing',
+            'payoutFailed',
             'readyToTransfer',
             'completedManualRefunds'
         ));
+    }
+
+    public function retryRefundPayout(Order $order)
+    {
+        if (! in_array($order->payment_status, ['refund_payout_failed', 'refund_manual_processing'], true)) {
+            return back()->with('error', 'Refund payout ini tidak bisa di-retry.');
+        }
+
+        if (! $order->refund_destination_channel_code) {
+            return back()->with('error', 'Order belum punya channel payout. Minta user memperbarui data refund di profil.');
+        }
+
+        app(XenditRefundPayoutService::class)->queue($order, true);
+
+        return back()->with('success', 'Auto payout refund masuk antrean ulang.');
     }
 
     public function completeManualRefund(Request $request, Order $order)
@@ -105,6 +136,7 @@ class AdminRefundController extends Controller
 
         $xenditProcessed = 0;
         $manualPending = 0;
+        $payoutQueued = 0;
         $localRefunded = 0;
         $failed = [];
 
@@ -114,6 +146,8 @@ class AdminRefundController extends Controller
 
                 if ($state === 'manual_pending') {
                     $manualPending++;
+                } elseif ($state === 'payout_queued') {
+                    $payoutQueued++;
                 } elseif ($state === 'refunded') {
                     $localRefunded++;
                 } else {
@@ -130,7 +164,7 @@ class AdminRefundController extends Controller
             }
         }
 
-        $processed = $xenditProcessed + $manualPending + $localRefunded;
+        $processed = $xenditProcessed + $manualPending + $payoutQueued + $localRefunded;
 
         if ($processed > 0 && empty($failed)) {
             // Event otomatis ditolak/dinonaktifkan agar tidak tampil lagi di map.
@@ -155,7 +189,11 @@ class AdminRefundController extends Controller
         }
 
         if ($manualPending > 0) {
-            $details[] = "{$manualPending} perlu refund manual";
+            $details[] = "{$manualPending} menunggu data user";
+        }
+
+        if ($payoutQueued > 0) {
+            $details[] = "{$payoutQueued} auto payout";
         }
 
         if ($localRefunded > 0) {
@@ -190,7 +228,11 @@ class AdminRefundController extends Controller
         }
 
         if ($state === 'manual_pending') {
-            return back()->with('success', 'Channel pembayaran order ini tidak mendukung refund otomatis Xendit. Order ditandai perlu refund manual dan tiket terkait sudah dibatalkan.');
+            return back()->with('success', 'Channel pembayaran order ini tidak mendukung refund otomatis Xendit. Order menunggu data tujuan refund user dan tiket terkait sudah dibatalkan.');
+        }
+
+        if ($state === 'payout_queued') {
+            return back()->with('success', 'Channel pembayaran order ini tidak mendukung refund native Xendit. Auto payout ke rekening/e-wallet user sudah masuk antrean.');
         }
 
         if ($state === 'refunded') {
@@ -237,9 +279,9 @@ class AdminRefundController extends Controller
             );
         } catch (\Throwable $e) {
             if ($this->isRefundNotSupported($e)) {
-                $this->markManualRefundRequired($order, $adminReason, $referenceId);
+                $isPayoutQueued = $this->markManualRefundRequired($order, $adminReason, $referenceId);
 
-                return 'manual_pending';
+                return $isPayoutQueued ? 'payout_queued' : 'manual_pending';
             }
 
             throw $e;
@@ -306,14 +348,17 @@ class AdminRefundController extends Controller
         });
     }
 
-    private function markManualRefundRequired(Order $order, string $adminReason, string $referenceId): void
+    private function markManualRefundRequired(Order $order, string $adminReason, string $referenceId): bool
     {
-        DB::transaction(function () use ($order, $adminReason, $referenceId) {
+        $shouldQueuePayout = false;
+
+        DB::transaction(function () use ($order, $adminReason, $referenceId, &$shouldQueuePayout) {
             $refundDestination = $this->refundDestinationFromUserProfile($order);
             $hasRefundDestination = ! empty($refundDestination);
+            $shouldQueuePayout = $hasRefundDestination;
 
             $order->update([
-                'payment_status' => $hasRefundDestination ? 'refund_manual_processing' : 'refund_manual_pending',
+                'payment_status' => $hasRefundDestination ? 'refund_payout_pending' : 'refund_manual_pending',
                 'refund_requested_at' => now(),
                 'refund_reason' => $adminReason,
                 'xendit_refund_id' => null,
@@ -328,6 +373,12 @@ class AdminRefundController extends Controller
 
             app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order->refresh());
         });
+
+        if ($shouldQueuePayout) {
+            app(XenditRefundPayoutService::class)->queue($order->refresh(), true);
+        }
+
+        return $shouldQueuePayout;
     }
 
     private function cancelTickets(Order $order): void

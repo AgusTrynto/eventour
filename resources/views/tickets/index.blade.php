@@ -66,8 +66,8 @@
                             <div class="refund-request-head">
                                 <span class="refund-request-icon"><x-icon name="alert-triangle" :size="18" /></span>
                                 <div>
-                                    <strong>Refund manual membutuhkan tujuan transfer</strong>
-                                    <p>Channel pembayaran tiket ini tidak mendukung refund otomatis. Isi rekening atau e-wallet agar admin bisa mengembalikan dana.</p>
+                                    <strong>Refund membutuhkan tujuan transfer</strong>
+                                    <p>Channel pembayaran tiket ini tidak mendukung refund langsung ke metode bayar asal. Isi rekening atau e-wallet agar sistem bisa mengirim pengembalian dana.</p>
                                 </div>
                             </div>
 
@@ -104,12 +104,27 @@
                     @elseif ($order->payment_status === 'refund_manual_processing')
                         <div class="refund-status-note processing">
                             <x-icon name="clock" :size="17" />
-                            Data refund sudah dikirim. Admin sedang memproses transfer manual.
+                            Data refund sudah dikirim. Pengembalian dana sedang diproses.
+                        </div>
+                    @elseif ($order->payment_status === 'refund_payout_pending')
+                        <div class="refund-status-note processing">
+                            <x-icon name="clock" :size="17" />
+                            Refund sedang dikirim otomatis ke {{ $order->refund_destination_provider ?? 'tujuan refund' }}.
+                        </div>
+                    @elseif ($order->payment_status === 'refund_payout_failed')
+                        <div class="refund-status-note processing">
+                            <x-icon name="alert-triangle" :size="17" />
+                            Refund otomatis gagal diproses. Admin akan melakukan pengecekan ulang.
                         </div>
                     @elseif ($order->manual_refunded_at)
                         <div class="refund-status-note completed">
                             <x-icon name="check-circle" :size="17" />
-                            Refund manual selesai pada {{ $order->manual_refunded_at->translatedFormat('d M Y, H:i') }}.
+                            Refund selesai pada {{ $order->manual_refunded_at->translatedFormat('d M Y, H:i') }}.
+                        </div>
+                    @elseif ($order->xendit_payout_completed_at)
+                        <div class="refund-status-note completed">
+                            <x-icon name="check-circle" :size="17" />
+                            Refund otomatis selesai pada {{ $order->xendit_payout_completed_at->translatedFormat('d M Y, H:i') }}.
                         </div>
                     @endif
 

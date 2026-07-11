@@ -249,6 +249,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/orders/{order}/manual-refund/complete', [AdminRefundController::class, 'completeManualRefund'])
         ->name('admin.refunds.complete');
 
+    Route::post('/orders/{order}/refund-payout/retry', [AdminRefundController::class, 'retryRefundPayout'])
+        ->name('admin.refunds.payout.retry');
+
     Route::post('/events/{event}/refund', [AdminRefundController::class, 'refundEvent'])
         ->name('admin.events.refund');
 

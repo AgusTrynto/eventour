@@ -195,7 +195,7 @@
 
         <div class="refund-warning">
             <x-icon name="alert-triangle" :size="16" />
-            <span>Jika channel pembayaran tidak mendukung refund otomatis, order akan ditandai perlu refund manual.</span>
+            <span>Jika refund native Xendit tidak didukung, sistem akan mengirim auto payout ke rekening/e-wallet user.</span>
         </div>
 
         <form id="refund-form" method="POST">

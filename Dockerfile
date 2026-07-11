@@ -8,6 +8,7 @@ FROM php:8.2-apache
 # ==========================
 RUN apt-get update && apt-get install -y \
     git \
+    supervisor \
     unzip \
     zip \
     curl \
@@ -107,6 +108,8 @@ RUN php artisan route:clear || true
 EXPOSE 80
 
 # ==========================
-# Start Apache
+# Start Apache + Queue Worker
 # ==========================
-CMD ["apache2-foreground"]
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

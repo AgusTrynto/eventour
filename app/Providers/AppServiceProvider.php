@@ -31,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
                 'refunds' => Order::whereIn('payment_status', [
                     'refund_manual_pending',
                     'refund_manual_processing',
+                    'refund_payout_pending',
+                    'refund_payout_failed',
                 ])->count(),
             ]);
         });

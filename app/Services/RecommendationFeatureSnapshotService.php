@@ -18,6 +18,8 @@ class RecommendationFeatureSnapshotService
         'refund_pending',
         'refund_manual_pending',
         'refund_manual_processing',
+        'refund_payout_pending',
+        'refund_payout_failed',
         'refunded',
         'cancelled',
         'canceled',
