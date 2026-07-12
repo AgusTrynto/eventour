@@ -34,6 +34,7 @@ class DashboardController extends Controller
             ->count('event_id');
 
         $eventSearchItems = Event::where('status', 'approved')
+            ->notEnded()
             ->orderBy('start_date', 'asc')
             ->get(['id', 'title', 'category', 'start_date', 'end_date', 'location_name', 'location', 'price', 'status'])
             ->map(function (Event $event) {
