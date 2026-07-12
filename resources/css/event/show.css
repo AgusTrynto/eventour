@@ -221,6 +221,14 @@ body.event-detail-page {
     background: #1a1a22;
 }
 
+.route-info {
+    color: #9ca3af;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 12px;
+    text-align: center;
+}
+
 .leaflet-container { background: #1a1a22 !important; }
 .leaflet-popup-content-wrapper {
     background: #1e1e28;

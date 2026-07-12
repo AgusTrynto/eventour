@@ -321,10 +321,100 @@
             }[char]));
         }
 
+        function normalizeWhatsappNumber(phone) {
+            const digits = String(phone ?? '').replace(/\D/g, '');
+
+            if (!digits) return null;
+            if (digits.startsWith('0')) return `62${digits.slice(1)}`;
+            if (digits.startsWith('62')) return digits;
+            if (digits.startsWith('8')) return `62${digits}`;
+
+            return digits;
+        }
+
+        function whatsappUrlForPhone(phone, name) {
+            const normalizedPhone = normalizeWhatsappNumber(phone);
+
+            if (!normalizedPhone) return null;
+
+            const message = encodeURIComponent(`Halo ${name || 'EO'}, saya melihat kontak Anda di EvenTour.`);
+
+            return `https://wa.me/${normalizedPhone}?text=${message}`;
+        }
+
         function formatCategoryName(category) {
             return (category || 'event')
                 .replace(/_/g, ' ')
                 .replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        function categoryVisual(category) {
+            const key = String(category || 'lainnya').toLowerCase();
+            const visuals = {
+                musik: {
+                    color: '#ff5da2',
+                    icon: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+                    label: 'Musik',
+                },
+                seni: {
+                    color: '#f59e0b',
+                    icon: '<circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 5.8 2 10.5c0 3.7 3.3 6.8 7.7 7.7.7.1 1.1.8.9 1.4-.3.8.3 1.6 1.2 1.6h.2c5.5 0 10-3.8 10-8.5S17.5 2 12 2Z"/>',
+                    label: 'Seni',
+                },
+                olahraga: {
+                    color: '#22c55e',
+                    icon: '<path d="M6.5 6.5 17.5 17.5"/><path d="m21 21-2.5-2.5"/><path d="m5.5 5.5-2.5-2.5"/><path d="m18 14 3-3"/><path d="m14 18 3-3"/><path d="m6 10 4-4"/><path d="m3 13 3-3"/>',
+                    label: 'Olahraga',
+                },
+                kuliner: {
+                    color: '#ef4444',
+                    icon: '<path d="M4 3v8"/><path d="M8 3v8"/><path d="M4 7h4"/><path d="M6 11v10"/><path d="M17 3v18"/><path d="M17 3c2.2 1.4 3 3.2 3 5.5 0 2.7-1.2 4.5-3 5.5"/>',
+                    label: 'Kuliner',
+                },
+                teknologi: {
+                    color: '#60a5fa',
+                    icon: '<rect width="14" height="14" x="5" y="5" rx="2"/><path d="M9 1v4"/><path d="M15 1v4"/><path d="M9 19v4"/><path d="M15 19v4"/><path d="M1 9h4"/><path d="M1 15h4"/><path d="M19 9h4"/><path d="M19 15h4"/><path d="M9 9h6v6H9z"/>',
+                    label: 'Teknologi',
+                },
+                lainnya: {
+                    color: '#a78bfa',
+                    icon: '<path d="m12 3-1.9 5.7L4 10.5l6.1 1.8L12 18l1.9-5.7 6.1-1.8-6.1-1.8L12 3z"/><path d="M5 3v4"/><path d="M3 5h4"/><path d="M19 17v4"/><path d="M17 19h4"/>',
+                    label: 'Lainnya',
+                },
+            };
+
+            return visuals[key] || visuals.lainnya;
+        }
+
+        function categoryMarkerIcon(event, inRadius) {
+            const visual = categoryVisual(event?.category);
+            const size = inRadius ? 32 : 24;
+            const className = `category-map-marker ${inRadius ? 'in-radius' : 'out-radius'}`;
+            const html = `
+                <div
+                    class="${className}"
+                    style="--marker-color: ${visual.color};"
+                    title="${escapeHtml(visual.label)}"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >${visual.icon}</svg>
+                </div>
+            `;
+
+            return L.divIcon({
+                className: 'category-map-marker-wrap',
+                html,
+                iconSize: [size, size],
+                iconAnchor: [size / 2, size / 2],
+                popupAnchor: [0, -size / 2],
+            });
         }
 
         function formatRupiah(value) {
@@ -486,12 +576,16 @@
                 ? `Rating ${Number(eo.average_rating).toFixed(1)} / 5 (${eo.review_count} ulasan)`
                 : 'Belum ada ulasan';
             const distance = formatDistanceMeters(normalizeDistance(eo.distance));
+            const whatsappUrl = whatsappUrlForPhone(eo.phone, eo.name);
+            const phoneHtml = whatsappUrl
+                ? `<a href="${escapeHtml(whatsappUrl)}" class="popup-link popup-whatsapp" target="_blank" rel="noopener">WhatsApp ${escapeHtml(eo.phone)}</a>`
+                : `Telepon: ${escapeHtml(eo.phone || '-')}`;
 
             return `<div class="popup-event">` +
                 `<strong>${escapeHtml(eo.name)}</strong><br>` +
                 `${Number(eo.total_events)} event terdaftar<br>` +
                 `${escapeHtml(ratingText)}<br>` +
-                `Telepon: ${escapeHtml(eo.phone || '-')}` +
+                `${phoneHtml}` +
                 (distance ? `<br><small>${escapeHtml(distance)} dari kamu</small>` : '') +
             `</div>`;
         }
@@ -580,12 +674,9 @@
                 map.removeLayer(focusedSearchMarker);
             }
 
-            focusedSearchMarker = L.circleMarker(latlng, {
-                radius: 10,
-                fillColor: '#d8ff4f',
-                color: '#ffffff',
-                weight: 2.5,
-                fillOpacity: 0.95,
+            focusedSearchMarker = L.marker(latlng, {
+                icon: categoryMarkerIcon(event, true),
+                zIndexOffset: 1000,
             })
             .addTo(map)
             .bindPopup(buildEventPopup(event), popupOptions);
@@ -676,12 +767,8 @@
                 }
 
                 const inRadius = event.in_radius === true || event.in_radius === null;
-                const marker = L.circleMarker(coords, {
-                    radius: inRadius ? 9 : 6,
-                    fillColor: inRadius ? '#ff5da2' : '#9ca3af',
-                    color: inRadius ? '#ffffff' : '#d1d5db',
-                    weight: inRadius ? 2.5 : 1.5,
-                    fillOpacity: inRadius ? 0.95 : 0.6,
+                const marker = L.marker(coords, {
+                    icon: categoryMarkerIcon(event, inRadius),
                     opacity: inRadius ? 1 : 0.7,
                 })
                 .addTo(map)

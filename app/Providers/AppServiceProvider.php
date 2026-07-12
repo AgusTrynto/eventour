@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\EventOrganizer;
 use App\Models\Order;
 use App\Models\Payout;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Carbon::setLocale(config('app.locale'));
+
         // View Composer: inject pending counts ke semua view admin.*
         View::composer('admin.*', function ($view) {
             $view->with('pendingSidebar', [

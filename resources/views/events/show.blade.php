@@ -32,9 +32,9 @@
                         <div>
                             <span class="meta-label">Tanggal</span>
                             <span class="meta-value">
-                                {{ $event->start_date?->translatedFormat('d F Y, H:i') ?? '-' }} WIB
+                                {{ $event->start_date?->translatedFormat('l, d F Y, H:i') ?? '-' }} WIB
                                 @if ($event->end_date)
-                                    <br><span class="meta-sub">s/d {{ $event->end_date->translatedFormat('d F Y, H:i') }} WIB</span>
+                                    <br><span class="meta-sub">s/d {{ $event->end_date->translatedFormat('l, d F Y, H:i') }} WIB</span>
                                 @endif
                             </span>
                         </div>
@@ -78,6 +78,9 @@
                         <h2>Lokasi</h2>
                         <p class="location-name">{{ $event->location_name }}</p>
                         <div id="map" class="map-container"></div>
+                        <div id="route-info" class="route-info">
+                            {{ $userLocation ? 'Memuat jalur terdekat...' : 'Lokasi kamu belum tersedia. Perbarui lokasi dari dashboard untuk melihat jalur.' }}
+                        </div>
                     </div>
 
                 </div>
@@ -140,6 +143,71 @@
     <script>
         const eventLat = {{ $event->lat }};
         const eventLng = {{ $event->lng }};
+        const eventTitle = @json($event->title);
+        const userLocation = @json($userLocation);
+        const routeInfo = document.getElementById('route-info');
+        const motorOsrmProfile = 'cycling';
+        const normalMotorSpeedKmh = 35;
+        const routeColor = '#d8ff4f';
+
+        let routeData = null;
+        let currentRouteLine = null;
+        let currentRouteIsFallback = false;
+
+        function hasValidCoordinates(lat, lng) {
+            return Number.isFinite(lat)
+                && Number.isFinite(lng)
+                && lat >= -90
+                && lat <= 90
+                && lng >= -180
+                && lng <= 180;
+        }
+
+        function formatDistanceMeters(distance) {
+            if (!Number.isFinite(distance)) return null;
+
+            if (distance < 1000) {
+                return `${Math.round(distance)} m`;
+            }
+
+            return `${(distance / 1000).toFixed(distance < 10000 ? 1 : 0)} km`;
+        }
+
+        function formatDurationSeconds(seconds) {
+            if (!Number.isFinite(seconds)) return null;
+
+            const minutes = Math.max(1, Math.round(seconds / 60));
+
+            if (minutes < 60) {
+                return `${minutes} menit`;
+            }
+
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = minutes % 60;
+
+            return remainingMinutes ? `${hours} jam ${remainingMinutes} menit` : `${hours} jam`;
+        }
+
+        function directDistanceMeters(fromLat, fromLng, toLat, toLng) {
+            const earthRadius = 6371000;
+            const toRadians = degrees => degrees * Math.PI / 180;
+            const deltaLat = toRadians(toLat - fromLat);
+            const deltaLng = toRadians(toLng - fromLng);
+            const startLat = toRadians(fromLat);
+            const endLat = toRadians(toLat);
+            const a = Math.sin(deltaLat / 2) ** 2
+                + Math.cos(startLat) * Math.cos(endLat) * Math.sin(deltaLng / 2) ** 2;
+
+            return 2 * earthRadius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function estimatedMotorDuration(distanceMeters) {
+            if (!Number.isFinite(distanceMeters)) {
+                return null;
+            }
+
+            return (distanceMeters / 1000) / normalMotorSpeedKmh * 3600;
+        }
 
         const map = L.map('map', {
             zoomControl: true,
@@ -151,13 +219,126 @@
             maxZoom: 19,
         }).addTo(map);
 
-        L.circleMarker([eventLat, eventLng], {
+        const eventMarker = L.circleMarker([eventLat, eventLng], {
             radius: 10,
             fillColor: '#ff5da2',
             color: '#ffffff',
             weight: 2.5,
             fillOpacity: 0.95,
-        }).addTo(map).bindPopup(`<strong>{{ addslashes($event->title) }}</strong>`).openPopup();
+        }).addTo(map).bindPopup(`<strong>${eventTitle}</strong>`).openPopup();
+
+        if (userLocation && hasValidCoordinates(Number(userLocation.lat), Number(userLocation.lng))) {
+            const userLat = Number(userLocation.lat);
+            const userLng = Number(userLocation.lng);
+            const userMarker = L.circleMarker([userLat, userLng], {
+                radius: 8,
+                fillColor: '#d8ff4f',
+                color: '#0f1117',
+                weight: 2,
+                fillOpacity: 1,
+            }).addTo(map).bindPopup('Lokasi kamu');
+
+            const renderFallbackLine = () => {
+                if (currentRouteLine) {
+                    map.removeLayer(currentRouteLine);
+                }
+
+                routeData = null;
+                currentRouteIsFallback = true;
+                currentRouteLine = L.polyline([[userLat, userLng], [eventLat, eventLng]], {
+                    color: routeColor,
+                    dashArray: '8, 8',
+                    opacity: 0.78,
+                    weight: 3,
+                }).addTo(map);
+
+                map.fitBounds(L.featureGroup([userMarker, eventMarker, currentRouteLine]).getBounds(), {
+                    padding: [36, 36],
+                    maxZoom: 14,
+                });
+
+                updateRouteInfo();
+            };
+
+            const renderRoute = () => {
+                if (!routeData?.latLngs?.length) {
+                    renderFallbackLine();
+                    return;
+                }
+
+                if (currentRouteLine) {
+                    map.removeLayer(currentRouteLine);
+                }
+
+                currentRouteIsFallback = false;
+                currentRouteLine = L.polyline(routeData.latLngs, {
+                    color: routeColor,
+                    opacity: 0.92,
+                    weight: 4,
+                }).addTo(map);
+
+                map.fitBounds(currentRouteLine.getBounds(), {
+                    padding: [36, 36],
+                    maxZoom: 14,
+                });
+
+                updateRouteInfo();
+            };
+
+            const updateRouteInfo = () => {
+                const distance = routeData?.distance
+                    ?? directDistanceMeters(userLat, userLng, eventLat, eventLng);
+                const duration = estimatedMotorDuration(distance);
+                const distanceLabel = formatDistanceMeters(distance);
+                const durationLabel = formatDurationSeconds(duration);
+                const routeLabel = currentRouteIsFallback ? 'garis arah langsung' : 'jalur terdekat';
+
+                routeInfo.textContent = `Motor: ${distanceLabel ?? '-'} - ${durationLabel ?? '-'} (${routeLabel}, perkiraan kecepatan normal)`;
+            };
+
+            const routeUrl = () => {
+                const params = new URLSearchParams({
+                    alternatives: 'false',
+                    steps: 'true',
+                    annotations: 'true',
+                    overview: 'full',
+                    geometries: 'geojson',
+                });
+
+                return `https://router.project-osrm.org/route/v1/${motorOsrmProfile}/${userLng},${userLat};${eventLng},${eventLat}?${params.toString()}`;
+            };
+
+            const loadMotorRoute = () => {
+                routeData = null;
+                currentRouteIsFallback = false;
+                routeInfo.textContent = 'Motor: memuat jalur...';
+
+                fetch(routeUrl())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Gagal memuat rute.');
+
+                        return response.json();
+                    })
+                    .then(data => {
+                        const route = data.routes?.[0];
+                        const coordinates = route?.geometry?.coordinates;
+
+                        if (!Array.isArray(coordinates) || !coordinates.length) {
+                            renderFallbackLine();
+                            return;
+                        }
+
+                        routeData = {
+                            distance: route.distance,
+                            latLngs: coordinates.map(([lng, lat]) => [lat, lng]),
+                        };
+                        renderRoute();
+                    })
+                    .catch(renderFallbackLine);
+            };
+
+            loadMotorRoute();
+        }
     </script>
 
 </body>

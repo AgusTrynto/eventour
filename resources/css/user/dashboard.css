@@ -699,6 +699,45 @@ footer {
     text-align: center;
 }
 
+.category-map-marker-wrap {
+    background: transparent;
+    border: 0;
+}
+
+.category-map-marker {
+    align-items: center;
+    background: var(--marker-color);
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .34);
+    color: #0f1117;
+    display: flex;
+    font-size: 12px;
+    font-weight: 800;
+    height: 32px;
+    justify-content: center;
+    line-height: 1;
+    text-transform: uppercase;
+    width: 32px;
+}
+
+.category-map-marker.out-radius {
+    filter: grayscale(.35);
+    height: 24px;
+    opacity: .72;
+    width: 24px;
+}
+
+.category-map-marker svg {
+    height: 17px;
+    width: 17px;
+}
+
+.category-map-marker.out-radius svg {
+    height: 13px;
+    width: 13px;
+}
+
 .radius-control {
     display: flex;
     align-items: center;
@@ -1062,6 +1101,10 @@ footer {
  
 .popup-link:hover {
     text-decoration: underline;
+}
+
+.popup-whatsapp {
+    color: #60a5fa;
 }
 
 /* Search & filters */
