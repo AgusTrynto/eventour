@@ -57,7 +57,6 @@ class RecommendationFeatureSnapshotService
 
         $tickets = Ticket::query()
             ->where('order_id', $order->id)
-            ->with(['event', 'order', 'user'])
             ->get();
 
         if ($tickets->isEmpty()) {
@@ -71,7 +70,41 @@ class RecommendationFeatureSnapshotService
             ->whereNull('ticket_id')
             ->delete();
 
-        $tickets->each(fn (Ticket $ticket) => $this->recordPurchasedTicket($ticket));
+        $now = now();
+        $rows = $tickets
+            ->map(fn (Ticket $ticket) => $this->snapshotDatabasePayload(
+                $this->snapshotPayload($order->user, $order->event, $order, $ticket),
+                $now
+            ))
+            ->all();
+
+        if ($rows === []) {
+            return;
+        }
+
+        RecommendationFeatureSnapshot::upsert(
+            $rows,
+            ['ticket_id'],
+            [
+                'user_id',
+                'event_id',
+                'order_id',
+                'interaction_type',
+                'label',
+                'event_category',
+                'event_price',
+                'distance_meters',
+                'event_start_at',
+                'event_hour',
+                'event_day_of_week',
+                'is_weekend',
+                'order_quantity',
+                'paid_at',
+                'feature_vector',
+                'neural_score',
+                'updated_at',
+            ]
+        );
     }
 
     public function recordPurchasedTicket(Ticket $ticket): ?RecommendationFeatureSnapshot
@@ -177,6 +210,20 @@ class RecommendationFeatureSnapshotService
             'hour_cos' => cos($hourRadians),
             'event_day_of_week' => $dayOfWeek,
             'is_weekend' => $isWeekend ? 1.0 : 0.0,
+        ];
+    }
+
+    private function snapshotDatabasePayload(array $payload, $now): array
+    {
+        return [
+            ...$payload,
+            'is_weekend' => $payload['is_weekend'] ? 1 : 0,
+            'event_start_at' => $payload['event_start_at']?->format('Y-m-d H:i:s'),
+            'paid_at' => $payload['paid_at']?->format('Y-m-d H:i:s'),
+            'feature_vector' => json_encode($payload['feature_vector']),
+            'neural_score' => $payload['neural_score'] ?? null,
+            'created_at' => $now,
+            'updated_at' => $now,
         ];
     }
 
