@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Event;
+use App\Models\Order;
 use App\Models\RecommendationFeatureSnapshot;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -46,9 +47,13 @@ class NeuralContentRecommendationService
 
     public function recommendForUser(User $user, int $limit = 3): Collection
     {
-        $this->snapshotService->syncPurchasedTicketsForUser($user);
-
         $historySnapshots = $this->getPurchasedSnapshots($user);
+
+        if ($historySnapshots->isEmpty() && $this->userHasInterestOrders($user)) {
+            $this->snapshotService->syncPurchasedTicketsForUser($user);
+            $historySnapshots = $this->getPurchasedSnapshots($user);
+        }
+
         $purchasedEventIds = $historySnapshots
             ->pluck('event_id')
             ->unique()
@@ -129,6 +134,14 @@ class NeuralContentRecommendationService
             ->get()
             ->filter(fn (RecommendationFeatureSnapshot $snapshot) => $snapshot->event !== null)
             ->values();
+    }
+
+    private function userHasInterestOrders(User $user): bool
+    {
+        return Order::query()
+            ->where('user_id', $user->id)
+            ->whereIn('payment_status', RecommendationFeatureSnapshotService::interestPaymentStatuses())
+            ->exists();
     }
 
     private function buildUserEmbedding(Collection $historySnapshots, float $maxPrice): array

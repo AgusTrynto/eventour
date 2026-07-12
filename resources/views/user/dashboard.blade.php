@@ -182,7 +182,10 @@
                         class="recommendation-list"
                         id="recommendation-list"
                     >
-                        @include('user.partials.recommendations', ['recommendedEvents' => $recommendedEvents])
+                        <div class="empty-state">
+                            <span class="empty-state-icon"><x-icon name="ticket" :size="38" /></span>
+                            <p>Memuat rekomendasi...</p>
+                        </div>
                     </div>
                 </div>
 
@@ -200,6 +203,7 @@
         const savedLng = @json(session('user_location.lng'));
         const eventSearchItems = @json($eventSearchItems);
         const eventPriceMax = {{ $eventPriceMax }};
+        const recommendationList = document.getElementById('recommendation-list');
 
         const eventSearchInput = document.getElementById('event-search-input');
         const eventSearchClear = document.getElementById('event-search-clear');
@@ -748,6 +752,7 @@
         }
 
         syncPriceRangeLabel();
+        loadRecommendations();
 
         const defaultLat = -6.2088;
         const defaultLng = 106.8456;
@@ -916,6 +921,29 @@
                 refreshIcon.classList.remove('spinning');
             });
         });
+
+        function loadRecommendations() {
+            fetch('{{ route("dashboard.recommendations", [], false) }}', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Gagal memuat rekomendasi.');
+
+                return response.json();
+            })
+            .then(data => {
+                recommendationList.innerHTML = data.html || '';
+            })
+            .catch(() => {
+                recommendationList.innerHTML = `
+                    <div class="empty-state">
+                        <p>Rekomendasi belum bisa dimuat.</p>
+                    </div>
+                `;
+            });
+        }
     </script>
 
 </body>
