@@ -15,6 +15,11 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $userLocation = $this->userLocation($user);
+
+        if ($userLocation !== null) {
+            session(['user_location' => $userLocation]);
+        }
 
         // Jumlah tiket yang sudah dibayar oleh user (dan belum direfund)
         $ticketCount = Order::where('user_id', $user->id)
@@ -61,7 +66,8 @@ class DashboardController extends Controller
             'eventCount',
             'eventSearchItems',
             'eventPriceMax',
-            'eventPriceStep'
+            'eventPriceStep',
+            'userLocation'
         ));
     }
 
@@ -97,5 +103,37 @@ class DashboardController extends Controller
             $userVersion,
             md5($snapshotVersion),
         ]);
+    }
+
+    private function userLocation(User $user): ?array
+    {
+        if ($user->last_location) {
+            return [
+                'lat' => (float) $user->last_location->latitude,
+                'lng' => (float) $user->last_location->longitude,
+            ];
+        }
+
+        $sessionLocation = session('user_location');
+
+        if (! is_array($sessionLocation)) {
+            return null;
+        }
+
+        $lat = $sessionLocation['lat'] ?? null;
+        $lng = $sessionLocation['lng'] ?? null;
+
+        if (! is_numeric($lat) || ! is_numeric($lng)) {
+            return null;
+        }
+
+        $lat = (float) $lat;
+        $lng = (float) $lng;
+
+        if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            return null;
+        }
+
+        return compact('lat', 'lng');
     }
 }

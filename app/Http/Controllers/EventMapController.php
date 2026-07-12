@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class EventMapController extends Controller
 {
@@ -13,7 +14,7 @@ class EventMapController extends Controller
      */
     public function nearby(Request $request)
     {
-        $location = $this->locationFromRequest($request) ?? session('user_location');
+        $location = $this->locationFromRequest($request) ?? $this->storedLocation();
         $radius   = (int) $request->input('radius', 10000);
 
         $query = Event::where('status', 'approved')
@@ -53,6 +54,40 @@ class EventMapController extends Controller
         $lng = $request->query('lng');
 
         if (!is_numeric($lat) || !is_numeric($lng)) {
+            return null;
+        }
+
+        $lat = (float) $lat;
+        $lng = (float) $lng;
+
+        if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            return null;
+        }
+
+        return compact('lat', 'lng');
+    }
+
+    private function storedLocation(): ?array
+    {
+        $user = Auth::user();
+
+        if ($user?->last_location) {
+            return [
+                'lat' => (float) $user->last_location->latitude,
+                'lng' => (float) $user->last_location->longitude,
+            ];
+        }
+
+        $location = session('user_location');
+
+        if (! is_array($location)) {
+            return null;
+        }
+
+        $lat = $location['lat'] ?? null;
+        $lng = $location['lng'] ?? null;
+
+        if (! is_numeric($lat) || ! is_numeric($lng)) {
             return null;
         }
 

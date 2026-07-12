@@ -15,17 +15,24 @@ class LocationController extends Controller
             'lng' => ['required', 'numeric', 'between:-180,180'],
         ]);
 
+        $location = [
+            'lat' => (float) $request->lat,
+            'lng' => (float) $request->lng,
+        ];
+
         session([
-            'user_location' => [
-                'lat' => $request->lat,
-                'lng' => $request->lng,
-            ]
+            'user_location' => $location,
         ]);
 
         Auth::user()->update([
-            'last_location' => new Point((float) $request->lat, (float) $request->lng),
+            'last_location' => new Point($location['lat'], $location['lng']),
         ]);
 
-        return response()->json(['status' => 'ok']);
+        $request->session()->save();
+
+        return response()->json([
+            'status' => 'ok',
+            'location' => $location,
+        ]);
     }
 }

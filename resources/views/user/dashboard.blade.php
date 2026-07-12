@@ -118,7 +118,7 @@
                     <div class="stat-info">
                         <span class="stat-label">Lokasi</span>
                         <span class="stat-value" id="location-status" style="font-size:14px; padding-top:4px;">
-                            {{ session('user_location') ? 'Terdeteksi' : 'Mendeteksi...' }}
+                            {{ $userLocation ? 'Terdeteksi' : 'Mendeteksi...' }}
                         </span>
                     </div>
                     <button type="button" id="refresh-location-btn" class="btn-refresh-location" title="Perbarui lokasi">
@@ -199,8 +199,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        const savedLat = @json(session('user_location.lat'));
-        const savedLng = @json(session('user_location.lng'));
+        const savedLocation = @json($userLocation);
+        const savedLat = savedLocation?.lat;
+        const savedLng = savedLocation?.lng;
         const eventSearchItems = @json($eventSearchItems);
         const eventPriceMax = {{ $eventPriceMax }};
         const recommendationList = document.getElementById('recommendation-list');
@@ -879,7 +880,7 @@
                     const lng = pos.coords.longitude;
 
                     placeUserOnMap(lat, lng);
-                    document.getElementById('location-status').textContent = 'Terdeteksi';
+                    document.getElementById('location-status').textContent = 'Menyimpan...';
 
                     fetch('{{ route("location.save", [], false) }}', {
                         method: 'POST',
@@ -888,6 +889,21 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         },
                         body: JSON.stringify({ lat, lng }),
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Gagal menyimpan lokasi.');
+
+                        return response.json();
+                    })
+                    .then(data => {
+                        const saved = data.location || { lat, lng };
+
+                        userLat = toFiniteNumber(saved.lat);
+                        userLng = toFiniteNumber(saved.lng);
+                        document.getElementById('location-status').textContent = 'Terdeteksi';
+                    })
+                    .catch(() => {
+                        document.getElementById('location-status').textContent = 'Gagal simpan';
                     })
                     .finally(() => {
                         if (onDone) onDone();
