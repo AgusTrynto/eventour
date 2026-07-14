@@ -50,6 +50,97 @@
     </div>
 </div>
 
+@php
+    $leader = $topOrganizers->first();
+@endphp
+
+<div class="card top-eo-card">
+    <div class="top-eo-header">
+        <div>
+            <span class="section-kicker">Penjualan tiket</span>
+            <h2>EO Paling Ramai</h2>
+            <p>Ranking berdasarkan tiket sukses terjual dari order paid dan disbursed.</p>
+        </div>
+
+        @if ($leader)
+            <div class="top-eo-pill">
+                <x-icon name="star" :size="16" />
+                <span>#1 {{ $leader->org_name }}</span>
+            </div>
+        @endif
+    </div>
+
+    @if ($topOrganizers->isNotEmpty())
+        <div class="top-eo-layout">
+            <div class="top-eo-leader">
+                <div class="leader-rank">#1</div>
+                <div class="leader-main">
+                    <div class="leader-avatar">{{ strtoupper(substr($leader->org_name, 0, 1)) }}</div>
+                    <div class="leader-copy">
+                        <span>EO Teramai</span>
+                        <h3>{{ $leader->org_name }}</h3>
+                        <p>{{ $leader->user->email ?? 'Email tidak tersedia' }}</p>
+                    </div>
+                </div>
+
+                <div class="leader-metrics">
+                    <div>
+                        <span>Tiket terjual</span>
+                        <strong>{{ number_format((int) $leader->tickets_sold_count, 0, ',', '.') }}</strong>
+                    </div>
+                    <div>
+                        <span>Omzet</span>
+                        <strong>Rp {{ number_format((float) $leader->revenue_total, 0, ',', '.') }}</strong>
+                    </div>
+                </div>
+
+                @if ($leader->topSellingEvent)
+                    <div class="leader-event">
+                        <x-icon name="ticket" :size="18" />
+                        <div>
+                            <span>Event paling laku</span>
+                            <strong>{{ $leader->topSellingEvent->title }}</strong>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <div class="top-eo-list">
+                @foreach ($topOrganizers as $organizer)
+                    <div class="top-eo-row {{ $loop->first ? 'is-leader' : '' }}">
+                        <div class="top-eo-rank">{{ $loop->iteration }}</div>
+                        <div class="top-eo-row-main">
+                            <div class="top-eo-row-head">
+                                <span>{{ $organizer->org_name }}</span>
+                                <strong>{{ number_format((int) $organizer->tickets_sold_count, 0, ',', '.') }} tiket</strong>
+                            </div>
+                            <div class="top-eo-progress">
+                                <span style="width: {{ $organizer->ticket_share_percent }}%"></span>
+                            </div>
+                            <div class="top-eo-meta">
+                                <span>{{ number_format((int) $organizer->paid_orders_count, 0, ',', '.') }} transaksi</span>
+                                <span>{{ number_format((int) $organizer->approved_events_count, 0, ',', '.') }} event live</span>
+                                <span>Rp {{ number_format((float) $organizer->revenue_total, 0, ',', '.') }}</span>
+                            </div>
+                            @if ($organizer->topSellingEvent)
+                                <div class="top-eo-event-title">
+                                    Top event: {{ $organizer->topSellingEvent->title }}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @else
+        <div class="top-eo-empty">
+            <span class="empty-card-icon"><x-icon name="ticket" :size="34" /></span>
+            <strong>Belum ada penjualan tiket sukses.</strong>
+            <p>Ranking EO akan muncul setelah ada order berstatus paid atau disbursed.</p>
+        </div>
+    @endif
+</div>
+
 <div class="grid-2">
 
     {{-- Pending EO --}}

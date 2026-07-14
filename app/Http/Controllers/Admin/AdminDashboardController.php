@@ -32,6 +32,49 @@ class AdminDashboardController extends Controller
             ->take(5)
             ->get();
 
-        return view('admin.dashboard', compact('stats', 'recentPendingEO', 'recentPendingEvents'));
+        $paidStatuses = ['paid', 'disbursed'];
+
+        $topOrganizers = EventOrganizer::where('status', 'approved')
+            ->with('user')
+            ->withCount([
+                'events as approved_events_count' => fn ($query) => $query->where('status', 'approved'),
+                'orders as paid_orders_count' => fn ($query) => $query->whereIn('payment_status', $paidStatuses),
+            ])
+            ->withSum([
+                'orders as tickets_sold_count' => fn ($query) => $query->whereIn('payment_status', $paidStatuses),
+            ], 'quantity')
+            ->withSum([
+                'orders as revenue_total' => fn ($query) => $query->whereIn('payment_status', $paidStatuses),
+            ], 'total_amount')
+            ->orderByDesc('tickets_sold_count')
+            ->orderBy('org_name')
+            ->take(5)
+            ->get()
+            ->filter(fn (EventOrganizer $organizer) => (int) $organizer->tickets_sold_count > 0)
+            ->values();
+
+        if ($topOrganizers->isNotEmpty()) {
+            $topEventsByOrganizer = Event::whereIn('event_organizer_id', $topOrganizers->pluck('id'))
+                ->withSum([
+                    'orders as tickets_sold_count' => fn ($query) => $query->whereIn('payment_status', $paidStatuses),
+                ], 'quantity')
+                ->orderByDesc('tickets_sold_count')
+                ->orderByDesc('start_date')
+                ->get()
+                ->filter(fn (Event $event) => (int) $event->tickets_sold_count > 0)
+                ->groupBy('event_organizer_id')
+                ->map(fn ($events) => $events->first());
+
+            $maxTicketsSold = max(1, (int) $topOrganizers->max('tickets_sold_count'));
+
+            $topOrganizers->each(function (EventOrganizer $organizer) use ($topEventsByOrganizer, $maxTicketsSold) {
+                $ticketsSold = (int) $organizer->tickets_sold_count;
+
+                $organizer->ticket_share_percent = min(100, max(6, (int) round(($ticketsSold / $maxTicketsSold) * 100)));
+                $organizer->setRelation('topSellingEvent', $topEventsByOrganizer->get($organizer->id));
+            });
+        }
+
+        return view('admin.dashboard', compact('stats', 'recentPendingEO', 'recentPendingEvents', 'topOrganizers'));
     }
 }

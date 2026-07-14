@@ -31,6 +31,18 @@ class EventOrganizer extends Model
         return $this->hasMany(Event::class);
     }
 
+    public function orders()
+    {
+        return $this->hasManyThrough(
+            Order::class,
+            Event::class,
+            'event_organizer_id',
+            'event_id',
+            'id',
+            'id'
+        );
+    }
+
     public function payouts()
     {
         return $this->hasMany(Payout::class);
