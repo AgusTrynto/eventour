@@ -4,4 +4,5 @@
 !recommendation/
 !recommendation/ncbf_model.h5
 !recommendation/ncbf_model_meta.json
+!recommendation/ncbf_model_weights.json
 !.gitignore

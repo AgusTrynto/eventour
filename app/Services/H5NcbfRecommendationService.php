@@ -12,8 +12,7 @@ use Symfony\Component\Process\Process;
 class H5NcbfRecommendationService
 {
     public function __construct(
-        private readonly NcbfFeatureVectorService $featureVectorService,
-        private readonly RecommendationFeatureSnapshotService $snapshotService
+        private readonly NcbfFeatureVectorService $featureVectorService
     ) {
     }
 
@@ -42,13 +41,17 @@ class H5NcbfRecommendationService
             return null;
         }
 
-        $userVector = $this->featureVectorService->userProfileVector($historySnapshots, $maxPrice);
+        $modelMaxPrice = $this->modelMaxPrice($maxPrice);
+        $referencePaidAt = $this->latestPaidAt($historySnapshots);
+        $userVector = $this->featureVectorService->userProfileVector($historySnapshots, $modelMaxPrice);
         $samples = $candidates
-            ->map(function (Event $event) use ($user, $userVector, $maxPrice) {
+            ->map(function (Event $event) use ($userVector, $modelMaxPrice, $referencePaidAt) {
                 $eventVector = $this->featureVectorService->eventVector(
                     $event,
-                    $maxPrice,
-                    $this->snapshotService->distanceFromUser($user, $event)
+                    $modelMaxPrice,
+                    null,
+                    null,
+                    $referencePaidAt
                 );
 
                 return [
@@ -70,6 +73,10 @@ class H5NcbfRecommendationService
             $predictScript,
             '--model',
             $modelPath,
+        ], null, [
+            'PYTHONHASHSEED' => '0',
+            'PYTHONIOENCODING' => 'utf-8',
+            'TF_CPP_MIN_LOG_LEVEL' => '2',
         ]);
 
         $process->setInput($payload);
@@ -104,5 +111,32 @@ class H5NcbfRecommendationService
     private function isEnabled(): bool
     {
         return (bool) config('recommendation.h5.enabled', true);
+    }
+
+    private function modelMaxPrice(float $fallback): float
+    {
+        $metadataPath = (string) config('recommendation.h5.metadata_path');
+
+        if (!is_file($metadataPath)) {
+            return max(1.0, $fallback);
+        }
+
+        $metadata = json_decode((string) file_get_contents($metadataPath), true);
+        $maxPrice = is_array($metadata) ? ($metadata['max_price'] ?? null) : null;
+
+        if (!is_numeric($maxPrice) || (float) $maxPrice <= 0.0) {
+            return max(1.0, $fallback);
+        }
+
+        return (float) $maxPrice;
+    }
+
+    private function latestPaidAt(Collection $historySnapshots): ?\DateTimeInterface
+    {
+        return $historySnapshots
+            ->map(fn (RecommendationFeatureSnapshot $snapshot) => $snapshot->paid_at ?? $snapshot->order?->paid_at)
+            ->filter(fn ($paidAt) => $paidAt instanceof \DateTimeInterface)
+            ->sortByDesc(fn (\DateTimeInterface $paidAt) => $paidAt->getTimestamp())
+            ->first();
     }
 }

@@ -45,7 +45,7 @@ class NeuralContentRecommendationService
     ) {
     }
 
-    public function recommendForUser(User $user, int $limit = 3): Collection
+    public function recommendForUser(User $user, ?int $limit = 3): Collection
     {
         $historySnapshots = $this->getPurchasedSnapshots($user);
 
@@ -100,7 +100,7 @@ class NeuralContentRecommendationService
                     );
                 })
                 ->sortByDesc('score')
-                ->take($limit)
+                ->when($limit !== null, fn (Collection $recommendations) => $recommendations->take($limit))
                 ->values();
         }
 
@@ -117,7 +117,7 @@ class NeuralContentRecommendationService
                 return $this->formatRecommendation($event, $score, $features);
             })
             ->sortByDesc('score')
-            ->take($limit)
+            ->when($limit !== null, fn (Collection $recommendations) => $recommendations->take($limit))
             ->values();
     }
 
@@ -173,7 +173,7 @@ class NeuralContentRecommendationService
         );
     }
 
-    private function coldStartRecommendations(User $user, Collection $candidates, int $limit): Collection
+    private function coldStartRecommendations(User $user, Collection $candidates, ?int $limit): Collection
     {
         $maxPrice = $this->maxPrice($candidates);
 
@@ -198,7 +198,7 @@ class NeuralContentRecommendationService
                 return $this->formatRecommendation($event, max(0.0, min(1.0, $score)), $features);
             })
             ->sortByDesc('score')
-            ->take($limit)
+            ->when($limit !== null, fn (Collection $recommendations) => $recommendations->take($limit))
             ->values();
     }
 
@@ -318,7 +318,7 @@ class NeuralContentRecommendationService
         return [
             'event' => $event,
             'score' => $score,
-            'score_label' => number_format($score * 100, 0) . '% cocok',
+            'score_label' => number_format($score * 100, 2, ',', '.') . '% cocok',
             'category_label' => $this->categoryLabel($features['category']),
             'time_label' => $this->timeLabel($features['hour']),
             'model_label' => $modelLabel,

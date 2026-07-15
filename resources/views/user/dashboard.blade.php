@@ -172,8 +172,8 @@
                 <div class="card">
                     <div class="card-header">
                         <h2>Rekomendasi untuk Anda</h2>
-                        <a href="#event-search" class="card-link">
-                            Lihat semua
+                        <a href="{{ route('dashboard.events') }}" class="card-link">
+                            Lihat selengkapnya
                             <x-icon name="arrow-right" size="14" />
                         </a>
                     </div>
@@ -1047,6 +1047,37 @@
                 `;
             });
         }
+
+        recommendationList.addEventListener('click', (event) => {
+            if (event.target.closest('a, button')) return;
+
+            const item = event.target.closest('[data-recommendation-event-id]');
+            if (!item) return;
+
+            const eventId = item.dataset.recommendationEventId;
+            if (currentMode !== 'events') {
+                setMapMode('events', { focusEventId: eventId, openNearest: false });
+                return;
+            }
+
+            focusEventOnMap(eventId);
+        });
+
+        recommendationList.addEventListener('keydown', (event) => {
+            if (!['Enter', ' '].includes(event.key)) return;
+
+            const item = event.target.closest('[data-recommendation-event-id]');
+            if (!item) return;
+
+            event.preventDefault();
+            const eventId = item.dataset.recommendationEventId;
+            if (currentMode !== 'events') {
+                setMapMode('events', { focusEventId: eventId, openNearest: false });
+                return;
+            }
+
+            focusEventOnMap(eventId);
+        });
     </script>
 
 </body>

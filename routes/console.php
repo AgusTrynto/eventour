@@ -60,6 +60,11 @@ Artisan::command('recommendations:export-ncbf-training {--output=} {--negatives=
         $user = $userSnapshots->first()->user;
         $userVector = $featureVectors->userProfileVector($userSnapshots, $maxPrice);
         $purchasedEventIds = $userSnapshots->pluck('event_id')->unique()->values();
+        $referencePaidAt = $userSnapshots
+            ->map(fn (RecommendationFeatureSnapshot $snapshot) => $snapshot->paid_at ?? $snapshot->order?->paid_at)
+            ->filter(fn ($paidAt) => $paidAt instanceof \DateTimeInterface)
+            ->sortByDesc(fn (\DateTimeInterface $paidAt) => $paidAt->getTimestamp())
+            ->first();
 
         foreach ($userSnapshots as $snapshot) {
             $eventVector = $featureVectors->snapshotVector($snapshot, $maxPrice);
@@ -81,7 +86,9 @@ Artisan::command('recommendations:export-ncbf-training {--output=} {--negatives=
             $eventVector = $featureVectors->eventVector(
                 $event,
                 $maxPrice,
-                $snapshotService->distanceFromUser($user, $event)
+                null,
+                null,
+                $referencePaidAt
             );
 
             $samples[] = [

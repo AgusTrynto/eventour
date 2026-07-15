@@ -7,6 +7,8 @@ use App\Models\Order;
 use App\Models\RecommendationFeatureSnapshot;
 use App\Models\User;
 use App\Services\NeuralContentRecommendationService;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -87,10 +89,34 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function recommendationList(Request $request, NeuralContentRecommendationService $recommendationService)
+    {
+        $user = Auth::user();
+        $perPage = 10;
+        $page = max(1, (int) $request->query('page', 1));
+        $recommendations = $recommendationService->recommendForUser($user, null)->values();
+        $recommendedEvents = new LengthAwarePaginator(
+            $recommendations->forPage($page, $perPage)->values(),
+            $recommendations->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+
+        return view('user.recommendations', compact('user', 'recommendedEvents'));
+    }
+
     private function recommendationCacheKey(User $user): string
     {
         $modelPath = (string) config('recommendation.h5.model_path');
+        $metadataPath = (string) config('recommendation.h5.metadata_path');
+        $weightsPath = preg_replace('/\.h5$/', '_weights.json', $modelPath) ?: '';
         $modelVersion = is_file($modelPath) ? (string) filemtime($modelPath) : 'no-model';
+        $metadataVersion = is_file($metadataPath) ? (string) filemtime($metadataPath) : 'no-metadata';
+        $weightsVersion = is_file($weightsPath) ? (string) filemtime($weightsPath) : 'no-weights';
         $userVersion = (string) ($user->updated_at?->timestamp ?? 'no-user-update');
         $snapshotVersion = (string) (
             RecommendationFeatureSnapshot::query()
@@ -101,6 +127,8 @@ class DashboardController extends Controller
         return 'dashboard:recommendations:' . implode(':', [
             $user->id,
             $modelVersion,
+            $metadataVersion,
+            $weightsVersion,
             $userVersion,
             md5($snapshotVersion),
         ]);

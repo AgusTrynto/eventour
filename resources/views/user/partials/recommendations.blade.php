@@ -1,7 +1,13 @@
 @forelse ($recommendedEvents as $recommendation)
     @php($event = $recommendation['event'])
 
-    <div class="rec-item">
+    <div
+        class="rec-item rec-map-focus"
+        role="button"
+        tabindex="0"
+        data-recommendation-event-id="{{ $event->id }}"
+        aria-label="Tampilkan {{ $event->title }} di peta"
+    >
         <div class="rec-icon"><x-icon name="ticket" :size="22" /></div>
         <div class="rec-info">
             <div class="rec-title-row">
@@ -21,7 +27,7 @@
         </div>
         <div class="rec-actions">
             <span class="rec-score">{{ $recommendation['score_label'] }}</span>
-            <a href="{{ route('events.show', $event) }}" class="rec-btn">Lihat</a>
+            <a href="{{ route('events.show', $event) }}" class="rec-btn" data-rec-detail-link>Lihat</a>
         </div>
     </div>
 @empty

@@ -1,13 +1,15 @@
 {
-  "created_at": "2026-07-12T07:16:56.778157+00:00",
+  "created_at": "2026-07-14T12:28:08.815177+00:00",
   "input_dim": 100,
   "event_vector_dim": 25,
-  "max_price": 192500,
-  "positive_count": 1142,
-  "negative_count": 3426,
-  "final_train_loss": 0.05121004953980446,
-  "final_train_accuracy": 0.9805745482444763,
-  "validation_loss": 0.05716072395443916,
-  "validation_accuracy": 0.9802847504615784,
-  "validation_auc": 0.9963345527648926
+  "max_price": 74246.46,
+  "positive_count": 10000,
+  "negative_count": 30000,
+  "total_samples": 40000,
+  "events": 9569,
+  "users": 200,
+  "validation_loss": 0.53724604845047,
+  "validation_accuracy": 0.7521250247955322,
+  "validation_auc": 0.6429413557052612,
+  "epochs_trained": 54
 }

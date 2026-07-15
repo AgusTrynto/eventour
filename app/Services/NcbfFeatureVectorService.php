@@ -9,7 +9,9 @@ use Illuminate\Support\Collection;
 class NcbfFeatureVectorService
 {
     private const TEXT_VECTOR_SIZE = 12;
-    private const DISTANCE_CLAMP_METERS = 100000.0;
+    private const DEFAULT_HOUR = 12;
+    private const DEFAULT_DURATION_LEVEL = 0.25;
+    private const DEFAULT_DISTANCE_CLOSENESS = 0.5;
 
     private const CATEGORIES = [
         'musik',
@@ -74,50 +76,39 @@ class NcbfFeatureVectorService
         return $this->eventVector(
             $event,
             $maxPrice,
-            $snapshot->distance_meters !== null ? (float) $snapshot->distance_meters : null,
             $this->normalizeCategory($snapshot->event_category ?? $event->category),
             (float) ($snapshot->event_price ?? $event->price),
-            (int) ($snapshot->event_hour ?? $event->start_date?->format('G') ?? 12),
-            (bool) ($snapshot->is_weekend ?? ($event->start_date && $event->start_date->isWeekend()))
+            $snapshot->paid_at ?? $snapshot->order?->paid_at
         );
     }
 
     public function eventVector(
         Event $event,
         float $maxPrice,
-        ?float $distanceMeters = null,
         ?string $category = null,
         ?float $price = null,
-        ?int $hour = null,
-        ?bool $isWeekend = null
+        $paidAt = null
     ): array {
         $category = $this->normalizeCategory($category ?? $event->category);
         $price = $price ?? (float) $event->price;
-        $hour = $hour ?? (int) ($event->start_date?->format('G') ?? 12);
-        $isWeekend = $isWeekend ?? (bool) ($event->start_date && $event->start_date->isWeekend());
+        $hour = $this->hourFromPaidAt($paidAt);
+        $isWeekend = $this->isWeekendPaidAt($paidAt);
 
         $categoryVector = array_fill(0, count(self::CATEGORIES), 0.0);
         $categoryVector[array_search($category, self::CATEGORIES, true)] = 1.0;
 
         $hourRadians = (2 * M_PI * $hour) / 24;
         $priceLevel = $maxPrice > 0 ? min($price / $maxPrice, 1.0) : 0.0;
-        $durationHours = $event->end_date && $event->start_date
-            ? max(0.0, $event->start_date->diffInMinutes($event->end_date) / 60)
-            : 2.0;
-        $durationLevel = min($durationHours / 8.0, 1.0);
-        $distanceCloseness = $distanceMeters === null
-            ? 0.5
-            : max(0.0, 1.0 - min($distanceMeters, self::DISTANCE_CLAMP_METERS) / self::DISTANCE_CLAMP_METERS);
 
         return array_merge($categoryVector, [
-            ...$this->contentVector($event),
+            ...$this->contentVector($event, $category),
             sin($hourRadians),
             cos($hourRadians),
             $isWeekend ? 1.0 : 0.0,
             $priceLevel,
             1.0 - $priceLevel,
-            $durationLevel,
-            $distanceCloseness,
+            self::DEFAULT_DURATION_LEVEL,
+            self::DEFAULT_DISTANCE_CLOSENESS,
         ]);
     }
 
@@ -145,24 +136,23 @@ class NcbfFeatureVectorService
         return $this->eventVectorSize() * 4;
     }
 
-    private function contentVector(Event $event): array
+    private function contentVector(Event $event, string $category): array
     {
         $vector = array_fill(0, self::TEXT_VECTOR_SIZE, 0.0);
 
-        foreach ($this->contentTokens($event) as $token) {
-            $slot = hexdec(substr(hash('crc32b', $token), -4)) % self::TEXT_VECTOR_SIZE;
+        foreach ($this->contentTokens($event, $category) as $token) {
+            $slot = (int) (hexdec(hash('crc32b', $token)) % self::TEXT_VECTOR_SIZE);
             $vector[$slot] += 1.0 + (min(strlen($token), 12) / 24);
         }
 
         return $this->normalizeVector(array_map(fn (float $value) => log(1 + $value), $vector));
     }
 
-    private function contentTokens(Event $event): array
+    private function contentTokens(Event $event, string $category): array
     {
         $text = strtolower(trim(implode(' ', array_filter([
             $event->title,
-            $event->description,
-            $event->category,
+            $category,
         ]))));
 
         $normalized = preg_replace('/[^a-z0-9]+/', ' ', $text) ?? '';
@@ -202,5 +192,23 @@ class NcbfFeatureVectorService
         $days = max(0, $paidAt->diffInDays(now()));
 
         return max(0.35, 1.0 - min($days, 120) / 180);
+    }
+
+    private function hourFromPaidAt($paidAt): int
+    {
+        if ($paidAt instanceof \DateTimeInterface) {
+            return (int) $paidAt->format('G');
+        }
+
+        return self::DEFAULT_HOUR;
+    }
+
+    private function isWeekendPaidAt($paidAt): bool
+    {
+        if (!$paidAt instanceof \DateTimeInterface) {
+            return false;
+        }
+
+        return (int) $paidAt->format('N') >= 6;
     }
 }

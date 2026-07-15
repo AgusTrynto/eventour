@@ -86,6 +86,29 @@ class EODashboardController extends Controller
             ->take(8)
             ->get();
 
+        $topSpenders = Order::whereIn('event_id', $eventIds)
+            ->whereIn('payment_status', $paidStatuses)
+            ->select('user_id')
+            ->selectRaw('SUM(total_amount) as total_spent')
+            ->selectRaw('SUM(quantity) as tickets_bought')
+            ->selectRaw('COUNT(*) as orders_count')
+            ->with('user')
+            ->groupBy('user_id')
+            ->orderByDesc('total_spent')
+            ->orderByDesc('tickets_bought')
+            ->take(5)
+            ->get();
+
+        if ($topSpenders->isNotEmpty()) {
+            $maxSpent = max(1, (float) $topSpenders->max('total_spent'));
+
+            $topSpenders->each(function (Order $spender) use ($maxSpent) {
+                $totalSpent = (float) $spender->total_spent;
+
+                $spender->spend_share_percent = min(100, max(7, (int) round(($totalSpent / $maxSpent) * 100)));
+            });
+        }
+
         return view('eo.dashboard', compact(
             'organizer',
             'approvedEvents',
@@ -97,7 +120,8 @@ class EODashboardController extends Controller
             'processingPayoutAmount',
             'completedPayoutAmount',
             'readyForPayoutEvents',
-            'recentPayouts'
+            'recentPayouts',
+            'topSpenders'
         ));
     }
 

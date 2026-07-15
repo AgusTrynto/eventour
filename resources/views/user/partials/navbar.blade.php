@@ -16,7 +16,7 @@
         [
             'key' => 'events',
             'label' => 'Event',
-            'href' => route('dashboard') . '#event-map',
+            'href' => route('dashboard.events'),
             'icon' => 'calendar',
         ],
         [
