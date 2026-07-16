@@ -9,9 +9,27 @@
     $navItems = [
         [
             'key' => 'dashboard',
-            'label' => 'Dashboard EO',
+            'label' => 'Dashboard',
             'href' => route('eo.dashboard'),
             'icon' => 'bar-chart',
+        ],
+        [
+            'key' => 'events',
+            'label' => 'Event Saya',
+            'href' => route('eo.events.index'),
+            'icon' => 'calendar',
+        ],
+        [
+            'key' => 'payouts',
+            'label' => 'Payout',
+            'href' => route('eo.payouts.index'),
+            'icon' => 'briefcase',
+        ],
+        [
+            'key' => 'customers',
+            'label' => 'Pembeli',
+            'href' => route('eo.customers.index'),
+            'icon' => 'users',
         ],
         [
             'key' => 'create',
@@ -21,7 +39,7 @@
         ],
         [
             'key' => 'scan',
-            'label' => 'Scan Tiket',
+            'label' => 'Scan',
             'href' => route('eo.scan'),
             'icon' => 'camera',
         ],
@@ -104,7 +122,6 @@
 </aside>
 
 <div class="eo-page-loader" data-page-loader aria-hidden="true">
-    <div class="loader-spinner" aria-hidden="true"></div>
     <div class="loader-bar" aria-hidden="true"></div>
 </div>
 

@@ -21,15 +21,73 @@ class EODashboardController extends Controller
     // =========================================================
     public function index()
     {
-        $organizer = Auth::user()->eventOrganizer;
-
-        if (! $organizer) {
-            abort(403, 'Akun ini tidak terdaftar sebagai Event Organizer.');
-        }
+        $organizer = $this->currentOrganizer();
 
         if ($organizer->status !== 'approved') {
             return view('eo.status', compact('organizer'));
         }
+
+        $eventIds = $organizer->events()->pluck('id');
+        $paidStatuses = ['paid', 'disbursed'];
+
+        $approvedEventCount = $organizer->events()
+            ->where('status', 'approved')
+            ->count();
+
+        $pendingEventCount = $organizer->events()
+            ->where('status', 'pending')
+            ->count();
+
+        $rejectedEventCount = $organizer->events()
+            ->where('status', 'rejected')
+            ->count();
+
+        $ticketSoldCount = Order::whereIn('event_id', $eventIds)
+            ->whereIn('payment_status', $paidStatuses)
+            ->sum('quantity');
+
+        $grossRevenue = Order::whereIn('event_id', $eventIds)
+            ->whereIn('payment_status', $paidStatuses)
+            ->sum('total_amount');
+
+        $escrowAmount = Order::whereIn('event_id', $eventIds)
+            ->where('payment_status', 'paid')
+            ->sum('total_amount');
+
+        $processingPayoutAmount = $organizer->payouts()
+            ->whereIn('status', ['pending', 'processing'])
+            ->sum('net_amount');
+
+        $completedPayoutAmount = $organizer->payouts()
+            ->where('status', 'completed')
+            ->sum('net_amount');
+
+        $readyForPayoutCount = $organizer->events()
+            ->where('status', 'approved')
+            ->whereDoesntHave('payouts', function ($query) {
+                $query->whereIn('status', ['pending', 'processing', 'completed', 'failed']);
+            })
+            ->get()
+            ->filter(fn ($event) => $event->escrow_amount > 0)
+            ->count();
+
+        return view('eo.dashboard', compact(
+            'organizer',
+            'approvedEventCount',
+            'pendingEventCount',
+            'rejectedEventCount',
+            'ticketSoldCount',
+            'grossRevenue',
+            'escrowAmount',
+            'processingPayoutAmount',
+            'completedPayoutAmount',
+            'readyForPayoutCount'
+        ));
+    }
+
+    public function events()
+    {
+        $organizer = $this->approvedOrganizer();
 
         $approvedEvents = $organizer->events()
             ->where('status', 'approved')
@@ -47,13 +105,20 @@ class EODashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        return view('eo.events', compact(
+            'organizer',
+            'approvedEvents',
+            'pendingEvents',
+            'rejectedEvents'
+        ));
+    }
+
+    public function payouts()
+    {
+        $organizer = $this->approvedOrganizer();
+
         $eventIds = $organizer->events()->pluck('id');
-
         $paidStatuses = ['paid', 'disbursed'];
-
-        $ticketSoldCount = Order::whereIn('event_id', $eventIds)
-            ->whereIn('payment_status', $paidStatuses)
-            ->sum('quantity');
 
         $grossRevenue = Order::whereIn('event_id', $eventIds)
             ->whereIn('payment_status', $paidStatuses)
@@ -86,6 +151,32 @@ class EODashboardController extends Controller
             ->take(8)
             ->get();
 
+        return view('eo.payouts', compact(
+            'organizer',
+            'grossRevenue',
+            'escrowAmount',
+            'processingPayoutAmount',
+            'completedPayoutAmount',
+            'readyForPayoutEvents',
+            'recentPayouts'
+        ));
+    }
+
+    public function customers()
+    {
+        $organizer = $this->approvedOrganizer();
+
+        $eventIds = $organizer->events()->pluck('id');
+        $paidStatuses = ['paid', 'disbursed'];
+
+        $ticketSoldCount = Order::whereIn('event_id', $eventIds)
+            ->whereIn('payment_status', $paidStatuses)
+            ->sum('quantity');
+
+        $grossRevenue = Order::whereIn('event_id', $eventIds)
+            ->whereIn('payment_status', $paidStatuses)
+            ->sum('total_amount');
+
         $topSpenders = Order::whereIn('event_id', $eventIds)
             ->whereIn('payment_status', $paidStatuses)
             ->select('user_id')
@@ -109,18 +200,10 @@ class EODashboardController extends Controller
             });
         }
 
-        return view('eo.dashboard', compact(
+        return view('eo.customers', compact(
             'organizer',
-            'approvedEvents',
-            'pendingEvents',
-            'rejectedEvents',
             'ticketSoldCount',
             'grossRevenue',
-            'escrowAmount',
-            'processingPayoutAmount',
-            'completedPayoutAmount',
-            'readyForPayoutEvents',
-            'recentPayouts',
             'topSpenders'
         ));
     }
@@ -186,7 +269,7 @@ class EODashboardController extends Controller
             'status' => 'pending',
         ]);
 
-        return redirect()->route('eo.dashboard')
+        return redirect()->route('eo.events.index')
             ->with('success', 'Event berhasil diajukan! Menunggu persetujuan admin.');
     }
 
@@ -316,5 +399,27 @@ class EODashboardController extends Controller
         );
 
         return back()->with('success', 'Kesimpulan AI berhasil diperbarui.');
+    }
+
+    private function currentOrganizer()
+    {
+        $organizer = Auth::user()->eventOrganizer;
+
+        if (! $organizer) {
+            abort(403, 'Akun ini tidak terdaftar sebagai Event Organizer.');
+        }
+
+        return $organizer;
+    }
+
+    private function approvedOrganizer()
+    {
+        $organizer = $this->currentOrganizer();
+
+        if ($organizer->status !== 'approved') {
+            abort(403, 'Akun EO kamu belum disetujui.');
+        }
+
+        return $organizer;
     }
 }

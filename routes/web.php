@@ -179,11 +179,20 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
     Route::get('/dashboard', [EODashboardController::class, 'index'])
         ->name('eo.dashboard');
 
+    Route::get('/events', [EODashboardController::class, 'events'])
+        ->name('eo.events.index');
+
     Route::get('/events/create', [EODashboardController::class, 'createEvent'])
         ->name('eo.events.create');
 
     Route::post('/events', [EODashboardController::class, 'storeEvent'])
         ->name('eo.events.store');
+
+    Route::get('/payouts', [EODashboardController::class, 'payouts'])
+        ->name('eo.payouts.index');
+
+    Route::get('/customers', [EODashboardController::class, 'customers'])
+        ->name('eo.customers.index');
 
     Route::post('/events/{event}/payout-request', [EODashboardController::class, 'requestPayout'])
         ->name('eo.events.payout.request');

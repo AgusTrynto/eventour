@@ -111,7 +111,7 @@
                 <input type="hidden" name="lng" id="lng-input" value="{{ old('lng') }}" required>
 
                 <div class="form-actions">
-                    <a href="{{ route('eo.dashboard') }}" class="btn-cancel">Batal</a>
+                    <a href="{{ route('eo.events.index') }}" class="btn-cancel">Batal</a>
                     <button type="submit" class="btn-submit">Ajukan Event</button>
                 </div>
             </form>

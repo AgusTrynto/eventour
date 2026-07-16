@@ -334,13 +334,8 @@
     z-index: 90;
 }
 
-.loader-spinner {
-    animation: user-loader-spin .8s linear infinite;
-    border: 3px solid rgba(255,255,255,.16);
-    border-radius: 999px;
-    border-top-color: var(--accent);
-    height: 42px;
-    width: 42px;
+.user-page-loader .loader-spinner {
+    display: none;
 }
 
 .loader-bar {

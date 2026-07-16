@@ -121,7 +121,6 @@
 </aside>
 
 <div class="user-page-loader" data-page-loader aria-hidden="true">
-    <div class="loader-spinner" aria-hidden="true"></div>
     <div class="loader-bar" aria-hidden="true"></div>
 </div>
 
