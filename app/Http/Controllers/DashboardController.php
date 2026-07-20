@@ -43,7 +43,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $event->id,
                     'title' => $event->title,
-                    'category' => $event->category ?? 'lainnya',
+                    'category' => $event->category ?? '',
                     'location_name' => $event->location_name,
                     'lat' => $event->lat,
                     'lng' => $event->lng,

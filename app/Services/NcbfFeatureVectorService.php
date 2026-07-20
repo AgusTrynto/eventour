@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 
 class NcbfFeatureVectorService
 {
-    private const TEXT_VECTOR_SIZE = 12;
+    private const TEXT_VECTOR_SIZE = 32;
     private const DEFAULT_HOUR = 12;
     private const DEFAULT_DURATION_LEVEL = 0.25;
     private const DEFAULT_DISTANCE_CLOSENESS = 0.5;
@@ -19,7 +19,14 @@ class NcbfFeatureVectorService
         'olahraga',
         'kuliner',
         'teknologi',
-        'lainnya',
+        'travel',
+        'gaming',
+        'workshop',
+        'seminar',
+        'fashion_beauty',
+        'komunitas',
+        'bazaar',
+        'otomotif',
     ];
 
     private const STOPWORDS = [
@@ -136,6 +143,16 @@ class NcbfFeatureVectorService
         return $this->eventVectorSize() * 4;
     }
 
+    public function categoryCount(): int
+    {
+        return count(self::CATEGORIES);
+    }
+
+    public function textVectorSize(): int
+    {
+        return self::TEXT_VECTOR_SIZE;
+    }
+
     private function contentVector(Event $event, string $category): array
     {
         $vector = array_fill(0, self::TEXT_VECTOR_SIZE, 0.0);
@@ -169,7 +186,7 @@ class NcbfFeatureVectorService
     {
         $category = strtolower((string) $category);
 
-        return in_array($category, self::CATEGORIES, true) ? $category : 'lainnya';
+        return in_array($category, self::CATEGORIES, true) ? $category : self::CATEGORIES[0];
     }
 
     private function normalizeVector(array $vector): array

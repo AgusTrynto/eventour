@@ -110,6 +110,8 @@ Artisan::command('recommendations:export-ncbf-training {--output=} {--negatives=
         'generated_at' => now()->toISOString(),
         'input_dim' => $featureVectors->pairVectorSize(),
         'event_vector_dim' => $featureVectors->eventVectorSize(),
+        'category_count' => $featureVectors->categoryCount(),
+        'text_vector_size' => $featureVectors->textVectorSize(),
         'max_price' => $maxPrice,
         'positive_count' => collect($samples)->where('label', 1)->count(),
         'negative_count' => collect($samples)->where('label', 0)->count(),

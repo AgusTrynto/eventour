@@ -56,7 +56,14 @@
                             <option value="olahraga" {{ old('category') === 'olahraga' ? 'selected' : '' }}>Olahraga</option>
                             <option value="kuliner" {{ old('category') === 'kuliner' ? 'selected' : '' }}>Kuliner</option>
                             <option value="teknologi" {{ old('category') === 'teknologi' ? 'selected' : '' }}>Teknologi</option>
-                            <option value="lainnya" {{ old('category') === 'lainnya' ? 'selected' : '' }}>Lainnya</option>
+                            <option value="travel" {{ old('category') === 'travel' ? 'selected' : '' }}>Travel</option>
+                            <option value="gaming" {{ old('category') === 'gaming' ? 'selected' : '' }}>Gaming</option>
+                            <option value="workshop" {{ old('category') === 'workshop' ? 'selected' : '' }}>Workshop</option>
+                            <option value="seminar" {{ old('category') === 'seminar' ? 'selected' : '' }}>Seminar</option>
+                            <option value="fashion_beauty" {{ old('category') === 'fashion_beauty' ? 'selected' : '' }}>Fashion & Beauty</option>
+                            <option value="komunitas" {{ old('category') === 'komunitas' ? 'selected' : '' }}>Komunitas</option>
+                            <option value="bazaar" {{ old('category') === 'bazaar' ? 'selected' : '' }}>Bazaar</option>
+                            <option value="otomotif" {{ old('category') === 'otomotif' ? 'selected' : '' }}>Otomotif</option>
                         </select>
                     </div>
                 </div>

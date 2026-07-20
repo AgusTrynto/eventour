@@ -73,11 +73,12 @@ class H5NcbfRecommendationService
             $predictScript,
             '--model',
             $modelPath,
-        ], null, [
-            'PYTHONHASHSEED' => '0',
-            'PYTHONIOENCODING' => 'utf-8',
-            'TF_CPP_MIN_LOG_LEVEL' => '2',
-        ]);
+            ], null, [
+                'PYTHONHASHSEED' => '0',
+                'PYTHONIOENCODING' => 'utf-8',
+                'TF_ENABLE_ONEDNN_OPTS' => '0',
+                'TF_CPP_MIN_LOG_LEVEL' => '2',
+            ]);
 
         $process->setInput($payload);
         $process->setTimeout((int) config('recommendation.h5.timeout', 8));

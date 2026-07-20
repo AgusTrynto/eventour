@@ -1,15 +1,17 @@
 {
-  "created_at": "2026-07-14T12:28:08.815177+00:00",
-  "input_dim": 100,
-  "event_vector_dim": 25,
+  "created_at": "2026-07-20T11:48:14.273335+00:00",
+  "input_dim": 208,
+  "event_vector_dim": 52,
+  "category_count": 13,
+  "text_vector_size": 32,
   "max_price": 74246.46,
   "positive_count": 10000,
-  "negative_count": 30000,
-  "total_samples": 40000,
+  "negative_count": 40000,
+  "total_samples": 50000,
   "events": 9569,
   "users": 200,
-  "validation_loss": 0.53724604845047,
-  "validation_accuracy": 0.7521250247955322,
-  "validation_auc": 0.6429413557052612,
-  "epochs_trained": 54
+  "validation_loss": 0.35935938358306885,
+  "validation_accuracy": 0.8676999807357788,
+  "validation_auc": 0.8048035502433777,
+  "epochs_trained": 80
 }

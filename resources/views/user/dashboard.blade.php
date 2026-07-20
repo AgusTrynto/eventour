@@ -381,6 +381,46 @@
                     icon: '<path d="m12 3-1.9 5.7L4 10.5l6.1 1.8L12 18l1.9-5.7 6.1-1.8-6.1-1.8L12 3z"/><path d="M5 3v4"/><path d="M3 5h4"/><path d="M19 17v4"/><path d="M17 19h4"/>',
                     label: 'Lainnya',
                 },
+                travel: {
+                    color: '#06b6d4',
+                    icon: '<path d="M3 21h18"/><path d="m6 17 2-5"/><path d="m16 17 2-5"/><path d="M12 3v12"/><path d="M7 21 5 17h14l-2 4"/><path d="M10 8h4"/>',
+                    label: 'Travel',
+                },
+                gaming: {
+                    color: '#8b5cf6',
+                    icon: '<path d="m12 2 2.5 5h5.5l-4 3.5L17 16l-5-2.5L7 16l1.5-5.5L4.5 7h5.5L12 2z"/><path d="M6 20h12"/><path d="M8 17v3"/><path d="M16 17v3"/>',
+                    label: 'Gaming',
+                },
+                workshop: {
+                    color: '#f97316',
+                    icon: '<path d="M4 5h16"/><path d="M6 5v14"/><path d="M18 5v14"/><path d="M6 13h12"/><path d="M6 9h12"/><path d="m9 9-3 4 3 4"/><path d="m15 9 3 4-3 4"/>',
+                    label: 'Workshop',
+                },
+                seminar: {
+                    color: '#14b8a6',
+                    icon: '<path d="M4 4h16v16H4z"/><path d="M4 9h16"/><path d="M5 4v16"/><path d="M9 9v6"/><path d="M13 9v4"/><path d="M17 9v2"/>',
+                    label: 'Seminar',
+                },
+                fashion_beauty: {
+                    color: '#ec4899',
+                    icon: '<path d="M6 9a6 6 0 0 1 12 0"/><path d="M6 9c0 8 6 13 6 13s6-5 6-13"/><path d="M12 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M9 22h6"/>',
+                    label: 'Fashion & Beauty',
+                },
+                komunitas: {
+                    color: '#84cc16',
+                    icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+                    label: 'Komunitas',
+                },
+                bazaar: {
+                    color: '#e11d48',
+                    icon: '<path d="M2 4h20"/><path d="M4 4v16h16V4"/><path d="M8 8v8"/><path d="M12 8v8"/><path d="M16 8v8"/><path d="M2 8h20"/>',
+                    label: 'Bazaar',
+                },
+                otomotif: {
+                    color: '#64748b',
+                    icon: '<path d="M2 18v-6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6"/><path d="M4 14h16"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M9 14v4"/><path d="M15 14v4"/>',
+                    label: 'Otomotif',
+                },
             };
 
             return visuals[key] || visuals.lainnya;

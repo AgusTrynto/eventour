@@ -24,7 +24,14 @@ class RecommendationTrainingDummySeeder extends Seeder
         'olahraga',
         'kuliner',
         'teknologi',
-        'lainnya',
+        'travel',
+        'gaming',
+        'workshop',
+        'seminar',
+        'fashion_beauty',
+        'komunitas',
+        'bazaar',
+        'otomotif',
     ];
 
     private const CITIES = [
@@ -92,15 +99,69 @@ class RecommendationTrainingDummySeeder extends Seeder
             ['title' => 'Charity Bazaar', 'description' => 'Bazaar amal, donasi komunitas, thrift market, dan pertunjukan kecil.', 'hour' => 11, 'duration' => 7, 'base_price' => 25000],
             ['title' => 'Campus Expo', 'description' => 'Expo kampus, komunitas mahasiswa, talkshow karier, dan booth edukasi.', 'hour' => 9, 'duration' => 6, 'base_price' => 15000],
         ],
+        'travel' => [
+            ['title' => 'City Tour Guide', 'description' => 'Tur kota bersama guide lokal, kunjungan hidden gems, dan walking tour.', 'hour' => 8, 'duration' => 6, 'base_price' => 80000],
+            ['title' => 'Backpacker Gathering', 'description' => 'Meetup backpacker, sharing itinerary, tips solo travel, dan komunitas.', 'hour' => 18, 'duration' => 3, 'base_price' => 35000],
+            ['title' => 'Photo Trip', 'description' => 'Trip fotografi ke spot ikonik, komposisi landscape, dan golden hour hunt.', 'hour' => 5, 'duration' => 8, 'base_price' => 120000],
+            ['title' => 'Travel Talk', 'description' => 'Diskusi traveling, budaya lokal, sustainable travel, dan kisah inspiratif.', 'hour' => 15, 'duration' => 3, 'base_price' => 45000],
+        ],
+        'gaming' => [
+            ['title' => 'Game Night', 'description' => 'Malam bermain game, turnamen ringan, dan sesi main bareng komunitas.', 'hour' => 19, 'duration' => 4, 'base_price' => 50000],
+            ['title' => 'E-Sports Tournament', 'description' => 'Turnamen e-sports antar komunitas, hadiah menarik, dan siaran langsung.', 'hour' => 10, 'duration' => 10, 'base_price' => 100000],
+            ['title' => 'Board Game Meet', 'description' => 'Kumpul komunitas board game, belajar aturan baru, dan sesi seru.', 'hour' => 13, 'duration' => 5, 'base_price' => 35000],
+            ['title' => 'Indie Game Launch', 'description' => 'Peluncuran game indie lokal, playtest langsung, dan diskusi developer.', 'hour' => 14, 'duration' => 6, 'base_price' => 0],
+        ],
+        'workshop' => [
+            ['title' => 'Creative Workshop', 'description' => 'Workshop kreatif, hands-on membuat produk, dan coaching kreativitas.', 'hour' => 9, 'duration' => 6, 'base_price' => 95000],
+            ['title' => 'Writing Class', 'description' => 'Kelas menulis kreatif, teknik narasi, dan forum diskusi penulis.', 'hour' => 10, 'duration' => 4, 'base_price' => 65000],
+            ['title' => 'Design Sprint', 'description' => 'Sprint desain produk, prototyping cepat, dan validasi bersama mentor.', 'hour' => 8, 'duration' => 8, 'base_price' => 150000],
+            ['title' => 'Skillshare Session', 'description' => 'Sesi berbagi keterampilan bahasa, digital, public speaking, dan lainnya.', 'hour' => 15, 'duration' => 3, 'base_price' => 40000],
+        ],
+        'seminar' => [
+            ['title' => 'Business Seminar', 'description' => 'Seminar bisnis dengan praktisi, strategi skala usaha, dan networking.', 'hour' => 9, 'duration' => 6, 'base_price' => 120000],
+            ['title' => 'Motivational Talk', 'description' => 'Talkshow motivasi bersama tokoh inspiratif dan sesi tanya jawab.', 'hour' => 14, 'duration' => 3, 'base_price' => 70000],
+            ['title' => 'Career Panel', 'description' => 'Panel karir dengan profesional berbagai industri dan tips rekrutmen.', 'hour' => 10, 'duration' => 5, 'base_price' => 85000],
+            ['title' => 'Industry Summit', 'description' => 'Konferensi industri, tren terbaru, kolaborasi lintas sektor, dan pameran.', 'hour' => 8, 'duration' => 9, 'base_price' => 180000],
+        ],
+        'fashion_beauty' => [
+            ['title' => 'Fashion Show', 'description' => 'Pertunjukan fashion koleksi desainer lokal, runway, dan kreativitas busana.', 'hour' => 19, 'duration' => 3, 'base_price' => 95000],
+            ['title' => 'Beauty Workshop', 'description' => 'Workshop kecantikan, tutorial makeup, skincare, dan tips perawatan diri.', 'hour' => 10, 'duration' => 4, 'base_price' => 70000],
+            ['title' => 'Thrift Market', 'description' => 'Pasar thrift fashion, second hand berkualitas, dan komunitas sustainable.', 'hour' => 9, 'duration' => 8, 'base_price' => 15000],
+            ['title' => 'Style Talk', 'description' => 'Diskusi gaya, mix and match, personal branding, dan fashion tips.', 'hour' => 15, 'duration' => 3, 'base_price' => 55000],
+        ],
+        'komunitas' => [
+            ['title' => 'Komunitas Meetup', 'description' => 'Meetup komunitas lintas minat, sharing ide, dan kolaborasi baru.', 'hour' => 15, 'duration' => 4, 'base_price' => 20000],
+            ['title' => 'Networking Night', 'description' => 'Malam networking, bertemu profesional, dan memperluas koneksi.', 'hour' => 18, 'duration' => 3, 'base_price' => 60000],
+            ['title' => 'Volunteer Gathering', 'description' => 'Kumpul relawan, aksi sosial, program komunitas, dan dampak positif.', 'hour' => 8, 'duration' => 5, 'base_price' => 0],
+            ['title' => 'Community Service', 'description' => 'Bakti sosial, kerja bakti, edukasi masyarakat, dan kebersamaan.', 'hour' => 7, 'duration' => 6, 'base_price' => 0],
+        ],
+        'bazaar' => [
+            ['title' => 'Weekend Bazaar', 'description' => 'Bazaar akhir pekan dengan tenant lokal, kuliner, dan produk kreatif.', 'hour' => 9, 'duration' => 9, 'base_price' => 0],
+            ['title' => 'Artisan Fair', 'description' => 'Pameran produk artisan, kerajinan tangan, dan kolaborasi pengrajin.', 'hour' => 10, 'duration' => 8, 'base_price' => 25000],
+            ['title' => 'Pop-Up Market', 'description' => 'Pasar pop-up dengan konsep unik, limited edition, dan tenant musiman.', 'hour' => 11, 'duration' => 8, 'base_price' => 20000],
+            ['title' => 'Creative Bazaar', 'description' => 'Bazaar kreatif, merchandise ilustrator, zine, dan komunitas seni.', 'hour' => 10, 'duration' => 7, 'base_price' => 30000],
+        ],
+        'otomotif' => [
+            ['title' => 'Car Meet', 'description' => 'Kumpul komunitas otomotif, pameran modifikasi, dan sesi foto bersama.', 'hour' => 8, 'duration' => 5, 'base_price' => 40000],
+            ['title' => 'Motor Show', 'description' => 'Pameran motor modifikasi, kontes, dan gathering bikers komunitas.', 'hour' => 9, 'duration' => 7, 'base_price' => 45000],
+            ['title' => 'Auto Talk', 'description' => 'Diskusi otomotif, review kendaraan, tips modifikasi, dan keselamatan.', 'hour' => 15, 'duration' => 3, 'base_price' => 30000],
+            ['title' => 'Racing Day', 'description' => 'Hari balap komunitas, drag race, dan kompetisi keterampilan mengemudi.', 'hour' => 7, 'duration' => 8, 'base_price' => 110000],
+        ],
     ];
 
     private const PERSONAS = [
         ['name' => 'Music Night Explorer', 'categories' => ['musik', 'kuliner'], 'cities' => ['Jakarta', 'Bandung'], 'max_price' => 160000],
-        ['name' => 'Creative Weekend Hunter', 'categories' => ['seni', 'lainnya'], 'cities' => ['Yogyakarta', 'Semarang'], 'max_price' => 90000],
+        ['name' => 'Creative Weekend Hunter', 'categories' => ['seni', 'workshop'], 'cities' => ['Yogyakarta', 'Semarang'], 'max_price' => 90000],
         ['name' => 'Morning Sport Fan', 'categories' => ['olahraga'], 'cities' => ['Jakarta', 'Tegal'], 'max_price' => 100000],
         ['name' => 'Food Festival Seeker', 'categories' => ['kuliner', 'musik'], 'cities' => ['Bandung', 'Tegal', 'Semarang'], 'max_price' => 90000],
-        ['name' => 'Tech Builder', 'categories' => ['teknologi'], 'cities' => ['Jakarta', 'Yogyakarta'], 'max_price' => 180000],
-        ['name' => 'Local Community Regular', 'categories' => ['lainnya', 'seni', 'kuliner'], 'cities' => ['Tegal', 'Semarang'], 'max_price' => 70000],
+        ['name' => 'Tech Builder', 'categories' => ['teknologi', 'workshop'], 'cities' => ['Jakarta', 'Yogyakarta'], 'max_price' => 180000],
+        ['name' => 'Travel Explorer', 'categories' => ['travel', 'kuliner'], 'cities' => ['Yogyakarta', 'Bandung', 'Semarang'], 'max_price' => 120000],
+        ['name' => 'Gamer Enthusiast', 'categories' => ['gaming', 'teknologi'], 'cities' => ['Jakarta', 'Bandung'], 'max_price' => 130000],
+        ['name' => 'Lifelong Learner', 'categories' => ['seminar', 'workshop'], 'cities' => ['Semarang', 'Yogyakarta'], 'max_price' => 150000],
+        ['name' => 'Fashion Lover', 'categories' => ['fashion_beauty', 'bazaar'], 'cities' => ['Jakarta', 'Bandung', 'Semarang'], 'max_price' => 100000],
+        ['name' => 'Community Activist', 'categories' => ['komunitas', 'seni'], 'cities' => ['Tegal', 'Yogyakarta'], 'max_price' => 60000],
+        ['name' => 'Bazaar Hunter', 'categories' => ['bazaar', 'kuliner'], 'cities' => ['Jakarta', 'Tegal', 'Semarang'], 'max_price' => 50000],
+        ['name' => 'Auto Enthusiast', 'categories' => ['otomotif', 'teknologi'], 'cities' => ['Jakarta', 'Bandung'], 'max_price' => 140000],
     ];
 
     public function run(): void

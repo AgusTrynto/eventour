@@ -33,7 +33,14 @@ class RecommendationFeatureSnapshotService
         'olahraga',
         'kuliner',
         'teknologi',
-        'lainnya',
+        'travel',
+        'gaming',
+        'workshop',
+        'seminar',
+        'fashion_beauty',
+        'komunitas',
+        'bazaar',
+        'otomotif',
     ];
 
     private const DISTANCE_CLAMP_METERS = 100000.0;
@@ -258,6 +265,6 @@ class RecommendationFeatureSnapshotService
     {
         $category = strtolower((string) $category);
 
-        return in_array($category, self::CATEGORIES, true) ? $category : 'lainnya';
+        return in_array($category, self::CATEGORIES, true) ? $category : self::CATEGORIES[0];
     }
 }

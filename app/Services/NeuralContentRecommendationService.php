@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 
 class NeuralContentRecommendationService
 {
-    private const TEXT_VECTOR_SIZE = 12;
+    private const TEXT_VECTOR_SIZE = 32;
     private const DISTANCE_CLAMP_METERS = 100000.0;
 
     private const CATEGORIES = [
@@ -19,7 +19,14 @@ class NeuralContentRecommendationService
         'olahraga',
         'kuliner',
         'teknologi',
-        'lainnya',
+        'travel',
+        'gaming',
+        'workshop',
+        'seminar',
+        'fashion_beauty',
+        'komunitas',
+        'bazaar',
+        'otomotif',
     ];
 
     private const STOPWORDS = [
@@ -188,7 +195,7 @@ class NeuralContentRecommendationService
                     ? max(0.0, 1.0 - min(now()->diffInDays($event->start_date), 30) / 30)
                     : 0.0;
 
-                $categoryConfidence = $features['category'] === 'lainnya' ? 0.55 : 1.0;
+                $categoryConfidence = 1.0;
                 $score = (0.34 * $soonness)
                     + (0.26 * $features['content_strength'])
                     + (0.18 * $categoryConfidence)
@@ -313,7 +320,7 @@ class NeuralContentRecommendationService
         return $this->normalizeVector($hidden);
     }
 
-    private function formatRecommendation(Event $event, float $score, array $features, string $modelLabel = 'Neural content'): array
+    private function formatRecommendation(Event $event, float $score, array $features, string $modelLabel = 'NCBF .h5'): array
     {
         return [
             'event' => $event,
@@ -332,7 +339,7 @@ class NeuralContentRecommendationService
     {
         $category = strtolower((string) $category);
 
-        return in_array($category, self::CATEGORIES, true) ? $category : 'lainnya';
+        return in_array($category, self::CATEGORIES, true) ? $category : self::CATEGORIES[0];
     }
 
     private function categoryLabel(string $category): string
