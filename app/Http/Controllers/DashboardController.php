@@ -74,6 +74,20 @@ class DashboardController extends Controller
         ));
     }
 
+    public function myEvents()
+    {
+        $user = Auth::user();
+
+        $orders = Order::with(['event', 'tickets'])
+            ->where('user_id', $user->id)
+            ->whereIn('payment_status', ['paid', 'disbursed'])
+            ->whereNull('refunded_at')
+            ->orderBy('paid_at', 'desc')
+            ->get();
+
+        return view('user.my-events', compact('user', 'orders'));
+    }
+
     public function recommendations(NeuralContentRecommendationService $recommendationService)
     {
         $user = Auth::user();

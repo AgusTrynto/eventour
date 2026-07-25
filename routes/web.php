@@ -111,6 +111,10 @@ Route::get('/dashboard/events', [DashboardController::class, 'recommendationList
     ->name('dashboard.events')
     ->middleware('auth');
 
+Route::get('/dashboard/my-events', [DashboardController::class, 'myEvents'])
+    ->name('dashboard.my-events')
+    ->middleware('auth');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [UserProfileController::class, 'edit'])
         ->name('profile.edit');

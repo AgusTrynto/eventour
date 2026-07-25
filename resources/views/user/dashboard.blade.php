@@ -106,13 +106,13 @@
                         <span class="stat-value">{{ $ticketCount }}</span>
                     </div>
                 </div>
-                <div class="stat-card">
+                <a href="{{ route('dashboard.my-events') }}" class="stat-card" style="text-decoration:none;color:inherit">
                     <div class="stat-icon"><x-icon name="calendar" :size="28" /></div>
                     <div class="stat-info">
                         <span class="stat-label">Event Diikuti</span>
                         <span class="stat-value">{{ $eventCount }}</span>
                     </div>
-                </div>
+                </a>
                 <div class="stat-card">
                     <div class="stat-icon"><x-icon name="map-pin" :size="28" /></div>
                     <div class="stat-info">

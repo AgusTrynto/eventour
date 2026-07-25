@@ -116,20 +116,15 @@ class H5NcbfRecommendationService
 
     private function modelMaxPrice(float $fallback): float
     {
-        $metadataPath = (string) config('recommendation.h5.metadata_path');
+        static $dbMaxPrice = null;
 
-        if (!is_file($metadataPath)) {
-            return max(1.0, $fallback);
+        if ($dbMaxPrice === null) {
+            $dbMaxPrice = (float) Event::query()
+                ->where('status', 'approved')
+                ->max('price');
         }
 
-        $metadata = json_decode((string) file_get_contents($metadataPath), true);
-        $maxPrice = is_array($metadata) ? ($metadata['max_price'] ?? null) : null;
-
-        if (!is_numeric($maxPrice) || (float) $maxPrice <= 0.0) {
-            return max(1.0, $fallback);
-        }
-
-        return (float) $maxPrice;
+        return max(1.0, $dbMaxPrice);
     }
 
     private function latestPaidAt(Collection $historySnapshots): ?\DateTimeInterface
