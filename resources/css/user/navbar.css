@@ -113,6 +113,48 @@
     font-size: 14px;
 }
 
+.user-navbar .theme-toggle {
+    align-items: center;
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: #d1d5db;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: inherit;
+    font-size: 13px;
+    gap: 8px;
+    min-height: 36px;
+    padding: 7px 12px;
+    transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease;
+    white-space: nowrap;
+}
+
+.user-navbar .theme-toggle:hover,
+.user-navbar .theme-toggle:focus-visible {
+    background: rgba(216,255,79,.1);
+    border-color: rgba(216,255,79,.28);
+    color: white;
+}
+
+.user-navbar .theme-toggle:active {
+    transform: scale(.98);
+}
+
+.user-navbar .theme-toggle__icon {
+    align-items: center;
+    display: inline-flex;
+}
+
+.user-navbar .theme-toggle__icon--light,
+body.theme-light .user-navbar .theme-toggle__icon--dark {
+    display: none;
+}
+
+body.theme-light .user-navbar .theme-toggle__icon--light {
+    display: inline-flex;
+}
+
 .user-navbar .btn-logout,
 .user-sidebar .btn-logout {
     background: rgba(255,255,255,.05);
@@ -367,6 +409,439 @@ body.is-page-loading footer {
     transform: translateY(4px);
 }
 
+body.theme-light {
+    --bg: #f6f7ee;
+    --card: rgba(255,255,255,.88);
+    --border: rgba(15,23,42,.12);
+    --light-text: #111827;
+    --light-muted: #4b5563;
+    --light-soft: #6b7280;
+    --light-accent: #536800;
+    --light-panel: rgba(255,255,255,.9);
+    --light-panel-solid: #ffffff;
+    --light-field: rgba(15,23,42,.045);
+    --light-shadow: 0 20px 55px rgba(15,23,42,.09);
+    --light-shadow-soft: 0 10px 28px rgba(15,23,42,.07);
+    background: var(--bg);
+    color: var(--light-text);
+}
+
+body.theme-light .bg-glow {
+    background:
+        radial-gradient(circle at top left, rgba(216,255,79,.30), transparent 34%),
+        radial-gradient(circle at 84% 12%, rgba(96,165,250,.14), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(255,93,162,.13), transparent 42%);
+}
+
+body.theme-light .user-navbar {
+    background: rgba(255,255,255,.86);
+    border-bottom-color: rgba(15,23,42,.1);
+    box-shadow: 0 12px 34px rgba(15,23,42,.08);
+}
+
+body.theme-light .user-navbar .logo,
+body.theme-light .user-sidebar .logo,
+body.theme-light .logo,
+body.theme-light .main-content :where(h1, h2, h3, h4, h5, h6, strong, b),
+body.theme-light .card-header h2,
+body.theme-light .welcome-text h1,
+body.theme-light .profile-name,
+body.theme-light .event-header h1,
+body.theme-light .event-summary h1,
+body.theme-light .ticket-info h2,
+body.theme-light .ticket-detail-header h1,
+body.theme-light .ticket-detail-header strong,
+body.theme-light .order-group-header h3,
+body.theme-light .ticket-holder-card h2,
+body.theme-light .ticket-mini-code,
+body.theme-light .review-event-header h2,
+body.theme-light .review-comment,
+body.theme-light .recommendation-result-info h2,
+body.theme-light .rec-title,
+body.theme-light .price-row.total,
+body.theme-light .detail-row span:last-child,
+body.theme-light .info-row span:last-child,
+body.theme-light .meta-value,
+body.theme-light .empty-state p {
+    color: var(--light-text);
+}
+
+body.theme-light :where(p, small, li),
+body.theme-light .main-content :where(p, small, li),
+body.theme-light .user-navbar .nav-link,
+body.theme-light .user-navbar .user-name,
+body.theme-light .user-sidebar .user-name,
+body.theme-light .user-sidebar .sidebar-link,
+body.theme-light .back-link,
+body.theme-light .welcome-text p,
+body.theme-light .page-heading p,
+body.theme-light .profile-email,
+body.theme-light .profile-joined,
+body.theme-light .profile-note,
+body.theme-light .event-meta,
+body.theme-light .event-description,
+body.theme-light .location-name,
+body.theme-light .route-info,
+body.theme-light .map-info,
+body.theme-light .radius-control,
+body.theme-light .ticket-code,
+body.theme-light .ticket-detail-header p,
+body.theme-light .ticket-note,
+body.theme-light .order-meta,
+body.theme-light .ticket-holder-card p,
+body.theme-light .refund-request-head p,
+body.theme-light .toolbar-meta,
+body.theme-light .price-row,
+body.theme-light .event-meta span,
+body.theme-light .attendee-section label,
+body.theme-light .form-group label,
+body.theme-light .escrow-note,
+body.theme-light .result-card p,
+body.theme-light .review-event-header p,
+body.theme-light .review-form label,
+body.theme-light .star-rating-field legend,
+body.theme-light .review-history-label,
+body.theme-light .review-date,
+body.theme-light .recommendation-page-summary,
+body.theme-light .recommendation-result-info p,
+body.theme-light .rec-meta,
+body.theme-light .rec-signal,
+body.theme-light .empty-state,
+body.theme-light footer {
+    color: var(--light-muted);
+}
+
+body.theme-light .meta-label,
+body.theme-light .meta-sub,
+body.theme-light .price-label,
+body.theme-light .info-row,
+body.theme-light .ticket-info-row,
+body.theme-light .profile-field span,
+body.theme-light .refund-form-grid label,
+body.theme-light .review-comment.muted,
+body.theme-light .pagination-link.disabled {
+    color: var(--light-soft);
+}
+
+body.theme-light .user-navbar .nav-link:hover,
+body.theme-light .user-navbar .nav-link:focus-visible,
+body.theme-light .back-link:hover,
+body.theme-light .user-sidebar .sidebar-link:hover,
+body.theme-light .search-clear-btn:hover {
+    color: var(--light-text);
+}
+
+body.theme-light .user-navbar .nav-link.active,
+body.theme-light .user-sidebar .sidebar-link.active,
+body.theme-light .user-sidebar .sidebar-link-eo,
+body.theme-light .badge,
+body.theme-light .card-link,
+body.theme-light .stat-value,
+body.theme-light .profile-avatar,
+body.theme-light .price-value,
+body.theme-light .order-total,
+body.theme-light .order-total-amount,
+body.theme-light .ticket-holder-label,
+body.theme-light .ticket-holder-open,
+body.theme-light .ticket-alert-success,
+body.theme-light .status-paid,
+body.theme-light .status-valid,
+body.theme-light .success-box,
+body.theme-light .alert-success,
+body.theme-light .review-status,
+body.theme-light .btn-submit-review,
+body.theme-light .btn-explore,
+body.theme-light .rec-price,
+body.theme-light .rec-score,
+body.theme-light .rec-btn,
+body.theme-light .popup-event .popup-link,
+body.theme-light .pagination-link:hover,
+body.theme-light .pagination-link.active,
+body.theme-light .readonly-stars .filled,
+body.theme-light .star-rating label:hover,
+body.theme-light .star-rating label:hover ~ label,
+body.theme-light .star-rating input:checked ~ label {
+    color: var(--light-accent);
+}
+
+body.theme-light .user-navbar .nav-active-indicator,
+body.theme-light .user-sidebar .sidebar-link.active,
+body.theme-light .user-sidebar .sidebar-link-eo,
+body.theme-light .nav-link-eo-badge,
+body.theme-light .status-valid,
+body.theme-light .ticket-alert-success,
+body.theme-light .success-box,
+body.theme-light .alert-success,
+body.theme-light .review-status,
+body.theme-light .btn-submit-review,
+body.theme-light .btn-explore,
+body.theme-light .rec-score,
+body.theme-light .rec-btn,
+body.theme-light .pagination-link.active {
+    background: rgba(216,255,79,.38);
+    border-color: rgba(83,104,0,.22);
+}
+
+body.theme-light .user-navbar .theme-toggle,
+body.theme-light .user-navbar .hamburger-btn,
+body.theme-light .user-sidebar .sidebar-close,
+body.theme-light .user-navbar .btn-logout,
+body.theme-light .user-sidebar .btn-logout,
+body.theme-light .btn-refresh-location,
+body.theme-light .map-toggle-btn,
+body.theme-light .qty-btn,
+body.theme-light .ticket-action-btn,
+body.theme-light .pagination-link,
+body.theme-light .search-clear-btn {
+    background: rgba(15,23,42,.045);
+    border-color: var(--border);
+    color: var(--light-muted);
+}
+
+body.theme-light .user-navbar .theme-toggle:hover,
+body.theme-light .user-navbar .theme-toggle:focus-visible,
+body.theme-light .btn-refresh-location:hover:not(:disabled),
+body.theme-light .map-toggle-btn:hover,
+body.theme-light .map-toggle-btn.active,
+body.theme-light .qty-btn:hover,
+body.theme-light .ticket-action-btn:hover,
+body.theme-light .pagination-link:hover {
+    background: rgba(216,255,79,.26);
+    border-color: rgba(83,104,0,.22);
+    color: var(--light-accent);
+}
+
+body.theme-light .user-navbar .hamburger-btn span {
+    background: var(--light-text);
+}
+
+body.theme-light .user-sidebar,
+body.theme-light .mobile-sidebar {
+    background: #ffffff;
+    border-right-color: var(--border);
+    box-shadow: 20px 0 55px rgba(15,23,42,.15);
+}
+
+body.theme-light .sidebar-overlay {
+    background: rgba(15,23,42,.28);
+}
+
+body.theme-light .user-sidebar .sidebar-user,
+body.theme-light .sidebar-user,
+body.theme-light .card,
+body.theme-light .stat-card,
+body.theme-light .event-search-panel,
+body.theme-light .ticket-card,
+body.theme-light .ticket-event-summary,
+body.theme-light .order-group,
+body.theme-light .ticket-holder-card,
+body.theme-light .ticket-toolbar,
+body.theme-light .checkout-card,
+body.theme-light .review-card,
+body.theme-light .empty-state,
+body.theme-light .recommendation-result-card,
+body.theme-light .recommendation-page-summary {
+    background: var(--light-panel);
+    border-color: var(--border);
+    box-shadow: var(--light-shadow-soft);
+}
+
+body.theme-light .stat-card:hover,
+body.theme-light .rec-item:hover,
+body.theme-light .recommendation-result-card:hover,
+body.theme-light .ticket-holder-card:hover,
+body.theme-light .ticket-holder-card:focus-visible,
+body.theme-light .ticket-mini:hover {
+    background: rgba(250,252,239,.96);
+    border-color: rgba(83,104,0,.22);
+    box-shadow: var(--light-shadow);
+}
+
+body.theme-light .rec-item,
+body.theme-light .ticket-mini,
+body.theme-light .review-history,
+body.theme-light .review-comment,
+body.theme-light .price-breakdown,
+body.theme-light .order-details,
+body.theme-light .attendee-section,
+body.theme-light .limit-info,
+body.theme-light .profile-note,
+body.theme-light .escrow-note,
+body.theme-light .refund-request-box,
+body.theme-light .refund-status-note,
+body.theme-light .rec-icon,
+body.theme-light .rec-signal {
+    background: var(--light-field);
+    border-color: var(--border);
+}
+
+body.theme-light input,
+body.theme-light select,
+body.theme-light textarea,
+body.theme-light #qty-input,
+body.theme-light .radius-select,
+body.theme-light .search-input-wrap,
+body.theme-light .profile-field input,
+body.theme-light .profile-field select,
+body.theme-light .refund-form-grid input,
+body.theme-light .refund-form-grid select,
+body.theme-light .attendee-input input,
+body.theme-light .ticket-toolbar select,
+body.theme-light .review-form textarea {
+    background: rgba(255,255,255,.76);
+    border-color: rgba(15,23,42,.14);
+    color: var(--light-text);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+}
+
+body.theme-light input:focus,
+body.theme-light select:focus,
+body.theme-light textarea:focus,
+body.theme-light #qty-input:focus,
+body.theme-light .radius-select:focus,
+body.theme-light .profile-field input:focus,
+body.theme-light .profile-field select:focus,
+body.theme-light .refund-form-grid input:focus,
+body.theme-light .refund-form-grid select:focus,
+body.theme-light .attendee-input input:focus,
+body.theme-light .review-form textarea:focus {
+    border-color: rgba(83,104,0,.42);
+    box-shadow: 0 0 0 3px rgba(216,255,79,.28);
+    outline: none;
+}
+
+body.theme-light input::placeholder,
+body.theme-light textarea::placeholder,
+body.theme-light .search-input-wrap input::placeholder {
+    color: #8b95a3;
+}
+
+body.theme-light select option,
+body.theme-light select optgroup,
+body.theme-light .profile-field select option,
+body.theme-light .profile-field select optgroup,
+body.theme-light .radius-select option,
+body.theme-light .ticket-toolbar select option,
+body.theme-light .refund-form-grid select option {
+    background: #ffffff;
+    color: var(--light-text);
+}
+
+body.theme-light .alert-error,
+body.theme-light .ticket-alert-error,
+body.theme-light .error-box,
+body.theme-light .status-cancelled,
+body.theme-light .event-state-badge.ended {
+    background: rgba(239,68,68,.1);
+    border-color: rgba(185,28,28,.2);
+    color: #b91c1c;
+}
+
+body.theme-light .status-used,
+body.theme-light .refund-status-note.completed,
+body.theme-light .ticket-action-btn.whatsapp,
+body.theme-light .info-row.checked-in span:last-child {
+    background: rgba(34,197,94,.11);
+    border-color: rgba(21,128,61,.2);
+    color: #15803d;
+}
+
+body.theme-light .refund-status-note.processing,
+body.theme-light .refund-readiness.missing,
+body.theme-light .limit-info {
+    background: rgba(245,158,11,.12);
+    border-color: rgba(180,83,9,.22);
+    color: #92400e;
+}
+
+body.theme-light .refund-request-box,
+body.theme-light .refund-submit-btn {
+    background: rgba(37,99,235,.08);
+    border-color: rgba(29,78,216,.18);
+    color: #1d4ed8;
+}
+
+body.theme-light .category-badge {
+    background: rgba(219,39,119,.1);
+    border-color: rgba(190,24,93,.2);
+    color: #be185d;
+}
+
+body.theme-light .meta-icon {
+    color: #be185d;
+}
+
+body.theme-light .star-rating label,
+body.theme-light .readonly-stars {
+    color: rgba(15,23,42,.22);
+}
+
+body.theme-light .btn-pay,
+body.theme-light .btn-buy,
+body.theme-light .btn-profile-save,
+body.theme-light .download-all-btn {
+    color: #111827;
+    box-shadow: 0 12px 26px rgba(83,104,0,.14);
+}
+
+body.theme-light .btn-pay:hover,
+body.theme-light .btn-buy:hover,
+body.theme-light .btn-profile-save:hover {
+    box-shadow: 0 16px 34px rgba(83,104,0,.20);
+}
+
+body.theme-light .btn-buy:disabled {
+    background: rgba(15,23,42,.08);
+    color: var(--light-soft);
+    box-shadow: none;
+}
+
+body.theme-light .map-container,
+body.theme-light .leaflet-container {
+    background: #eef2e3 !important;
+}
+
+body.theme-light .leaflet-popup-content-wrapper {
+    background: #ffffff;
+    border-color: rgba(15,23,42,.14);
+    color: var(--light-text);
+    box-shadow: 0 14px 32px rgba(15,23,42,.16);
+}
+
+body.theme-light .leaflet-popup-tip {
+    background: #ffffff;
+}
+
+body.theme-light .category-map-marker {
+    border-color: #ffffff;
+    box-shadow: 0 8px 20px rgba(15,23,42,.24);
+}
+
+body.theme-light .qr-wrapper {
+    background: #ffffff;
+    border: 1px solid rgba(15,23,42,.08);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.8), 0 12px 28px rgba(15,23,42,.08);
+}
+
+body.theme-light .ticket-divider::before,
+body.theme-light .order-group-header,
+body.theme-light .price-row.total,
+body.theme-light .detail-row,
+body.theme-light .info-row,
+body.theme-light .ticket-price,
+body.theme-light .sidebar-logout,
+body.theme-light .user-sidebar .sidebar-logout {
+    border-color: var(--border);
+}
+
+body.theme-light .user-page-loader {
+    background: rgba(246,247,238,.72);
+}
+
+body.theme-light .loader-bar {
+    background: rgba(15,23,42,.12);
+}
+
 @view-transition {
     navigation: auto;
 }
@@ -422,5 +897,9 @@ body.is-page-loading footer {
 
     .user-navbar .hamburger-btn {
         display: flex;
+    }
+
+    .user-navbar .theme-toggle__label {
+        display: none;
     }
 }

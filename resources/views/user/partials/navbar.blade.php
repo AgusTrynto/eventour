@@ -61,6 +61,16 @@
         </nav>
 
         <div class="nav-right">
+            <button type="button" class="theme-toggle" data-theme-toggle aria-label="Ganti ke mode terang" aria-pressed="false">
+                <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">
+                    <x-icon name="moon" :size="15" />
+                </span>
+                <span class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true">
+                    <x-icon name="sun" :size="15" />
+                </span>
+                <span class="theme-toggle__label" data-theme-toggle-label>Gelap</span>
+            </button>
+
             @if ($navbarUser?->role === 'eo')
                 <a href="{{ route('eo.dashboard') }}" class="nav-link-eo-badge">
                     <x-icon name="building" :size="15" />
@@ -135,6 +145,22 @@
         const mobileSidebar = document.getElementById('mobile-sidebar');
         const sidebarOverlay = document.getElementById('sidebar-overlay');
         const pageLoader = document.querySelector('[data-page-loader]');
+        const themeToggle = document.querySelector('[data-theme-toggle]');
+        const themeToggleLabel = document.querySelector('[data-theme-toggle-label]');
+        const themeStorageKey = 'eventour-theme';
+
+        function applyTheme(theme) {
+            const isLight = theme === 'light';
+
+            body.classList.toggle('theme-light', isLight);
+            themeToggle?.setAttribute('aria-pressed', String(isLight));
+            themeToggle?.setAttribute('aria-label', isLight ? 'Ganti ke mode gelap' : 'Ganti ke mode terang');
+            if (themeToggleLabel) themeToggleLabel.textContent = isLight ? 'Terang' : 'Gelap';
+        }
+
+        const savedTheme = localStorage.getItem(themeStorageKey);
+        const prefersLight = window.matchMedia?.('(prefers-color-scheme: light)').matches;
+        applyTheme(savedTheme ?? (prefersLight ? 'light' : 'dark'));
 
         function moveIndicator(target) {
             if (!navLinks || !indicator || !target) return;
@@ -215,6 +241,11 @@
         hamburgerBtn?.addEventListener('click', openSidebar);
         sidebarClose?.addEventListener('click', closeSidebar);
         sidebarOverlay?.addEventListener('click', closeSidebar);
+        themeToggle?.addEventListener('click', () => {
+            const nextTheme = body.classList.contains('theme-light') ? 'dark' : 'light';
+            localStorage.setItem(themeStorageKey, nextTheme);
+            applyTheme(nextTheme);
+        });
         mobileSidebar?.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
                 if (isSamePageHashLink(link)) setActiveNav(link);
