@@ -439,11 +439,27 @@ class XenditWebhookController extends Controller
     private function generateTickets(Order $order): void
     {
         if (! Ticket::where('order_id', $order->id)->exists()) {
+            $attendees = $order->attendee_details ?? [];
+            $userName = $order->user->name ?? 'Pembeli';
+            $event = $order->event;
+            $maxPerPerson = $event->max_tickets_per_person ?? $order->quantity;
+            $isFlexible = $event->ticket_purchase_policy === 'flexible';
+            $holderNames = array_values(array_filter(
+                array_merge([$userName], $attendees),
+                fn ($name) => trim((string) $name) !== ''
+            ));
+
             for ($i = 0; $i < $order->quantity; $i++) {
+                $name = $userName;
+                if ($isFlexible && $maxPerPerson > 0) {
+                    $name = $holderNames[intdiv($i, $maxPerPerson)] ?? $userName;
+                }
+
                 Ticket::create([
                     'order_id' => $order->id,
                     'event_id' => $order->event_id,
                     'user_id' => $order->user_id,
+                    'attendee_name' => $name,
                     'ticket_code' => Ticket::generateCode(),
                     'status' => 'valid',
                 ]);
