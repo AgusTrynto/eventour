@@ -244,6 +244,8 @@ class EODashboardController extends Controller
             'lng' => ['required', 'numeric', 'between:-180,180'],
             'price' => ['required', 'numeric', 'min:0'],
             'quota' => ['nullable', 'integer', 'min:1'],
+            'max_tickets_per_person' => ['nullable', 'integer', 'min:1'],
+            'ticket_purchase_policy' => ['required', 'in:strict,flexible'],
         ], [
             'title.required' => 'Nama event wajib diisi.',
             'start_date.required' => 'Tanggal mulai wajib diisi.',
@@ -252,6 +254,8 @@ class EODashboardController extends Controller
             'lat.required' => 'Titik lokasi di map wajib dipilih.',
             'lng.required' => 'Titik lokasi di map wajib dipilih.',
             'price.required' => 'Harga tiket wajib diisi (isi 0 jika gratis).',
+            'ticket_purchase_policy.required' => 'Pilih kebijakan pembelian tiket.',
+            'ticket_purchase_policy.in' => 'Kebijakan pembelian tiket tidak valid.',
         ]);
 
         Event::create([
@@ -266,6 +270,8 @@ class EODashboardController extends Controller
             'location' => new Point((float) $request->lat, (float) $request->lng),
             'price' => $request->price,
             'quota' => $request->quota,
+            'max_tickets_per_person' => $request->max_tickets_per_person,
+            'ticket_purchase_policy' => $request->ticket_purchase_policy,
             'status' => 'pending',
         ]);
 

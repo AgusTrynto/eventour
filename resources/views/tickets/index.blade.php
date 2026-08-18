@@ -14,12 +14,14 @@
     @include('user.partials.navbar', ['active' => 'tickets'])
 
     <main class="main-content">
-        <div class="container-custom narrow">
+        <div class="container-custom">
 
             <div class="page-heading">
-                <span class="badge">TIKET SAYA</span>
-                <h1>Riwayat Tiket</h1>
-                <p>Semua tiket yang sudah kamu beli atau klaim.</p>
+                <div class="page-heading-inner">
+                    <span class="badge">TIKET SAYA</span>
+                    <h1>Riwayat Tiket</h1>
+                </div>
+                <p>Pilih pemegang tiket untuk melihat semua QR atas nama orang tersebut.</p>
             </div>
 
             @if (session('success'))
@@ -41,179 +43,94 @@
                 </div>
             @endif
 
-            @forelse ($tickets as $orderId => $group)
-                @php
-                    $first = $group->first();
-                    $order = $first->order;
-                @endphp
-
-                <div class="order-group">
-                    <div class="order-group-header">
-                        <div>
-                            <h3>{{ $first->event->title }}</h3>
-                            <span class="order-meta">
-                                {{ $first->event->start_date?->translatedFormat('d M Y, H:i') ?? '-' }} ·
-                                {{ $group->count() }} tiket
-                            </span>
-                        </div>
-                        <span class="order-total">
-                            Rp {{ number_format($order->total_amount, 0, ',', '.') }}
-                        </span>
+            <form class="ticket-toolbar" method="GET" action="{{ route('tickets.index') }}">
+                <div class="toolbar-filters">
+                    <div class="search-input-wrap">
+                        <x-icon name="search" :size="16" />
+                        <input
+                            type="search"
+                            name="search"
+                            value="{{ request('search') }}"
+                            placeholder="Cari nama tiket atau pemegang tiket..."
+                            autocomplete="off"
+                            aria-label="Cari tiket"
+                        >
+                        @if(request('search'))
+                            <button type="button" class="search-clear-btn" aria-label="Bersihkan pencarian" onclick="this.form.search.value='';this.form.submit();">
+                                <x-icon name="x" :size="14" />
+                            </button>
+                        @endif
                     </div>
 
-                    @if ($order->payment_status === 'refund_manual_pending')
-                        <div class="refund-request-box">
-                            <div class="refund-request-head">
-                                <span class="refund-request-icon"><x-icon name="alert-triangle" :size="18" /></span>
-                                <div>
-                                    <strong>Refund membutuhkan tujuan transfer</strong>
-                                    <p>Channel pembayaran tiket ini tidak mendukung refund langsung ke metode bayar asal. Isi rekening atau e-wallet agar sistem bisa mengirim pengembalian dana.</p>
-                                </div>
-                            </div>
+                    <select name="status" aria-label="Filter status" onchange="this.form.submit()">
+                        <option value="">Semua Status</option>
+                        <option value="valid" {{ request('status') === 'valid' ? 'selected' : '' }}>Aktif</option>
+                        <option value="used" {{ request('status') === 'used' ? 'selected' : '' }}>Terpakai</option>
+                        <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Batal</option>
+                    </select>
 
-                            <form action="{{ route('orders.refund-destination.store', $order) }}" method="POST" class="refund-destination-form">
-                                @csrf
-                                <div class="refund-form-grid">
-                                    <label>
-                                        Jenis tujuan
-                                        <select name="refund_destination_type" required>
-                                            <option value="">Pilih tujuan</option>
-                                            <option value="bank" {{ old('refund_destination_type', $order->refund_destination_type) === 'bank' ? 'selected' : '' }}>Bank</option>
-                                            <option value="ewallet" {{ old('refund_destination_type', $order->refund_destination_type) === 'ewallet' ? 'selected' : '' }}>E-wallet</option>
-                                        </select>
-                                    </label>
-                                    <label>
-                                        Nama bank/e-wallet
-                                        <input type="text" name="refund_destination_provider" maxlength="50" placeholder="Contoh: BCA, DANA, OVO" value="{{ old('refund_destination_provider', $order->refund_destination_provider) }}" required>
-                                    </label>
-                                    <label>
-                                        Nomor rekening/e-wallet
-                                        <input type="text" name="refund_destination_account_number" maxlength="50" placeholder="Nomor tujuan refund" value="{{ old('refund_destination_account_number', $order->refund_destination_account_number) }}" required>
-                                    </label>
-                                    <label>
-                                        Nama pemilik
-                                        <input type="text" name="refund_destination_account_name" maxlength="255" placeholder="Nama sesuai rekening/e-wallet" value="{{ old('refund_destination_account_name', $order->refund_destination_account_name) }}" required>
-                                    </label>
-                                </div>
-                                <button type="submit" class="refund-submit-btn">
-                                    <x-icon name="send" :size="16" />
-                                    Kirim Data Refund
-                                </button>
-                            </form>
-                        </div>
-                    @elseif ($order->payment_status === 'refund_manual_processing')
-                        <div class="refund-status-note processing">
-                            <x-icon name="clock" :size="17" />
-                            Data refund sudah dikirim. Pengembalian dana sedang diproses.
-                        </div>
-                    @elseif ($order->payment_status === 'refund_payout_pending')
-                        <div class="refund-status-note processing">
-                            <x-icon name="clock" :size="17" />
-                            Refund sedang dikirim otomatis ke {{ $order->refund_destination_provider ?? 'tujuan refund' }}.
-                        </div>
-                    @elseif ($order->payment_status === 'refund_payout_failed')
-                        <div class="refund-status-note processing">
-                            <x-icon name="alert-triangle" :size="17" />
-                            Refund otomatis gagal diproses. Admin akan melakukan pengecekan ulang.
-                        </div>
-                    @elseif ($order->manual_refunded_at)
-                        <div class="refund-status-note completed">
-                            <x-icon name="check-circle" :size="17" />
-                            Refund selesai pada {{ $order->manual_refunded_at->translatedFormat('d M Y, H:i') }}.
-                        </div>
-                    @elseif ($order->xendit_payout_completed_at)
-                        <div class="refund-status-note completed">
-                            <x-icon name="check-circle" :size="17" />
-                            Refund otomatis selesai pada {{ $order->xendit_payout_completed_at->translatedFormat('d M Y, H:i') }}.
-                        </div>
+                    <select name="sort" aria-label="Urutkan" onchange="this.form.submit()">
+                        <option value="newest" {{ request('sort', 'newest') === 'newest' ? 'selected' : '' }}>Pembelian Terbaru</option>
+                        <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Pembelian Terlama</option>
+                        <option value="event_upcoming" {{ request('sort') === 'event_upcoming' ? 'selected' : '' }}>Event Akan Datang</option>
+                        <option value="event_past" {{ request('sort') === 'event_past' ? 'selected' : '' }}>Event Sudah Lewat</option>
+                        <option value="name_asc" {{ request('sort') === 'name_asc' ? 'selected' : '' }}>Nama Event A-Z</option>
+                    </select>
+                </div>
+
+                <div class="toolbar-meta">
+                    <span class="result-count">{{ $paginator->total() }} pemegang tiket</span>
+                    @if(request()->has('search') || request()->has('status') || request()->has('sort'))
+                        <a href="{{ route('tickets.index') }}" class="reset-link">Reset filter</a>
                     @endif
+                </div>
+            </form>
 
-                    <div class="ticket-mini-list">
-                        @foreach ($group as $ticket)
-                            @php
-                                $ticketUrl = route('tickets.show', $ticket);
-                                $shareText = "Tiket EvenTour\nEvent: {$ticket->event->title}\nKode: {$ticket->ticket_code}\nDetail: {$ticketUrl}";
-                            @endphp
+            <div class="ticket-holder-list">
+                @forelse ($ticketGroups as $ticketGroup)
+                    @php
+                        $ticket = $ticketGroup->ticket;
+                        $holderName = $ticketGroup->holder_name;
+                    @endphp
 
-                            <div class="ticket-mini">
-                                <a href="{{ $ticketUrl }}" class="ticket-mini-main">
-                                    <span class="ticket-mini-code">{{ $ticket->ticket_code }}</span>
-                                    <span class="ticket-mini-status status-{{ $ticket->status }}">
-                                        @if ($ticket->status === 'valid') Aktif
-                                        @elseif ($ticket->status === 'used') Terpakai
-                                        @else Batal @endif
-                                    </span>
-                                </a>
-
-                                <div class="ticket-actions">
-                                    <a href="{{ $ticketUrl }}" class="ticket-action-btn">Detail</a>
-                                    <a href="https://wa.me/?text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener" class="ticket-action-btn whatsapp">Bagikan WA</a>
-                                    <button type="button" class="ticket-action-btn" data-ticket-code="{{ $ticket->ticket_code }}" data-event-title="{{ $ticket->event->title }}">
-                                        Download QR
-                                    </button>
-                                </div>
+                    <a href="{{ route('tickets.show', $ticket) }}"
+                        class="ticket-holder-card"
+                        aria-label="Buka QR tiket {{ $ticket->event->title }} atas nama {{ $holderName }}">
+                        <div class="ticket-holder-main">
+                            <div>
+                                <span class="ticket-holder-label">Nama Tiket</span>
+                                <h2>{{ $ticket->event->title }}</h2>
                             </div>
-                        @endforeach
+
+                            <div>
+                                <span class="ticket-holder-label">Pemegang Tiket</span>
+                                <p>{{ $holderName }}</p>
+                            </div>
+                        </div>
+
+                        <span class="ticket-holder-open" aria-hidden="true">
+                            <x-icon name="arrow-right" :size="18" />
+                        </span>
+                    </a>
+                @empty
+                    <div class="empty-state">
+                        <span class="empty-state-icon"><x-icon name="ticket" :size="38" /></span>
+                        <p>Kamu belum punya tiket apapun.</p>
+                        <a href="{{ route('dashboard') }}" class="btn-explore">Jelajahi Event</a>
                     </div>
+                @endforelse
+            </div>
+
+            @if ($paginator->hasPages())
+                <div class="pagination-wrap">
+                    {{ $paginator->links('templates.pagination') }}
                 </div>
-            @empty
-                <div class="empty-state">
-                    <span class="empty-state-icon"><x-icon name="ticket" :size="38" /></span>
-                    <p>Kamu belum punya tiket apapun.</p>
-                    <a href="{{ route('dashboard') }}" class="btn-explore">Jelajahi Event</a>
-                </div>
-            @endforelse
+            @endif
 
         </div>
     </main>
 
     <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script>
-        document.querySelectorAll('[data-ticket-code]').forEach(button => {
-            button.addEventListener('click', () => {
-                const ticketCode = button.dataset.ticketCode;
-                const eventTitle = button.dataset.eventTitle || 'event';
-                const qrHolder = document.createElement('div');
-
-                qrHolder.style.position = 'fixed';
-                qrHolder.style.left = '-9999px';
-                qrHolder.style.top = '-9999px';
-                document.body.appendChild(qrHolder);
-
-                new QRCode(qrHolder, {
-                    text: ticketCode,
-                    width: 320,
-                    height: 320,
-                    colorDark: '#0f1117',
-                    colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.H,
-                });
-
-                setTimeout(() => {
-                    const canvas = qrHolder.querySelector('canvas');
-                    const image = qrHolder.querySelector('img');
-                    const dataUrl = canvas ? canvas.toDataURL('image/png') : image?.src;
-
-                    if (!dataUrl) {
-                        qrHolder.remove();
-                        return;
-                    }
-
-                    const link = document.createElement('a');
-                    const safeEventTitle = eventTitle.toLowerCase().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
-
-                    link.href = dataUrl;
-                    link.download = `qr-${safeEventTitle || 'event'}-${ticketCode}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                    qrHolder.remove();
-                }, 100);
-            });
-        });
-    </script>
 
 </body>
 </html>

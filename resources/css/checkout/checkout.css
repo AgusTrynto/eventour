@@ -126,6 +126,49 @@ body.checkout-page {
     font-size: 13px;
 }
 
+.limit-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: rgba(255,193,7,.08);
+    border: 1px solid rgba(255,193,7,.2);
+    color: #ffc107;
+    font-size: 13px;
+}
+
+.attendee-section {
+    margin-top: 4px;
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--border, #444);
+}
+
+.attendee-section label {
+    display: block;
+    margin-bottom: 12px;
+    color: #c4c4c4;
+    font-size: 14px;
+}
+
+.attendee-input input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border, #444);
+    background: rgba(255,255,255,.03);
+    color: #fff;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.attendee-input input:focus {
+    outline: none;
+    border-color: var(--accent, #d8ff4f);
+}
+
 .checkout-form {
     margin-top: 24px;
     display: flex;

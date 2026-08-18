@@ -3,3 +3,11 @@
 .form-row { display: flex; gap: 1rem; }
 label { display: block; margin-bottom: .5rem; }
 input, select, textarea { width: 100%; padding: .5rem; border: 1px solid #ddd; border-radius: 4px; }
+.form-hint { display: block; margin-top: .35rem; font-size: 12px; color: #999; }
+.form-error { display: block; margin-top: .35rem; font-size: 12px; color: #ff6b6b; }
+.radio-group { display: flex; gap: 12px; flex-wrap: wrap; }
+.radio-card { flex: 1; min-width: 240px; }
+.radio-card input[type="radio"] { margin-right: 8px; accent-color: var(--accent, #d8ff4f); }
+.radio-content { display: inline-block; vertical-align: top; }
+.radio-content strong { display: block; font-size: 14px; color: #fff; margin-bottom: 4px; }
+.radio-content small { font-size: 12px; color: #999; line-height: 1.4; }

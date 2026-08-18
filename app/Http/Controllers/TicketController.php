@@ -4,25 +4,93 @@ namespace App\Http\Controllers;
 
 use App\Models\Ticket;
 use App\Services\XenditRefundPayoutService;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class TicketController extends Controller
 {
     // =========================================================
     // List semua tiket milik user yang login
     // =========================================================
-    public function index()
+    public function index(Request $request)
     {
-        $tickets = Ticket::where('user_id', Auth::id())
-            ->with('event', 'order')
-            ->latest()
-            ->get()
-            ->groupBy('order_id'); // kelompokkan per transaksi
+        $search = trim((string) $request->input('search', ''));
+        $status = $request->input('status', '');
+        $sort = $request->input('sort', 'newest');
+
+        $ticketsQuery = Ticket::where('user_id', Auth::id())
+            ->with(['event', 'order', 'user']);
+
+        if ($search !== '') {
+            $ticketsQuery->where(function ($q) use ($search) {
+                $q->where('ticket_code', 'like', "%{$search}%")
+                  ->orWhere('attendee_name', 'like', "%{$search}%")
+                  ->orWhereHas('event', fn ($q2) => $q2->where('title', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($status !== '' && in_array($status, ['valid', 'used', 'cancelled'], true)) {
+            $ticketsQuery->where('status', $status);
+        }
+
+        switch ($sort) {
+            case 'oldest':
+                $ticketsQuery->oldest();
+                break;
+            case 'event_upcoming':
+                $ticketsQuery
+                    ->join('events', 'events.id', '=', 'tickets.event_id')
+                    ->select('tickets.*')
+                    ->orderBy('events.start_date', 'asc');
+                break;
+            case 'event_past':
+                $ticketsQuery
+                    ->join('events', 'events.id', '=', 'tickets.event_id')
+                    ->select('tickets.*')
+                    ->orderBy('events.start_date', 'desc');
+                break;
+            case 'name_asc':
+                $ticketsQuery
+                    ->join('events', 'events.id', '=', 'tickets.event_id')
+                    ->select('tickets.*')
+                    ->orderBy('events.title', 'asc');
+                break;
+            default:
+                $ticketsQuery->latest();
+        }
+
+        $tickets = $ticketsQuery->get();
 
         $this->syncVisibleRefundPayouts($tickets);
 
-        return view('tickets.index', compact('tickets'));
+        $ticketGroups = $tickets
+            ->groupBy(fn (Ticket $ticket) => $ticket->event_id.'|'.$this->normalizedHolderName($ticket))
+            ->map(fn ($group) => (object) [
+                'ticket' => $group->first(),
+                'holder_name' => $this->ticketHolderName($group->first()),
+                'tickets' => $group->values(),
+            ])
+            ->values();
+
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 12;
+        $paginator = new LengthAwarePaginator(
+            $ticketGroups->forPage($page, $perPage)->values(),
+            $ticketGroups->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+
+        $ticketGroups = $paginator->getCollection();
+
+        return view('tickets.index', compact('ticketGroups', 'paginator'));
     }
 
     // =========================================================
@@ -34,11 +102,42 @@ class TicketController extends Controller
             abort(403);
         }
 
-        $ticket->load('event', 'order');
+        $ticket->load(['event', 'order', 'user']);
 
         $this->syncTicketRefundPayout($ticket);
 
-        return view('tickets.show', compact('ticket'));
+        $holderName = $this->ticketHolderName($ticket);
+        $normalizedHolderName = Str::lower($holderName);
+        $authUserName = Str::lower(trim((string) Auth::user()?->name));
+
+        $holderTickets = Ticket::where('user_id', Auth::id())
+            ->where('event_id', $ticket->event_id)
+            ->with(['event', 'order', 'user'])
+            ->where(function ($query) use ($normalizedHolderName, $authUserName) {
+                $query->whereRaw('LOWER(TRIM(attendee_name)) = ?', [$normalizedHolderName]);
+
+                if ($normalizedHolderName === $authUserName) {
+                    $query->orWhereNull('attendee_name')
+                        ->orWhere('attendee_name', '');
+                }
+            })
+            ->oldest('id')
+            ->get();
+
+        $this->syncVisibleRefundPayouts($holderTickets);
+
+        return view('tickets.show', compact('ticket', 'holderTickets', 'holderName'));
+    }
+
+    private function ticketHolderName(Ticket $ticket): string
+    {
+        return trim((string) $ticket->attendee_name)
+            ?: ($ticket->user?->name ?? 'Pemegang tiket');
+    }
+
+    private function normalizedHolderName(Ticket $ticket): string
+    {
+        return Str::lower($this->ticketHolderName($ticket));
     }
 
     private function syncVisibleRefundPayouts($tickets): void

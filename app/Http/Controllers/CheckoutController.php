@@ -61,8 +61,22 @@ class CheckoutController extends Controller
             return $redirect;
         }
 
+        $maxPerPerson = $event->max_tickets_per_person ?? 10;
+        $effectiveMax = $maxPerPerson;
+
+        if ($event->ticket_purchase_policy === 'flexible' && $event->max_tickets_per_person !== null) {
+            $effectiveMax = max(20, $event->max_tickets_per_person * 3);
+        } elseif ($event->ticket_purchase_policy === 'flexible') {
+            $effectiveMax = 20;
+        }
+
         $request->validate([
-            'quantity' => ['required', 'integer', 'min:1', 'max:10'],
+            'quantity' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:' . $effectiveMax,
+            ],
         ]);
 
         $user = Auth::user();
@@ -76,12 +90,27 @@ class CheckoutController extends Controller
             }
         }
 
+        if ($event->ticket_purchase_policy === 'strict' && $event->max_tickets_per_person !== null && $quantity > $event->max_tickets_per_person) {
+            return back()->with('error', "Maksimal {$event->max_tickets_per_person} tiket per orang. Jika ingin membeli lebih, buat pesanan terpisah atau hubungi EO.");
+        }
+
+        $attendeeNames = [];
+        if ($event->ticket_purchase_policy === 'flexible' && $event->max_tickets_per_person !== null && $quantity > $event->max_tickets_per_person) {
+            $requiredAttendeeCount = (int) ceil(($quantity - $event->max_tickets_per_person) / $event->max_tickets_per_person);
+            $request->validate([
+                'attendee_name' => ['required', 'array', 'min:' . $requiredAttendeeCount, 'max:' . $requiredAttendeeCount],
+                'attendee_name.*' => ['required', 'string', 'max:255'],
+            ]);
+            $attendeeNames = $request->attendee_name;
+        }
+
         $externalId = 'ORDER-'.Str::upper(Str::random(10)).'-'.time();
 
         $order = Order::create([
             'user_id' => $user->id,
             'event_id' => $event->id,
             'quantity' => $quantity,
+            'attendee_details' => !empty($attendeeNames) ? $attendeeNames : null,
             'unit_price' => $event->price,
             'total_amount' => $total,
             'payment_status' => 'pending',
@@ -170,11 +199,27 @@ class CheckoutController extends Controller
     private function generateTickets(Order $order): void
     {
         if (! Ticket::where('order_id', $order->id)->exists()) {
+            $attendees = $order->attendee_details ?? [];
+            $userName = $order->user->name ?? 'Pembeli';
+            $event = $order->event;
+            $maxPerPerson = $event->max_tickets_per_person ?? $order->quantity;
+            $isFlexible = $event->ticket_purchase_policy === 'flexible';
+            $holderNames = array_values(array_filter(
+                array_merge([$userName], $attendees),
+                fn ($name) => trim((string) $name) !== ''
+            ));
+
             for ($i = 0; $i < $order->quantity; $i++) {
+                $name = $userName;
+                if ($isFlexible && $maxPerPerson > 0) {
+                    $name = $holderNames[intdiv($i, $maxPerPerson)] ?? $userName;
+                }
+
                 Ticket::create([
                     'order_id' => $order->id,
                     'event_id' => $order->event_id,
                     'user_id' => $order->user_id,
+                    'attendee_name' => $name,
                     'ticket_code' => Ticket::generateCode(),
                     'status' => 'valid',
                 ]);

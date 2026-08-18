@@ -23,6 +23,8 @@ class Event extends Model
         'location',
         'price',
         'quota',
+        'max_tickets_per_person',
+        'ticket_purchase_policy',
         'status',
         'reject_reason',
     ];

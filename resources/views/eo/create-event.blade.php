@@ -99,6 +99,40 @@
                     </div>
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Maks Tiket per Orang <span class="hint">(opsional)</span></label>
+                        <input type="number" name="max_tickets_per_person" min="1" placeholder="Tanpa batas jika kosong"
+                            value="{{ old('max_tickets_per_person') }}">
+                        <small class="form-hint">Batas jumlah tiket yang bisa dibeli oleh 1 orang dalam 1 transaksi. Kosongkan jika tanpa batas.</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Kebijakan Pembelian Tiket</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="ticket_purchase_policy" value="strict"
+                                {{ old('ticket_purchase_policy', 'strict') === 'strict' ? 'checked' : '' }}>
+                            <div class="radio-content">
+                                <strong>Tidak bisa melebihi limit</strong>
+                                <small>User tidak bisa membeli lebih dari maks tiket per orang. Jika mau beli lebih, harus buat pesanan terpisah.</small>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="ticket_purchase_policy" value="flexible"
+                                {{ old('ticket_purchase_policy') === 'flexible' ? 'checked' : '' }}>
+                            <div class="radio-content">
+                                <strong>Bisa melebihi dengan data diri lain</strong>
+                                <small>User bisa beli lebih dari limit asal mengisi nama lengkap setiap pemegang tiket.</small>
+                            </div>
+                        </label>
+                    </div>
+                    @error('ticket_purchase_policy')
+                        <small class="form-error">{{ $message }}</small>
+                    @enderror
+                </div>
+
                 <div class="form-group">
                     <label>Nama Lokasi</label>
                     <input type="text" name="location_name" placeholder="Contoh: GBK Senayan, Jakarta"

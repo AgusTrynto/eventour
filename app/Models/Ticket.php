@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 class Ticket extends Model
 {
     protected $fillable = [
-        'order_id', 'event_id', 'user_id', 'ticket_code',
+        'order_id', 'event_id', 'user_id', 'attendee_name', 'ticket_code',
         'status', 'checked_in_at', 'checked_in_by',
     ];
 

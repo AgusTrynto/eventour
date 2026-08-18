@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $fillable = [
-        'user_id', 'event_id', 'quantity', 'unit_price', 'total_amount',
+        'user_id', 'event_id', 'quantity', 'attendee_details', 'unit_price', 'total_amount',
         'payment_status', 'payment_method', 'payment_proof',
         'paid_at', 'refunded_at', 'refund_reason', 'refund_requested_at',
         'refund_destination_type', 'refund_destination_provider',
@@ -31,6 +31,7 @@ class Order extends Model
         'manual_refunded_at' => 'datetime',
         'xendit_payout_requested_at' => 'datetime',
         'xendit_payout_completed_at' => 'datetime',
+        'attendee_details' => 'array',
     ];
 
     public function user()
