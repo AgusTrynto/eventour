@@ -81,7 +81,9 @@ class CheckoutController extends Controller
 
         $user = Auth::user();
         $quantity = (int) $request->quantity;
-        $total = $event->price * $quantity;
+        $subtotal = $event->price * $quantity;
+        $adminFee = Order::adminFeeForSubtotal((float) $subtotal);
+        $total = $subtotal + $adminFee;
 
         if ($event->quota !== null) {
             $sold = $event->tickets_sold;
@@ -112,6 +114,8 @@ class CheckoutController extends Controller
             'quantity' => $quantity,
             'attendee_details' => !empty($attendeeNames) ? $attendeeNames : null,
             'unit_price' => $event->price,
+            'subtotal_amount' => $subtotal,
+            'admin_fee' => $adminFee,
             'total_amount' => $total,
             'payment_status' => 'pending',
             'payment_method' => 'xendit',
@@ -121,7 +125,7 @@ class CheckoutController extends Controller
         app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order);
 
         // ── Free event: tidak perlu bayar, langsung tandai paid ──
-        if ($total <= 0) {
+        if ($subtotal <= 0) {
             $order->update([
                 'payment_status' => 'paid',
                 'paid_at' => now(),

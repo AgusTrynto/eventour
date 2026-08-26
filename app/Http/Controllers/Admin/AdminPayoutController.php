@@ -65,15 +65,13 @@ class AdminPayoutController extends Controller
             return back()->with('error', 'EO belum melengkapi data rekening bank.');
         }
 
-        $gross = $event->escrow_amount;
+        $gross = $event->escrow_gross_amount;
+        $fee = $event->escrow_admin_fee;
+        $net = $event->escrow_amount;
 
-        if ($gross <= 0) {
+        if ($net <= 0) {
             return back()->with('error', 'Tidak ada dana untuk dicairkan pada event ini.');
         }
-
-        $feePercent = 5; // contoh: platform ambil 5%, sesuaikan kebijakan
-        $fee = round($gross * ($feePercent / 100), 2);
-        $net = $gross - $fee;
 
         Payout::create([
             'event_id' => $event->id,

@@ -36,7 +36,7 @@
                 <div class="stat-card">
                     <div class="stat-icon"><x-icon name="briefcase" :size="28" /></div>
                     <div class="stat-info">
-                        <span class="stat-label">Total Transaksi</span>
+                        <span class="stat-label">Saldo EO Bersih</span>
                         <span class="stat-value money">Rp {{ number_format($grossRevenue, 0, ',', '.') }}</span>
                     </div>
                 </div>

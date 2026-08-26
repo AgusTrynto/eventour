@@ -48,11 +48,11 @@ class EODashboardController extends Controller
 
         $grossRevenue = Order::whereIn('event_id', $eventIds)
             ->whereIn('payment_status', $paidStatuses)
-            ->sum('total_amount');
+            ->sum('subtotal_amount');
 
         $escrowAmount = Order::whereIn('event_id', $eventIds)
             ->where('payment_status', 'paid')
-            ->sum('total_amount');
+            ->sum('subtotal_amount');
 
         $processingPayoutAmount = $organizer->payouts()
             ->whereIn('status', ['pending', 'processing'])
@@ -122,11 +122,11 @@ class EODashboardController extends Controller
 
         $grossRevenue = Order::whereIn('event_id', $eventIds)
             ->whereIn('payment_status', $paidStatuses)
-            ->sum('total_amount');
+            ->sum('subtotal_amount');
 
         $escrowAmount = Order::whereIn('event_id', $eventIds)
             ->where('payment_status', 'paid')
-            ->sum('total_amount');
+            ->sum('subtotal_amount');
 
         $processingPayoutAmount = $organizer->payouts()
             ->whereIn('status', ['pending', 'processing'])
@@ -175,7 +175,7 @@ class EODashboardController extends Controller
 
         $grossRevenue = Order::whereIn('event_id', $eventIds)
             ->whereIn('payment_status', $paidStatuses)
-            ->sum('total_amount');
+            ->sum('subtotal_amount');
 
         $topSpenders = Order::whereIn('event_id', $eventIds)
             ->whereIn('payment_status', $paidStatuses)
@@ -305,9 +305,11 @@ class EODashboardController extends Controller
             'request_attachment.max' => 'Ukuran lampiran maksimal 4 MB.',
         ]);
 
-        $gross = $event->escrow_amount;
+        $gross = $event->escrow_gross_amount;
+        $fee = $event->escrow_admin_fee;
+        $net = $event->escrow_amount;
 
-        if ($gross <= 0) {
+        if ($net <= 0) {
             return back()->with('error', 'Belum ada dana tertahan dari tiket paid untuk event ini.');
         }
 
@@ -319,15 +321,12 @@ class EODashboardController extends Controller
             ? $request->file('request_attachment')->store('payout-requests', 'public')
             : null;
 
-        $feePercent = 5;
-        $fee = round($gross * ($feePercent / 100), 2);
-
         Payout::create([
             'event_id' => $event->id,
             'event_organizer_id' => $organizer->id,
             'gross_amount' => $gross,
             'platform_fee' => $fee,
-            'net_amount' => $gross - $fee,
+            'net_amount' => $net,
             'status' => 'pending',
             'request_reason' => $request->request_reason,
             'request_attachment' => $attachmentPath,

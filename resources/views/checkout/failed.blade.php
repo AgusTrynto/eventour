@@ -21,6 +21,8 @@
             <div class="order-details">
                 <div class="detail-row"><span>ID Pesanan</span><span>#{{ $order->id }}</span></div>
                 <div class="detail-row"><span>Jumlah Tiket</span><span>{{ $order->quantity }}</span></div>
+                <div class="detail-row"><span>Subtotal Tiket</span><span>Rp {{ number_format($order->subtotal_amount, 0, ',', '.') }}</span></div>
+                <div class="detail-row"><span>Biaya Admin</span><span>Rp {{ number_format($order->admin_fee, 0, ',', '.') }}</span></div>
                 <div class="detail-row"><span>Total Bayar</span><span>Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span></div>
                 <div class="detail-row"><span>Status</span><span class="status-failed">{{ ucfirst($order->payment_status) }}</span></div>
             </div>

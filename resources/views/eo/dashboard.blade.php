@@ -111,7 +111,7 @@
                     <span class="dashboard-menu-icon"><x-icon name="users" :size="26" /></span>
                     <span class="dashboard-menu-body">
                         <strong>Pembeli</strong>
-                        <small>Omzet Rp {{ number_format($grossRevenue, 0, ',', '.') }}</small>
+                        <small>Saldo EO Rp {{ number_format($grossRevenue, 0, ',', '.') }}</small>
                     </span>
                     <span class="dashboard-menu-action">Buka</span>
                 </a>
@@ -133,7 +133,7 @@
                 </div>
                 <div class="dashboard-finance-metrics">
                     <div>
-                        <span>Total transaksi</span>
+                        <span>Saldo EO bersih</span>
                         <strong>Rp {{ number_format($grossRevenue, 0, ',', '.') }}</strong>
                     </div>
                     <div>

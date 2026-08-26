@@ -151,7 +151,23 @@ class Event extends Model
     // Total dana yang sudah dibayar user & DITAHAN platform (belum dicairkan)
     public function getEscrowAmountAttribute(): float
     {
-        return (float) $this->orders()->where('payment_status', 'paid')->sum('total_amount');
+        return (float) $this->orders()
+            ->where('payment_status', 'paid')
+            ->sum('subtotal_amount');
+    }
+
+    public function getEscrowGrossAmountAttribute(): float
+    {
+        return (float) $this->orders()
+            ->where('payment_status', 'paid')
+            ->sum('total_amount');
+    }
+
+    public function getEscrowAdminFeeAttribute(): float
+    {
+        return (float) $this->orders()
+            ->where('payment_status', 'paid')
+            ->sum('admin_fee');
     }
 
     // Jumlah tiket yang berhasil terjual (status paid)

@@ -68,10 +68,22 @@
                         <span>Jumlah tiket</span>
                         <span id="display-qty">1</span>
                     </div>
+                    <div class="price-row">
+                        <span>Subtotal tiket</span>
+                        <span id="display-subtotal">
+                            {{ $event->price > 0 ? 'Rp ' . number_format($event->price, 0, ',', '.') : 'Gratis' }}
+                        </span>
+                    </div>
+                    <div class="price-row">
+                        <span>Biaya admin per transaksi</span>
+                        <span id="display-admin-fee">
+                            {{ $event->price > 0 ? 'Rp ' . number_format(\App\Models\Order::ADMIN_FEE, 0, ',', '.') : 'Gratis' }}
+                        </span>
+                    </div>
                     <div class="price-row total">
                         <span>Total Bayar</span>
                         <span id="display-total">
-                            {{ $event->price > 0 ? 'Rp ' . number_format($event->price, 0, ',', '.') : 'Gratis' }}
+                            {{ $event->price > 0 ? 'Rp ' . number_format($event->price + \App\Models\Order::ADMIN_FEE, 0, ',', '.') : 'Gratis' }}
                         </span>
                     </div>
                 </div>
@@ -94,6 +106,7 @@
 
     <script>
         const price = {{ $event->price }};
+        const adminFee = {{ \App\Models\Order::ADMIN_FEE }};
         const policy = @json($event->ticket_purchase_policy ?? 'strict');
         const globalMax = {{ $event->max_tickets_per_person ?? 'null' }};
         let maxTicket = 10;
@@ -108,6 +121,8 @@
 
         const qtyInput = document.getElementById('qty-input');
         const displayQty = document.getElementById('display-qty');
+        const displaySubtotal = document.getElementById('display-subtotal');
+        const displayAdminFee = document.getElementById('display-admin-fee');
         const displayTotal = document.getElementById('display-total');
         const attendeeSection = document.getElementById('attendee-section');
         const attendeeFields = document.getElementById('attendee-fields');
@@ -119,8 +134,12 @@
 
         function updateTotal() {
             const qty = parseInt(qtyInput.value);
+            const subtotal = price * qty;
+            const fee = subtotal > 0 ? adminFee : 0;
             displayQty.textContent = qty;
-            displayTotal.textContent = formatRupiah(price * qty);
+            displaySubtotal.textContent = formatRupiah(subtotal);
+            displayAdminFee.textContent = formatRupiah(fee);
+            displayTotal.textContent = formatRupiah(subtotal + fee);
             renderAttendeeFields(qty);
         }
 

@@ -52,7 +52,7 @@
                 <div class="stat-card">
                     <div class="stat-icon"><x-icon name="ticket" :size="28" /></div>
                     <div class="stat-info">
-                        <span class="stat-label">Total Transaksi</span>
+                        <span class="stat-label">Saldo EO Bersih</span>
                         <span class="stat-value money">Rp {{ number_format($grossRevenue, 0, ',', '.') }}</span>
                     </div>
                 </div>
@@ -125,7 +125,7 @@
                                         <span class="event-title">{{ $event->title }}</span>
                                         <span class="event-meta">
                                             Event {{ $event->start_date?->translatedFormat('d M Y') ?? '-' }} -
-                                            {{ $event->tickets_sold }} tiket
+                                            {{ $event->tickets_sold }} tiket - sudah dipotong biaya admin
                                         </span>
                                         <form
                                             action="{{ route('eo.events.payout.request', $event) }}"
@@ -154,7 +154,7 @@
                                     </div>
                                     <div class="payout-amount">
                                         <strong>Rp {{ number_format($event->escrow_amount, 0, ',', '.') }}</strong>
-                                        <span class="status-badge status-pending">Dana tertahan</span>
+                                        <span class="status-badge status-pending">Saldo EO</span>
                                     </div>
                                 </div>
                             @endforeach
