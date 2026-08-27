@@ -17,6 +17,15 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
+
+        if ($user->role === 'eo') {
+            return redirect()->route('eo.dashboard');
+        }
+
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
         $userLocation = $this->userLocation($user);
 
         if ($userLocation !== null) {

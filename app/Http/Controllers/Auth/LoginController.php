@@ -39,6 +39,7 @@ class LoginController extends Controller
 
         $redirectTo = match ($user->role) {
             'admin' => route('admin.dashboard'),
+            'eo' => route('eo.dashboard'),
             default => route('dashboard'),
         };
 
