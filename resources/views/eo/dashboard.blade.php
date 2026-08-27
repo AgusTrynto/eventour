@@ -102,7 +102,7 @@
                     <span class="dashboard-menu-icon"><x-icon name="briefcase" :size="26" /></span>
                     <span class="dashboard-menu-body">
                         <strong>Payout</strong>
-                        <small>{{ $readyForPayoutCount }} event siap diajukan</small>
+                        <small>{{ $readyForPayoutCount }} event menunggu pencairan</small>
                     </span>
                     <span class="dashboard-menu-action">Buka</span>
                 </a>

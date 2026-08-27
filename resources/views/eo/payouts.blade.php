@@ -44,7 +44,7 @@
                 <div class="welcome-text">
                     <span class="badge">PAYOUT</span>
                     <h1>Pencairan Dana</h1>
-                    <p>Dana tiket paid tertahan sampai pengajuan disetujui admin.</p>
+                    <p>Dana tiket paid akan dicairkan otomatis ke rekening EO setelah event berakhir.</p>
                 </div>
             </div>
 
@@ -99,8 +99,8 @@
                                 <strong>Rp {{ number_format($processingPayoutAmount, 0, ',', '.') }}</strong>
                             </div>
                             <div>
-                                <span>Event siap diajukan</span>
-                                <strong>{{ $readyForPayoutEvents->count() }} event</strong>
+                                <span>Menunggu event selesai</span>
+                                <strong>{{ $scheduledPayoutEvents->count() }} event</strong>
                             </div>
                         </div>
                     </div>
@@ -108,17 +108,20 @@
 
                 <div class="card full-width">
                     <div class="card-header">
-                        <h2>Dana Tertahan Bisa Diajukan ({{ $readyForPayoutEvents->count() }})</h2>
+                        <h2>Jadwal Pencairan Otomatis ({{ $scheduledPayoutEvents->count() }})</h2>
                     </div>
 
-                    @if ($readyForPayoutEvents->isEmpty())
+                    @if ($scheduledPayoutEvents->isEmpty())
                         <div class="empty-state compact">
                             <span class="empty-state-icon"><x-icon name="check-circle" :size="38" /></span>
-                            <p>Belum ada dana tertahan dari tiket paid yang bisa diajukan.</p>
+                            <p>Belum ada event aktif dengan dana tertahan yang menunggu jadwal pencairan.</p>
                         </div>
                     @else
                         <div class="event-list">
-                            @foreach ($readyForPayoutEvents as $event)
+                            @foreach ($scheduledPayoutEvents as $event)
+                                @php
+                                    $disbursementDate = $event->end_date ?? $event->start_date;
+                                @endphp
                                 <div class="event-item payout-event">
                                     <div class="event-icon pending"><x-icon name="lock" :size="20" /></div>
                                     <div class="event-info">
@@ -127,34 +130,13 @@
                                             Event {{ $event->start_date?->translatedFormat('d M Y') ?? '-' }} -
                                             {{ $event->tickets_sold }} tiket - sudah dipotong biaya admin
                                         </span>
-                                        <form
-                                            action="{{ route('eo.events.payout.request', $event) }}"
-                                            method="POST"
-                                            enctype="multipart/form-data"
-                                            class="payout-request-form"
-                                        >
-                                            @csrf
-                                            <textarea
-                                                name="request_reason"
-                                                rows="3"
-                                                maxlength="1000"
-                                                placeholder="Alasan pengajuan, contoh: DP vendor, sewa venue, atau kebutuhan operasional..."
-                                                required
-                                            ></textarea>
-                                            <div class="payout-request-actions">
-                                                <label class="payout-file-field">
-                                                    <span>Foto pendukung opsional</span>
-                                                    <input type="file" name="request_attachment" accept="image/*">
-                                                </label>
-                                                <button type="submit" class="btn-reviews">
-                                                    Ajukan Penarikan
-                                                </button>
-                                            </div>
-                                        </form>
+                                        <p class="detail-desc">
+                                            Dana akan dicairkan pada tanggal {{ $disbursementDate?->translatedFormat('d M Y') ?? '-' }}.
+                                        </p>
                                     </div>
                                     <div class="payout-amount">
                                         <strong>Rp {{ number_format($event->escrow_amount, 0, ',', '.') }}</strong>
-                                        <span class="status-badge status-pending">Saldo EO</span>
+                                        <span class="status-badge status-pending">Terjadwal</span>
                                     </div>
                                 </div>
                             @endforeach

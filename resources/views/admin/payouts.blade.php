@@ -7,7 +7,7 @@
 
 <div class="tabs">
     <button class="tab active" data-tab="ready">
-        Pengajuan EO <span class="tab-count">{{ $pendingPayouts->count() }}</span>
+        Payout Otomatis <span class="tab-count">{{ $pendingPayouts->count() }}</span>
     </button>
     <button class="tab" data-tab="processing">
         Diproses <span class="tab-count">{{ $processingPayouts->count() }}</span>
@@ -31,12 +31,12 @@
                     <h3>{{ $payout->event->title ?? 'Event tidak ditemukan' }}</h3>
                     <span class="event-card-by">oleh {{ $payout->organizer->org_name ?? '-' }}</span>
                 </div>
-                <span class="status-badge status-pending">Menunggu review</span>
+                <span class="status-badge status-pending">Siap dikirim</span>
             </div>
 
             <div class="eo-details">
                 <div class="detail-row">
-                    <span class="detail-label">Diajukan</span>
+                    <span class="detail-label">Dibuat otomatis</span>
                     <span>{{ $payout->requested_at?->translatedFormat('d M Y, H:i') ?? '-' }}</span>
                 </div>
                 <div class="detail-row">
@@ -49,7 +49,7 @@
                 </div>
                 @if ($payout->request_reason)
                     <div class="detail-row full">
-                        <span class="detail-label">Alasan EO</span>
+                        <span class="detail-label">Keterangan</span>
                         <p class="detail-desc">{{ $payout->request_reason }}</p>
                     </div>
                 @endif
@@ -77,7 +77,7 @@
                     @csrf
                     <button type="submit" class="btn-approve-full">
                         <x-icon name="check-circle" :size="17" />
-                        Setujui & Kirim Otomatis
+                        Kirim Otomatis
                     </button>
                 </form>
                 <form action="{{ route('admin.payouts.reject', $payout) }}" method="POST" class="payout-form">
@@ -95,7 +95,7 @@
     @empty
         <div class="empty-card">
             <span class="empty-card-icon"><x-icon name="check-circle" :size="38" /></span>
-            <p>Belum ada pengajuan pencairan dari EO.</p>
+            <p>Belum ada payout otomatis yang siap dikirim.</p>
         </div>
     @endforelse
 </div>
@@ -147,7 +147,7 @@
                 @endif
                 @if ($payout->request_reason)
                     <div class="detail-row full">
-                        <span class="detail-label">Alasan EO</span>
+                        <span class="detail-label">Keterangan</span>
                         <p class="detail-desc">{{ $payout->request_reason }}</p>
                     </div>
                 @endif
@@ -317,7 +317,7 @@
 
             <div class="eo-details">
                 <div class="detail-row">
-                    <span class="detail-label">Dana diajukan</span>
+                    <span class="detail-label">Dana payout</span>
                     <span>Rp {{ number_format($payout->gross_amount, 0, ',', '.') }}</span>
                 </div>
                 <div class="detail-row">
@@ -326,7 +326,7 @@
                 </div>
                 @if ($payout->request_reason)
                     <div class="detail-row full">
-                        <span class="detail-label">Alasan EO</span>
+                        <span class="detail-label">Keterangan</span>
                         <p class="detail-desc">{{ $payout->request_reason }}</p>
                     </div>
                 @endif
@@ -341,7 +341,7 @@
     @empty
         <div class="empty-card">
             <span class="empty-card-icon"><x-icon name="inbox" :size="38" /></span>
-            <p>Belum ada pengajuan yang ditolak.</p>
+            <p>Belum ada payout yang ditolak.</p>
         </div>
     @endforelse
 </div>

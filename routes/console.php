@@ -3,6 +3,7 @@
 use App\Models\Event;
 use App\Models\Order;
 use App\Models\RecommendationFeatureSnapshot;
+use App\Services\EOPayoutAutomationService;
 use App\Services\NcbfFeatureVectorService;
 use App\Services\RecommendationFeatureSnapshotService;
 use Illuminate\Foundation\Inspiring;
@@ -11,6 +12,14 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Artisan::command('eo-payouts:create-due', function () {
+    $created = app(EOPayoutAutomationService::class)->createDuePayouts();
+
+    $this->info("{$created} payout EO otomatis dibuat.");
+
+    return 0;
+})->purpose('Create automatic EO payouts for ended events');
 
 Artisan::command('recommendations:export-ncbf-training {--output=} {--negatives=3}', function () {
     $output = $this->option('output') ?: storage_path('app/recommendation/ncbf_training.json');

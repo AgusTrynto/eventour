@@ -5,9 +5,9 @@ namespace App\Http\Controllers\EO;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
-use App\Models\Payout;
 use App\Models\Review;
 use App\Models\ReviewSummary;
+use App\Services\EOPayoutAutomationService;
 use App\Services\ReviewSummaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +26,8 @@ class EODashboardController extends Controller
         if ($organizer->status !== 'approved') {
             return view('eo.status', compact('organizer'));
         }
+
+        app(EOPayoutAutomationService::class)->createDuePayouts($organizer->id);
 
         $eventIds = $organizer->events()->pluck('id');
         $paidStatuses = ['paid', 'disbursed'];
@@ -68,7 +70,7 @@ class EODashboardController extends Controller
                 $query->whereIn('status', ['pending', 'processing', 'completed', 'failed']);
             })
             ->get()
-            ->filter(fn ($event) => $event->escrow_amount > 0)
+            ->filter(fn ($event) => $event->escrow_amount > 0 && $event->hasEnded())
             ->count();
 
         return view('eo.dashboard', compact(
@@ -117,6 +119,8 @@ class EODashboardController extends Controller
     {
         $organizer = $this->approvedOrganizer();
 
+        app(EOPayoutAutomationService::class)->createDuePayouts($organizer->id);
+
         $eventIds = $organizer->events()->pluck('id');
         $paidStatuses = ['paid', 'disbursed'];
 
@@ -136,14 +140,14 @@ class EODashboardController extends Controller
             ->where('status', 'completed')
             ->sum('net_amount');
 
-        $readyForPayoutEvents = $organizer->events()
+        $scheduledPayoutEvents = $organizer->events()
             ->where('status', 'approved')
             ->whereDoesntHave('payouts', function ($query) {
                 $query->whereIn('status', ['pending', 'processing', 'completed', 'failed']);
             })
-            ->orderBy('start_date', 'desc')
+            ->orderBy('start_date', 'asc')
             ->get()
-            ->filter(fn ($event) => $event->escrow_amount > 0);
+            ->filter(fn ($event) => $event->escrow_amount > 0 && ! $event->hasEnded());
 
         $recentPayouts = $organizer->payouts()
             ->with('event')
@@ -157,7 +161,7 @@ class EODashboardController extends Controller
             'escrowAmount',
             'processingPayoutAmount',
             'completedPayoutAmount',
-            'readyForPayoutEvents',
+            'scheduledPayoutEvents',
             'recentPayouts'
         ));
     }
@@ -277,63 +281,6 @@ class EODashboardController extends Controller
 
         return redirect()->route('eo.events.index')
             ->with('success', 'Event berhasil diajukan! Menunggu persetujuan admin.');
-    }
-
-    public function requestPayout(Request $request, Event $event)
-    {
-        $organizer = Auth::user()->eventOrganizer;
-
-        if (! $organizer || $event->event_organizer_id !== $organizer->id) {
-            abort(403, 'Event ini bukan milikmu.');
-        }
-
-        if ($event->status !== 'approved') {
-            return back()->with('error', 'Pencairan hanya bisa diajukan untuk event yang sudah disetujui.');
-        }
-
-        if ($event->payouts()->whereIn('status', ['pending', 'processing', 'completed', 'failed'])->exists()) {
-            return back()->with('error', 'Event ini sudah memiliki pengajuan pencairan.');
-        }
-
-        $request->validate([
-            'request_reason' => ['required', 'string', 'min:10', 'max:1000'],
-            'request_attachment' => ['nullable', 'image', 'max:4096'],
-        ], [
-            'request_reason.required' => 'Alasan pengajuan wajib diisi.',
-            'request_reason.min' => 'Alasan pengajuan minimal 10 karakter.',
-            'request_attachment.image' => 'Lampiran harus berupa gambar.',
-            'request_attachment.max' => 'Ukuran lampiran maksimal 4 MB.',
-        ]);
-
-        $gross = $event->escrow_gross_amount;
-        $fee = $event->escrow_admin_fee;
-        $net = $event->escrow_amount;
-
-        if ($net <= 0) {
-            return back()->with('error', 'Belum ada dana tertahan dari tiket paid untuk event ini.');
-        }
-
-        if (! $organizer->bank_channel_code || ! $organizer->bank_account_number) {
-            return back()->with('error', 'Lengkapi rekening bank EO sebelum mengajukan pencairan.');
-        }
-
-        $attachmentPath = $request->hasFile('request_attachment')
-            ? $request->file('request_attachment')->store('payout-requests', 'public')
-            : null;
-
-        Payout::create([
-            'event_id' => $event->id,
-            'event_organizer_id' => $organizer->id,
-            'gross_amount' => $gross,
-            'platform_fee' => $fee,
-            'net_amount' => $net,
-            'status' => 'pending',
-            'request_reason' => $request->request_reason,
-            'request_attachment' => $attachmentPath,
-            'requested_at' => now(),
-        ]);
-
-        return back()->with('success', 'Pengajuan pencairan berhasil dikirim. Menunggu review admin.');
     }
 
     // =========================================================

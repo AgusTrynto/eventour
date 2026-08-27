@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Order;
 use App\Models\Payout;
+use App\Services\EOPayoutAutomationService;
 use App\Services\XenditEOPayoutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,7 @@ class AdminPayoutController extends Controller
     // =========================================================
     public function index()
     {
+        app(EOPayoutAutomationService::class)->createDuePayouts();
         $this->syncProcessingPayoutStatuses();
 
         $pendingPayouts = Payout::where('status', 'pending')
@@ -89,7 +91,7 @@ class AdminPayoutController extends Controller
     public function approve(Payout $payout)
     {
         if ($payout->status !== 'pending') {
-            return back()->with('error', 'Pengajuan ini sudah direview.');
+            return back()->with('error', 'Payout ini sudah diproses.');
         }
 
         try {
@@ -103,7 +105,7 @@ class AdminPayoutController extends Controller
             return back()->with('error', 'Auto payout EO gagal dimulai: '.$e->getMessage());
         }
 
-        return back()->with('success', 'Pengajuan pencairan disetujui. Auto payout ke rekening EO masuk antrean.');
+        return back()->with('success', 'Auto payout ke rekening EO masuk antrean.');
     }
 
     public function retry(Payout $payout)
@@ -129,7 +131,7 @@ class AdminPayoutController extends Controller
     public function reject(Request $request, Payout $payout)
     {
         if ($payout->status !== 'pending') {
-            return back()->with('error', 'Pengajuan ini sudah direview.');
+            return back()->with('error', 'Payout ini sudah diproses.');
         }
 
         $request->validate([
@@ -145,7 +147,7 @@ class AdminPayoutController extends Controller
             'admin_note' => $request->admin_note,
         ]);
 
-        return back()->with('success', 'Pengajuan pencairan ditolak.');
+        return back()->with('success', 'Payout ditolak.');
     }
 
     // =========================================================
@@ -154,7 +156,7 @@ class AdminPayoutController extends Controller
     public function complete(Request $request, Payout $payout)
     {
         if ($payout->status !== 'processing') {
-            return back()->with('error', 'Pengajuan harus disetujui sebelum ditandai selesai transfer.');
+            return back()->with('error', 'Payout harus diproses sebelum ditandai selesai transfer.');
         }
 
         if ($payout->xendit_payout_reference_id) {

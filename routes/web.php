@@ -198,9 +198,6 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
     Route::get('/customers', [EODashboardController::class, 'customers'])
         ->name('eo.customers.index');
 
-    Route::post('/events/{event}/payout-request', [EODashboardController::class, 'requestPayout'])
-        ->name('eo.events.payout.request');
-
     Route::get('/events/{event}/reviews', [EODashboardController::class, 'eventReviews'])
         ->name('eo.events.reviews');
 
