@@ -1091,6 +1091,34 @@ footer {
     background: #1e1e28;
 }
 
+body.theme-light .leaflet-container {
+    background: #f8f9fa !important;
+}
+
+body.theme-light .leaflet-popup-content-wrapper {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    color: #1f2937;
+}
+
+body.theme-light .leaflet-popup-tip {
+    background: #ffffff;
+}
+
+body.theme-light .leaflet-control-zoom a {
+    background: #ffffff;
+    border-color: #d1d5db;
+    color: #1f2937;
+}
+
+body.theme-light .leaflet-control-zoom a:hover {
+    background: #f3f4f6;
+}
+
+body.theme-light .leaflet-control-attribution {
+    background: rgba(255,255,255,0.8);
+}
+
 /* ── REFRESH LOCATION BUTTON ──────────────────── */
 .btn-refresh-location {
     margin-left: auto;

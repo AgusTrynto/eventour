@@ -87,15 +87,37 @@ class EODashboardController extends Controller
         ));
     }
 
-    public function events()
+public function events(Request $request)
     {
         $organizer = $this->approvedOrganizer();
 
-        $approvedEvents = $organizer->events()
+        $timeFilter = $request->query('time_filter', 'all'); // all, ongoing, upcoming, ended
+
+        $approvedEventsQuery = $organizer->events()
             ->where('status', 'approved')
-            ->with('payout')
-            ->orderBy('start_date', 'asc')
-            ->get();
+            ->with('payout');
+
+        if ($timeFilter === 'ongoing') {
+            $approvedEventsQuery->where(function ($q) {
+                $q->where('start_date', '<=', now())
+                  ->where(function ($q2) {
+                      $q2->where('end_date', '>=', now())
+                         ->orWhereNull('end_date');
+                  });
+            });
+        } elseif ($timeFilter === 'upcoming') {
+            $approvedEventsQuery->where('start_date', '>', now());
+        } elseif ($timeFilter === 'ended') {
+            $approvedEventsQuery->where(function ($q) {
+                $q->where('end_date', '<', now())
+                  ->orWhere(function ($q2) {
+                      $q2->whereNull('end_date')
+                         ->where('start_date', '<', now());
+                  });
+            });
+        }
+
+        $approvedEvents = $approvedEventsQuery->orderBy('start_date', 'asc')->get();
 
         $pendingEvents = $organizer->events()
             ->where('status', 'pending')
@@ -111,7 +133,8 @@ class EODashboardController extends Controller
             'organizer',
             'approvedEvents',
             'pendingEvents',
-            'rejectedEvents'
+            'rejectedEvents',
+            'timeFilter'
         ));
     }
 

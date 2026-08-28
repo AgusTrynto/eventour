@@ -867,18 +867,20 @@
             if (userMarker) map.removeLayer(userMarker);
             if (radiusCircle) map.removeLayer(radiusCircle);
 
+            const style = getMapStyle();
+
             userMarker = L.circleMarker([userLat, userLng], {
                 radius: 8,
-                fillColor: '#d8ff4f',
-                color: '#0f1117',
+                fillColor: style.userColor,
+                color: isLightMode() ? '#ffffff' : '#0f1117',
                 weight: 2,
                 fillOpacity: 1,
             }).addTo(map).bindPopup('Lokasi kamu');
 
             radiusCircle = L.circle([userLat, userLng], {
                 radius: getRadius(),
-                color: '#d8ff4f',
-                fillColor: '#d8ff4f',
+                color: style.radiusColor,
+                fillColor: style.radiusColor,
                 fillOpacity: 0.06,
                 weight: 1.5,
                 dashArray: '6, 6',
@@ -896,6 +898,17 @@
         syncPriceRangeLabel();
         loadRecommendations();
 
+        function isLightMode() {
+            return window.matchMedia('(prefers-color-scheme: light)').matches ||
+                   document.body.classList.contains('theme-light');
+        }
+
+        function getMapStyle() {
+            return isLightMode()
+                ? { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', routeColor: '#3b82f6', userColor: '#2563eb', radiusColor: '#2563eb' }
+                : { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', routeColor: '#d8ff4f', userColor: '#d8ff4f', radiusColor: '#d8ff4f' };
+        }
+
         const defaultLat = -6.2088;
         const defaultLng = 106.8456;
         const initialLat = hasUserLocation() ? userLat : defaultLat;
@@ -906,13 +919,31 @@
             hasUserLocation() ? 12 : 5
         );
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        let tileLayer = L.tileLayer(getMapStyle().url, {
             attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
             maxZoom: 19,
         }).addTo(map);
 
         let routeLayer = null;
         let routePopupContent = null;
+
+        function refreshMapStyle() {
+            const style = getMapStyle();
+            tileLayer.setUrl(style.url);
+            if (userMarker) {
+                userMarker.setStyle({ fillColor: style.userColor, color: '#0f1117' });
+            }
+            if (radiusCircle) {
+                radiusCircle.setStyle({ color: style.radiusColor, fillColor: style.radiusColor });
+            }
+            if (routeLayer) {
+                routeLayer.setStyle({ color: style.routeColor });
+            }
+        }
+
+        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', refreshMapStyle);
+
+        new MutationObserver(() => refreshMapStyle()).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
         function clearRoute() {
             if (routeLayer) {
@@ -933,9 +964,10 @@
             clearRoute();
             const popup = document.querySelector('.leaflet-popup-content');
             routePopupContent = popup?.querySelector('.popup-route-info');
+            const routeColor = getMapStyle().routeColor;
             if (routePopupContent) {
                 routePopupContent.style.display = 'block';
-                routePopupContent.innerHTML = '<small style="color:#d8ff4f">Memuat rute...</small>';
+                routePopupContent.innerHTML = `<small style="color:${routeColor}">Memuat rute...</small>`;
             }
 
             try {
@@ -950,7 +982,7 @@
                 const durationMin = Math.round(route.duration / 60);
 
                 routeLayer = L.geoJSON(route.geometry, {
-                    style: { color: '#d8ff4f', weight: 4, opacity: 0.8, dashArray: '8, 6' }
+                    style: { color: routeColor, weight: 4, opacity: 0.8, dashArray: '8, 6' }
                 }).addTo(map);
 
                 map.fitBounds(routeLayer.getBounds(), { padding: [40, 60], maxZoom: 15 });

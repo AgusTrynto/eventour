@@ -111,6 +111,14 @@
             <div class="card full-width">
                 <div class="card-header">
                     <h2>Event Disetujui ({{ $approvedEvents->count() }})</h2>
+                    <form class="time-filter-form" method="GET" action="{{ route('eo.events.index') }}">
+                        <select name="time_filter" class="time-filter-select" onchange="this.form.submit()">
+                            <option value="all" {{ $timeFilter === 'all' ? 'selected' : '' }}>Semua</option>
+                            <option value="ongoing" {{ $timeFilter === 'ongoing' ? 'selected' : '' }}>Sedang Berlangsung</option>
+                            <option value="upcoming" {{ $timeFilter === 'upcoming' ? 'selected' : '' }}>Akan Datang</option>
+                            <option value="ended" {{ $timeFilter === 'ended' ? 'selected' : '' }}>Telah Berakhir</option>
+                        </select>
+                    </form>
                 </div>
 
                 @if ($approvedEvents->isEmpty())

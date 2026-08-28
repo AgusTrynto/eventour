@@ -1222,6 +1222,52 @@ body.theme-light .theme-toggle__icon--light {
     background: rgba(216,255,79,.2);
 }
 
+/* ── TIME FILTER ───────────────────────────────── */
+.card-header .time-filter-form {
+    margin-left: auto;
+}
+
+.time-filter-select {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: white;
+    font-size: 13px;
+    font-family: inherit;
+    padding: 6px 12px;
+    cursor: pointer;
+    outline: none;
+    transition: .2s;
+}
+
+.time-filter-select:focus,
+.time-filter-select:hover {
+    border-color: rgba(216,255,79,.35);
+    box-shadow: 0 0 0 3px rgba(216,255,79,.08);
+}
+
+.time-filter-select option {
+    background: #1a1a22;
+    color: white;
+}
+
+body.theme-light .time-filter-select {
+    background: rgba(15,23,42,.045);
+    border-color: var(--border);
+    color: var(--eo-text);
+}
+
+body.theme-light .time-filter-select option {
+    background: #ffffff;
+    color: var(--eo-text);
+}
+
+body.theme-light .time-filter-select:focus,
+body.theme-light .time-filter-select:hover {
+    border-color: var(--eo-accent);
+    box-shadow: 0 0 0 3px rgba(83,104,0,.15);
+}
+
 /* ── PAGE HEADING ─────────────────────────────── */
 .page-heading {
     text-align: center;
