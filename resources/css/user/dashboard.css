@@ -783,6 +783,11 @@ footer {
     text-decoration: underline;
 }
 
+.popup-route-info {
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,.1);
+}
+
 /* ── REKOMENDASI ─────────────────────────────── */
 .recommendation-list {
     max-height: 412px;

@@ -608,6 +608,7 @@
                 (event.location_name ? `<br><small>${escapeHtml(event.location_name)}</small>` : '') +
                 (distance ? `<br><small>${escapeHtml(distance)} dari kamu</small>` : '') +
                 `<br><a href="${escapeHtml(detailUrl)}" class="popup-link">Lihat Detail</a>` +
+                `<div class="popup-route-info" style="display:none; margin-top:8px;"></div>` +
             `</div>`;
         }
 
@@ -755,7 +756,7 @@
 
         function loadMapData(options = {}) {
             const requestId = ++mapRequestSequence;
-            const openNearest = options.openNearest ?? currentMode === 'events';
+            const openNearest = options.openNearest ?? false;
             const focusEventId = options.focusEventId ?? null;
 
             clearMapDataMarkers();
@@ -813,6 +814,19 @@
                 })
                 .addTo(map)
                 .bindPopup(buildEventPopup(event), popupOptions);
+
+                marker.on('popupopen', () => {
+                    if (hasUserLocation() && !routeLayer) {
+                        const popup = document.querySelector('.leaflet-popup-content');
+                        const routeInfo = popup?.querySelector('.popup-route-info');
+                        if (routeInfo && !routeInfo.dataset.loaded) {
+                            routeInfo.dataset.loaded = 'true';
+                            routeInfo.style.display = 'block';
+                            routeInfo.innerHTML = '<small style="color:#d8ff4f">Memuat rute...</small>';
+                            fetchAndShowRoute(coords[0], coords[1], event.title);
+                        }
+                    }
+                });
 
                 eventMarkerById.set(Number(event.id), marker);
                 dataMarkers.push(marker);
@@ -896,6 +910,74 @@
             attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
             maxZoom: 19,
         }).addTo(map);
+
+        let routeLayer = null;
+        let routePopupContent = null;
+
+        function clearRoute() {
+            if (routeLayer) {
+                map.removeLayer(routeLayer);
+                routeLayer = null;
+            }
+        }
+
+        function showRouteInPopup(content) {
+            if (routePopupContent) {
+                routePopupContent.innerHTML = content;
+            }
+        }
+
+        async function fetchAndShowRoute(destLat, destLng, title) {
+            if (!hasUserLocation()) return;
+
+            clearRoute();
+            const popup = document.querySelector('.leaflet-popup-content');
+            routePopupContent = popup?.querySelector('.popup-route-info');
+            if (routePopupContent) {
+                routePopupContent.style.display = 'block';
+                routePopupContent.innerHTML = '<small style="color:#d8ff4f">Memuat rute...</small>';
+            }
+
+            try {
+                const url = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${destLng},${destLat}?overview=full&geometries=geojson&steps=true`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.code !== 'Ok' || !data.routes?.length) throw new Error('Rute tidak ditemukan');
+
+                const route = data.routes[0];
+                const distanceKm = (route.distance / 1000).toFixed(1);
+                const durationMin = Math.round(route.duration / 60);
+
+                routeLayer = L.geoJSON(route.geometry, {
+                    style: { color: '#d8ff4f', weight: 4, opacity: 0.8, dashArray: '8, 6' }
+                }).addTo(map);
+
+                map.fitBounds(routeLayer.getBounds(), { padding: [40, 60], maxZoom: 15 });
+
+                showRouteInPopup(`
+                    <strong>${escapeHtml(title)}</strong><br>
+                    <small>🚗 ${distanceKm} km • ⏱️ ~${durationMin} menit</small>
+                    <br><a href="https://www.google.com/maps/dir/${userLat},${userLng}/${destLat},${destLng}" target="_blank" class="popup-link" style="font-size:12px">Buka di Google Maps</a>
+                `);
+            } catch (e) {
+                showRouteInPopup('<small style="color:#ff6b6b">Gagal memuat rute</small>');
+                console.error(e);
+            }
+        }
+
+        
+
+        function closeRouteOnPopupClose() {
+            map.on('popupclose', () => {
+                clearRoute();
+                const popup = document.querySelector('.leaflet-popup-content');
+                const routeInfo = popup?.querySelector('.popup-route-info');
+                if (routeInfo) routeInfo.dataset.loaded = '';
+                routePopupContent = null;
+            });
+        }
+        closeRouteOnPopupClose();
 
         eventSearchInput.addEventListener('input', () => {
             eventSearchClear.hidden = !eventSearchInput.value.trim();
