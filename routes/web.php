@@ -130,6 +130,9 @@ Route::post('/location/save', [LocationController::class, 'save'])
 Route::get('/events/nearby', [EventMapController::class, 'nearby'])
     ->name('events.nearby');
 
+Route::get('/events/province-stats', [EventMapController::class, 'provinceStats'])
+    ->name('events.province-stats');
+
 Route::get('/events/{event}', [EventController::class, 'show'])
     ->name('events.show')
     ->middleware('auth');

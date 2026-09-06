@@ -159,6 +159,10 @@
                             <x-icon name="building" :size="15" />
                             Event Organizer
                         </button>
+                        <button type="button" class="map-toggle-btn" data-mode="gis">
+                            <x-icon name="map" :size="15" />
+                            GIS
+                        </button>
                     </div>
 
                     <div id="map" class="map-container"></div>
@@ -737,10 +741,235 @@
                 button.classList.toggle('active', button.dataset.mode === mode);
             });
 
-            document.getElementById('map-title').textContent =
-                currentMode === 'events' ? 'Event di Sekitarmu' : 'Event Organizer di Sekitarmu';
+            const titleEl = document.getElementById('map-title');
+            if (mode === 'gis') {
+                clearMapDataMarkers();
+                titleEl.textContent = 'Peta Sebaran Event per Provinsi';
+                loadProvinceStats();
+            } else {
+                clearGisProvinceHighlight();
+                clearRoute();
+                const legend = document.querySelector('.gis-legend');
+                if (legend) legend.remove();
+                if (mode === 'events') {
+                    titleEl.textContent = 'Event di Sekitarmu';
+                    return loadMapData(options);
+                } else {
+                    titleEl.textContent = 'Event Organizer di Sekitarmu';
+                    return loadMapData(options);
+                }
+            }
+        }
 
-            return loadMapData(options);
+        let gisLayer = null;
+        let gisEventsLayer = null;
+        let gisHighlightedLayer = null;
+        let provinceStatsData = null;
+        let selectedProvince = null;
+
+        function getChoroplethColor(count, maxCount) {
+            if (maxCount === 0 || count === 0) return 'rgba(255,255,255,0.02)';
+            const ratio = count / maxCount;
+            const r = Math.round(255 * ratio);
+            const g = Math.round(40 * (1 - ratio));
+            const b = Math.round(40 * (1 - ratio));
+            const a = 0.05 + 0.15 * ratio;
+            return `rgba(${r},${g},${b},${a})`;
+        }
+
+        function onProvinceClick(e, feature) {
+            const name = feature.properties.name;
+            if (selectedProvince === name) {
+                clearGisProvinceHighlight();
+                return;
+            }
+
+            selectedProvince = name;
+            clearRoute();
+
+            if (gisHighlightedLayer) {
+                map.removeLayer(gisHighlightedLayer);
+            }
+
+            gisHighlightedLayer = L.geoJSON(feature, {
+                style: {
+                    fillColor: '#d8ff4f',
+                    fillOpacity: 0.25,
+                    color: '#d8ff4f',
+                    weight: 3,
+                }
+            }).addTo(map);
+
+            const events = provinceStatsData.events_by_province[name] || [];
+            mapInfoText.textContent = `${name}: ${events.length} event`;
+
+            if (gisEventsLayer) {
+                map.removeLayer(gisEventsLayer);
+            }
+
+            if (events.length > 0) {
+                gisEventsLayer = L.layerGroup();
+                events.forEach(ev => {
+                    const coords = getEventLatLng(ev);
+                    if (!coords) return;
+                    const marker = L.marker(coords, {
+                        icon: categoryMarkerIcon(ev, true),
+                    })
+                    .bindPopup(buildEventPopup(ev), popupOptions)
+                    .addTo(gisEventsLayer);
+
+                    marker.on('popupopen', () => {
+                        if (hasUserLocation() && !routeLayer) {
+                            const popup = document.querySelector('.leaflet-popup-content');
+                            const routeInfo = popup?.querySelector('.popup-route-info');
+                            if (routeInfo && !routeInfo.dataset.loaded) {
+                                routeInfo.dataset.loaded = 'true';
+                                routeInfo.style.display = 'block';
+                                routeInfo.innerHTML = '<small style="color:#d8ff4f">Memuat rute...</small>';
+                                fetchAndShowRoute(coords[0], coords[1], ev.title);
+                            }
+                        }
+                     });
+                 });
+
+                gisEventsLayer.addTo(map);
+            }
+
+            const bounds = gisHighlightedLayer.getBounds();
+            if (bounds.isValid()) {
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 8 });
+            }
+        }
+
+        function clearGisProvinceHighlight() {
+            selectedProvince = null;
+            clearRoute();
+            if (gisHighlightedLayer) {
+                map.removeLayer(gisHighlightedLayer);
+                gisHighlightedLayer = null;
+            }
+            if (gisEventsLayer) {
+                map.removeLayer(gisEventsLayer);
+                gisEventsLayer = null;
+            }
+            mapInfoText.textContent = 'Klik provinsi untuk melihat event di dalamnya';
+        }
+
+        function renderChoropleth(data) {
+            if (gisLayer) {
+                map.removeLayer(gisLayer);
+            }
+
+            provinceStatsData = data;
+            const counts = data.counts;
+            const maxCount = Math.max(...Object.values(counts), 1);
+
+            gisLayer = L.geoJSON(data.provinces, {
+                style: feature => ({
+                    fillColor: getChoroplethColor(counts[feature.properties.name] || 0, maxCount),
+                    color: 'rgba(200,220,255,0.6)',
+                    weight: 1.5,
+                    fillOpacity: 0.12,
+                }),
+                onEachFeature: (feature, layer) => {
+                    const count = counts[feature.properties.name] || 0;
+                    layer.bindTooltip(`${feature.properties.name}<br>${count} event`, {
+                        permanent: false,
+                        className: 'province-tooltip',
+                        direction: 'center',
+                    });
+                    layer.on('click', () => onProvinceClick(layer, feature));
+                    layer.on('mouseover', function() {
+                        if (selectedProvince !== feature.properties.name) {
+                            this.setStyle({ weight: 2.5, color: 'rgba(216,255,79,0.8)', fillOpacity: 0.2 });
+                        }
+                    });
+                    layer.on('mouseout', function() {
+                        if (selectedProvince !== feature.properties.name) {
+                            this.setStyle({ weight: 1.5, color: 'rgba(200,220,255,0.6)', fillOpacity: 0.12 });
+                        }
+                    });
+                }
+            }).addTo(map);
+
+            map.fitBounds(gisLayer.getBounds(), { padding: [20, 20], maxZoom: 6 });
+            mapInfoText.textContent = `Total ${data.total_events} event · Klik provinsi untuk melihat detail`;
+            addGisLegend();
+        }
+
+        function addGisLegend() {
+            const existing = document.querySelector('.gis-legend');
+            if (existing) existing.remove();
+
+            const legend = document.createElement('div');
+            legend.className = 'gis-legend';
+            legend.innerHTML = `
+                <div class="gis-legend-title">Sebaran Event</div>
+                <div class="gis-legend-stops">
+                    <div class="gis-legend-stop"><span class="gis-legend-color" style="background:rgba(255,60,60,0.35)"></span><span>Banyak</span></div>
+                    <div class="gis-legend-stop"><span class="gis-legend-color" style="background:rgba(255,60,60,0.15)"></span><span>Sedang</span></div>
+                    <div class="gis-legend-stop"><span class="gis-legend-color" style="background:rgba(255,60,60,0.05)"></span><span>Sedikit</span></div>
+                    <div class="gis-legend-stop"><span class="gis-legend-color" style="background:rgba(255,255,255,0.02);border:1px solid rgba(200,220,255,0.4)"></span><span>Tidak ada</span></div>
+                </div>
+            `;
+            document.getElementById('event-map').appendChild(legend);
+        }
+
+        function loadProvinceStats() {
+            mapInfoText.textContent = 'Memuat peta GIS...';
+            clearGisProvinceHighlight();
+
+            fetch('{{ route("events.province-stats", [], false) }}')
+                .then(res => {
+                    if (!res.ok) throw new Error('Gagal memuat data GIS.');
+                    return res.json();
+                })
+                .then(data => {
+                    renderChoropleth(data);
+                })
+                .catch(() => {
+                    mapInfoText.textContent = 'Gagal memuat data peta GIS.';
+                });
+        }
+
+        function renderEventMarkers(events, options = {}) {
+            events.forEach(event => {
+                const coords = getEventLatLng(event);
+                if (!coords) return;
+
+                const distance = getEventDistanceMeters(event);
+                if (distance !== null) {
+                    eventDistancesById.set(Number(event.id), distance);
+                }
+
+                const inRadius = event.in_radius === true || event.in_radius === null;
+                const marker = L.marker(coords, {
+                    icon: categoryMarkerIcon(event, inRadius),
+                    opacity: inRadius ? 1 : 0.7,
+                })
+                .addTo(map)
+                .bindPopup(buildEventPopup(event), popupOptions);
+
+                marker.on('popupopen', () => {
+                    if (hasUserLocation() && !routeLayer) {
+                        const popup = document.querySelector('.leaflet-popup-content');
+                        const routeInfo = popup?.querySelector('.popup-route-info');
+                        if (routeInfo && !routeInfo.dataset.loaded) {
+                            routeInfo.dataset.loaded = 'true';
+                            routeInfo.style.display = 'block';
+                            routeInfo.innerHTML = '<small style="color:#d8ff4f">Memuat rute...</small>';
+                            fetchAndShowRoute(coords[0], coords[1], event.title);
+                        }
+                    }
+                });
+
+                eventMarkerById.set(Number(event.id), marker);
+                dataMarkers.push(marker);
+            });
+
+            if (options.openNearest) {
+                openNearestEventPopups(events);
+            }
         }
 
         function clearMapDataMarkers() {

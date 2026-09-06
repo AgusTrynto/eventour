@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class EventMapController extends Controller
 {
@@ -45,6 +46,68 @@ class EventMapController extends Controller
             'events' => $events,
             'count_in_radius' => $events->where('in_radius', true)->count(),
             'count_total' => $events->count(),
+        ]);
+    }
+
+    /**
+     * Ambil statistik event per provinsi + koordinat event untuk GIS map.
+     */
+    public function provinceStats()
+    {
+        $events = Event::where('status', 'approved')->notEnded()->get();
+        $provinces = \App\Models\Province::all();
+
+        $counts = [];
+        $eventsByProvince = [];
+
+        foreach ($provinces as $province) {
+            $counts[$province->name] = 0;
+            $eventsByProvince[$province->name] = [];
+        }
+
+        foreach ($events as $event) {
+            if (!$event->location) continue;
+
+            $lat = $event->location->latitude;
+            $lng = $event->location->longitude;
+
+            $result = DB::select("
+                SELECT name FROM provinces
+                WHERE ST_Contains(geom::geometry, ST_SetSRID(ST_MakePoint({$lng}, {$lat}), 4326))
+                LIMIT 1
+            ");
+
+            $provinceName = $result[0]->name ?? 'Unknown';
+            $counts[$provinceName] = ($counts[$provinceName] ?? 0) + 1;
+            $eventsByProvince[$provinceName][] = [
+                'id' => $event->id,
+                'title' => $event->title,
+                'lat' => $lat,
+                'lng' => $lng,
+                'category' => $event->category,
+                'price' => $event->price,
+                'date' => $event->start_date?->translatedFormat('d M Y') ?? '-',
+                'location_name' => $event->location_name,
+            ];
+        }
+
+        $geoJsonFeatures = [];
+        foreach ($provinces as $province) {
+            if ($province->geojson) {
+                $feature = json_decode($province->geojson, true);
+                $geoJsonFeatures[] = [
+                    'type' => 'Feature',
+                    'properties' => ['name' => $province->name],
+                    'geometry' => $feature['geometry'] ?? $feature,
+                ];
+            }
+        }
+
+        return response()->json([
+            'provinces' => $geoJsonFeatures,
+            'counts' => $counts,
+            'events_by_province' => $eventsByProvince,
+            'total_events' => $events->count(),
         ]);
     }
 

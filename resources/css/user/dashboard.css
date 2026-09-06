@@ -689,7 +689,7 @@ footer {
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--border);
-    background: #1a1a22;
+    background: transparent;
 }
 
 .map-info {
@@ -1077,7 +1077,7 @@ footer {
 
 /* Leaflet dark override */
 .leaflet-container {
-    background: #1a1a22 !important;
+    background: transparent !important;
 }
 
 .leaflet-popup-content-wrapper {
@@ -1576,4 +1576,73 @@ body.theme-light .leaflet-control-attribution {
     .filter-row {
         grid-template-columns: 1fr;
     }
+}
+
+/* ── GIS CHOROPLETH ─────────────────────────── */
+.gis-legend {
+    position: absolute;
+    bottom: 24px;
+    right: 16px;
+    z-index: 1000;
+    background: rgba(15,17,23,0.92);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    backdrop-filter: blur(12px);
+    font-size: 11px;
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.gis-legend-title {
+    font-weight: 700;
+    font-size: 12px;
+    color: white;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.gis-legend-stops {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gis-legend-stop {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gis-legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+}
+
+.province-tooltip {
+    background: rgba(15,17,23,0.95) !important;
+    border: 1px solid rgba(216,255,79,0.3) !important;
+    border-radius: 8px !important;
+    color: white !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 6px 10px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+}
+
+.province-tooltip::before {
+    border-top-color: rgba(216,255,79,0.3) !important;
+}
+
+body.theme-light .province-tooltip {
+    background: rgba(255,255,255,0.95) !important;
+    border-color: rgba(0,0,0,0.15) !important;
+    color: #1f2937 !important;
+}
+
+body.theme-light .province-tooltip::before {
+    border-top-color: rgba(0,0,0,0.15) !important;
 }

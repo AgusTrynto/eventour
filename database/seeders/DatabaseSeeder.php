@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call(EventDummySeeder::class);
+        $this->call(ProvinceSeeder::class);
         $this->call(RecommendationDummySeeder::class);
         $this->call(RecommendationTrainingDummySeeder::class);
         $this->call(RecommendationFeatureSnapshotSeeder::class);
