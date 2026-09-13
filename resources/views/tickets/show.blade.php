@@ -69,6 +69,20 @@
                                 <span>{{ trim((string) $holderTicket->attendee_name) ?: $holderName }}</span>
                             </div>
 
+                            @php
+                                $displayNik = $holderTicket->attendee_nik;
+                                if (!$displayNik && (trim((string) $holderTicket->attendee_name) === '' || trim((string) $holderTicket->attendee_name) === $holderName)) {
+                                    $displayNik = $holderTicket->user->nik ?? null;
+                                }
+                            @endphp
+
+                            @if ($displayNik)
+                                <div class="info-row">
+                                    <span><x-icon name="credit-card" :size="16" /> NIK</span>
+                                    <span>{{ $displayNik }}</span>
+                                </div>
+                            @endif
+
                             @if ($holderTicket->status === 'used')
                                 <div class="info-row checked-in">
                                     <span><x-icon name="check-circle" :size="16" /> Check-in</span>

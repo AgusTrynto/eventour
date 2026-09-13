@@ -66,7 +66,7 @@
                     <div class="card">
                         <div class="empty-state">
                             <span class="empty-state-icon"><x-icon name="ticket" :size="38" /></span>
-                            <p>Belum ada event yang bisa direkomendasikan.</p>
+                            <p>Anda belum pernah membeli tiket. Mulai belanja tiket untuk mendapatkan rekomendasi!</p>
                         </div>
                     </div>
                 @endforelse

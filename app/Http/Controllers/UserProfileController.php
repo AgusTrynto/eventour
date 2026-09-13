@@ -53,4 +53,20 @@ class UserProfileController extends Controller
         return redirect()->route('profile.edit')
             ->with('success', 'Data tujuan refund berhasil disimpan.');
     }
+
+    public function updateNik(Request $request)
+    {
+        $data = $request->validate([
+            'nik' => ['nullable', 'string', 'max:30'],
+        ], [
+            'nik.max' => 'NIK maksimal 30 karakter.',
+        ]);
+
+        Auth::user()->update([
+            'nik' => $data['nik'],
+        ]);
+
+        return redirect()->route('profile.edit')
+            ->with('success', 'NIK berhasil disimpan.');
+    }
 }

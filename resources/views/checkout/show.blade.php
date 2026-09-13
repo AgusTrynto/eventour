@@ -37,7 +37,11 @@
                 @if ($event->max_tickets_per_person && $event->ticket_purchase_policy === 'strict')
                     <div class="limit-info">
                         <x-icon name="alert-triangle" :size="14" />
-                        Maksimal <strong>{{ $event->max_tickets_per_person }}</strong> tiket per orang
+                        @if ($userRemainingSlots > 0)
+                            Maksimal <strong>{{ $event->max_tickets_per_person }}</strong> tiket per orang. Anda bisa beli <strong>{{ $userRemainingSlots }}</strong> lagi.
+                        @else
+                            Anda sudah mencapai batas maksimal tiket untuk event ini.
+                        @endif
                     </div>
                 @endif
 
@@ -46,16 +50,16 @@
                     <div class="qty-control">
                         <button type="button" class="qty-btn" id="qty-minus">−</button>
                         <input type="number" name="quantity" id="qty-input" value="1" min="1"
-                            @if ($event->max_tickets_per_person && $event->ticket_purchase_policy === 'strict') max="{{ $event->max_tickets_per_person }}" @endif readonly>
+                            @if ($event->max_tickets_per_person && $event->ticket_purchase_policy === 'strict') max="{{ max(1, $userRemainingSlots) }}" @endif readonly>
                         <button type="button" class="qty-btn" id="qty-plus">+</button>
                     </div>
                 </div>
 
                 <div id="attendee-section" class="attendee-section" style="display: none;">
                     <div class="form-group">
-                        <label>Nama Pemegang Tiket <span id="attendee-count-label"></span></label>
+                        <label>Data Pemegang Tiket <span id="attendee-count-label"></span></label>
                         <div id="attendee-fields"></div>
-                        <small class="form-hint">Isi nama lengkap setiap pemegang tiket sesuai KTP untuk keperluan verifikasi di lokasi.</small>
+                        <small class="form-hint">Isi nama lengkap dan NIK setiap pemegang tiket sesuai KTP untuk verifikasi di lokasi.</small>
                     </div>
                 </div>
 
@@ -109,12 +113,12 @@
         const adminFee = {{ \App\Models\Order::ADMIN_FEE }};
         const policy = @json($event->ticket_purchase_policy ?? 'strict');
         const globalMax = {{ $event->max_tickets_per_person ?? 'null' }};
+        const userRemainingSlots = {{ $userRemainingSlots ?? 'null' }};
         let maxTicket = 10;
-        let strictLimit = 10;
 
         if (globalMax !== null) {
-            strictLimit = globalMax;
-            maxTicket = policy === 'strict' ? globalMax : Math.max(globalMax * 3, 20);
+            maxTicket = policy === 'strict' ? userRemainingSlots : Math.max(globalMax * 3, 20);
+            if (maxTicket === 0 && policy === 'strict') maxTicket = 1; // Prevent qty 0 on input if strict and maxed out
         } else {
             maxTicket = policy === 'strict' ? 10 : 20;
         }
@@ -144,31 +148,58 @@
         }
 
         function renderAttendeeFields(qty) {
-            const shouldShow = policy === 'flexible' && globalMax !== null && qty > globalMax;
-            const extraCount = Math.max(0, Math.ceil((qty - strictLimit) / strictLimit));
+            // Kalau userRemainingSlots === 0, semua tiket harus atas nama orang lain
+            // Kalau userRemainingSlots > 0, hanya tiket melebihi sisa slot saja yang butuh data teman
+            const isMaxedOut = userRemainingSlots !== null && userRemainingSlots === 0;
+            const isFlexible = policy === 'flexible' && globalMax !== null;
 
-            if (!shouldShow) {
+            let requiredCount = 0;
+            let countLabel = '';
+
+            if (isFlexible && userRemainingSlots !== null) {
+                if (isMaxedOut) {
+                    // Semua tiket atas nama orang lain
+                    requiredCount = Math.ceil(qty / globalMax);
+                    countLabel = `(${requiredCount} orang, semua atas nama teman — Anda sudah capai limit)`;
+                } else if (qty > userRemainingSlots) {
+                    // Hanya tiket yang melampaui sisa slot yang butuh data teman
+                    const excess = qty - userRemainingSlots;
+                    requiredCount = Math.ceil(excess / globalMax);
+                    countLabel = `(${requiredCount} orang tambahan, ${userRemainingSlots} tiket pertama atas nama Anda)`;
+                }
+            }
+
+            if (requiredCount <= 0) {
                 attendeeSection.style.display = 'none';
                 return;
             }
 
             attendeeSection.style.display = 'block';
-            attendeeCountLabel.textContent = `(isi ${extraCount} nama tambahan, sisanya atas nama Anda)` ;
+            attendeeCountLabel.textContent = countLabel;
 
-            const existingInputs = attendeeFields.querySelectorAll('input');
-            if (existingInputs.length === extraCount) return;
+            // Rebuild hanya jika jumlah blok berubah
+            const existingBlocks = attendeeFields.querySelectorAll('.attendee-input');
+            if (existingBlocks.length === requiredCount) return;
 
             attendeeFields.innerHTML = '';
-            for (let i = 0; i < extraCount; i++) {
+            const fieldStyle = 'width:100%;padding:10px;border-radius:10px;border:1px solid var(--border,#444);background:rgba(255,255,255,.03);color:inherit;font-size:14px;box-sizing:border-box;';
+            for (let i = 0; i < requiredCount; i++) {
                 const div = document.createElement('div');
                 div.className = 'attendee-input';
-                div.style.marginBottom = '10px';
+                div.style.cssText = 'margin-bottom:16px;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);';
+                const holderLabel = isMaxedOut ? `Pemegang Tiket #${i + 1}` : `Pemegang Tiket Tambahan #${i + 1}`;
                 div.innerHTML = `
-                    <label style="font-size:13px;color:#c4c4c4;margin-bottom:4px;display:block;">Pemegang Tiket Tambahan #${i + 1}</label>
-                    <input type="text" name="attendee_name[]" placeholder="Nama lengkap sesuai KTP"
-                        value=""
-                        style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border,#444);background:rgba(255,255,255,.03);color:#fff;font-size:14px;"
-                        required>
+                    <p style="font-size:13px;font-weight:700;color:#c4c4c4;margin-bottom:10px;">${holderLabel}</p>
+                    <div style="margin-bottom:8px;">
+                        <label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block;">Nama Lengkap</label>
+                        <input type="text" name="attendee_name[]" placeholder="Nama lengkap sesuai KTP"
+                            style="${fieldStyle}" required>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#9ca3af;margin-bottom:4px;display:block;">NIK</label>
+                        <input type="text" name="attendee_nik[]" placeholder="16 digit NIK"
+                            maxlength="30" style="${fieldStyle}" required>
+                    </div>
                 `;
                 attendeeFields.appendChild(div);
             }
@@ -183,6 +214,9 @@
             const val = parseInt(qtyInput.value);
             if (val < maxTicket) { qtyInput.value = val + 1; updateTotal(); }
         });
+
+        // Initialize state on page load
+        updateTotal();
     </script>
 
 </body>

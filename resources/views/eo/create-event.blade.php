@@ -124,7 +124,7 @@
                                 {{ old('ticket_purchase_policy') === 'flexible' ? 'checked' : '' }}>
                             <div class="radio-content">
                                 <strong>Bisa melebihi dengan data diri lain</strong>
-                                <small>User bisa beli lebih dari limit asal mengisi nama lengkap setiap pemegang tiket.</small>
+                                <small>User bisa beli lebih dari limit asal mengisi nama lengkap dan NIK setiap pemegang tiket tambahan.</small>
                             </div>
                         </label>
                     </div>
@@ -169,7 +169,7 @@
 
         const map = L.map('map-picker').setView([defaultLat, defaultLng], 5);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key={{ env('CARTO_API_KEY') }}', {
             attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
             maxZoom: 19,
         }).addTo(map);

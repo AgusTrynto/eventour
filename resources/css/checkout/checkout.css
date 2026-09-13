@@ -159,7 +159,7 @@ body.checkout-page {
     border-radius: 10px;
     border: 1px solid var(--border, #444);
     background: rgba(255,255,255,.03);
-    color: #fff;
+    color: inherit;
     font-size: 14px;
     box-sizing: border-box;
 }

@@ -529,6 +529,12 @@ body.dashboard-page {
     gap: 20px;
 }
 
+.profile-forms-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .refund-readiness {
     align-items: center;
     border-radius: 14px;

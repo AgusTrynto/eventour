@@ -119,6 +119,14 @@
                                 <button class="btn-buy" disabled>Event Berakhir</button>
                             @elseif ($event->quota !== null && ($event->quota - $event->tickets_sold) <= 0)
                                 <button class="btn-buy" disabled>Tiket Habis</button>
+                            @elseif ($userRemainingSlots === 0)
+                                @if ($event->ticket_purchase_policy === 'flexible')
+                                    <a href="{{ route('checkout.show', $event) }}" class="btn-buy">
+                                        Beli Untuk Teman
+                                    </a>
+                                @else
+                                    <button class="btn-buy" disabled>Limit Maksimal Tercapai</button>
+                                @endif
                             @else
                                 <a href="{{ route('checkout.show', $event) }}" class="btn-buy">
                                     {{ $event->price > 0 ? 'Beli Tiket' : 'Klaim Tiket Gratis' }}
@@ -214,7 +222,7 @@
             scrollWheelZoom: false,
         }).setView([eventLat, eventLng], 15);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key={{ env('CARTO_API_KEY') }}', {
             attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
             maxZoom: 19,
         }).addTo(map);

@@ -29,12 +29,14 @@ class RegisterController extends Controller
         $request->validate([
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'unique:users,email'],
+            'nik'      => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ], [
             'name.required'     => 'Nama lengkap wajib diisi.',
             'email.required'    => 'Email wajib diisi.',
             'email.email'       => 'Format email tidak valid.',
             'email.unique'      => 'Email ini sudah terdaftar.',
+            'nik.max'           => 'NIK maksimal 30 karakter.',
             'password.required' => 'Password wajib diisi.',
             'password.min'      => 'Password minimal 8 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
@@ -47,6 +49,7 @@ class RegisterController extends Controller
         Session::put('register_pending', [
             'name'     => $request->name,
             'email'    => $request->email,
+            'nik'      => $request->nik,
             'password' => Hash::make($request->password),
         ]);
 
@@ -130,6 +133,7 @@ class RegisterController extends Controller
         $user = User::create([
             'name'     => $pending['name'],
             'email'    => $pending['email'],
+            'nik'      => $pending['nik'] ?? null,
             'password' => $pending['password'],
         ]);
 

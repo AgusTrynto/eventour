@@ -79,7 +79,7 @@ class NeuralContentRecommendationService
         }
 
         if ($historySnapshots->isEmpty()) {
-            return $this->coldStartRecommendations($user, $candidates, $limit);
+            return collect();
         }
 
         $maxPrice = max(

@@ -33,6 +33,6 @@
 @empty
     <div class="empty-state">
         <span class="empty-state-icon"><x-icon name="ticket" :size="38" /></span>
-        <p>Belum ada event tersedia saat ini.</p>
+        <p>Anda belum pernah membeli tiket. Mulai belanja tiket untuk mendapatkan rekomendasi!</p>
     </div>
 @endforelse

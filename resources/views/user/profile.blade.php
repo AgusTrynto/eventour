@@ -40,6 +40,9 @@
                         <div class="profile-details">
                             <span class="profile-name">{{ $user->name }}</span>
                             <span class="profile-email">{{ $user->email }}</span>
+                            @if($user->nik)
+                                <span class="profile-nik">NIK: {{ $user->nik }}</span>
+                            @endif
                             <span class="profile-joined">Bergabung {{ $user->created_at?->translatedFormat('d M Y') }}</span>
                         </div>
                     </div>
@@ -52,68 +55,104 @@
                     </div>
                 </section>
 
-                <section class="card profile-form-card">
-                    <div class="card-header">
-                        <div>
-                            <span class="badge">TUJUAN REFUND</span>
-                            <h2>Rekening atau e-wallet</h2>
-                        </div>
-                    </div>
-
-                    <form action="{{ route('profile.refund-destination.update') }}" method="POST" class="profile-form">
-                        @csrf
-                        @method('PUT')
-
-                        <label class="profile-field">
-                            <span>Bank/e-wallet</span>
-                            <select name="refund_destination_channel_code" required>
-                                <option value="">Pilih tujuan refund</option>
-                                @foreach ($refundChannels as $group)
-                                    <optgroup label="{{ $group['label'] }}">
-                                        @foreach ($group['channels'] as $code => $label)
-                                            <option value="{{ $code }}" @selected(old('refund_destination_channel_code', $user->refund_destination_channel_code) === $code)>
-                                                {{ $label }}
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
-                        </label>
-
-                        <label class="profile-field">
-                            <span>Nomor rekening/e-wallet</span>
-                            <input
-                                type="text"
-                                name="refund_destination_account_number"
-                                maxlength="50"
-                                value="{{ old('refund_destination_account_number', $user->refund_destination_account_number) }}"
-                                placeholder="Contoh: 081234567890 atau 1234567890"
-                                required
-                            >
-                        </label>
-
-                        <label class="profile-field">
-                            <span>Nama pemilik</span>
-                            <input
-                                type="text"
-                                name="refund_destination_account_name"
-                                maxlength="255"
-                                value="{{ old('refund_destination_account_name', $user->refund_destination_account_name) }}"
-                                placeholder="Nama sesuai rekening/e-wallet"
-                                required
-                            >
-                        </label>
-
-                        <div class="escrow-note profile-note">
-                            <x-icon name="shield" :size="16" />
-                            Data ini dipakai jika refund otomatis ke metode pembayaran asal tidak didukung oleh channel pembayaran.
+                <div class="profile-forms-wrapper">
+                    <section class="card profile-form-card">
+                        <div class="card-header">
+                            <div>
+                                <span class="badge">DATA DIRI</span>
+                                <h2>NIK</h2>
+                            </div>
                         </div>
 
-                        <button type="submit" class="btn-profile-save">
-                            Simpan Data Refund
-                        </button>
-                    </form>
-                </section>
+                        <form action="{{ route('profile.nik.update') }}" method="POST" class="profile-form">
+                            @csrf
+                            @method('PUT')
+
+                            <label class="profile-field">
+                                <span>Nomor Induk Kependudukan (NIK)</span>
+                                <input
+                                    type="text"
+                                    name="nik"
+                                    maxlength="30"
+                                    value="{{ old('nik', $user->nik) }}"
+                                    placeholder="16 digit NIK"
+                                >
+                            </label>
+
+                            <div class="escrow-note profile-note">
+                                <x-icon name="shield" :size="16" />
+                                Data ini bersifat wajib dan hanya digunakan untuk verifikasi identitas.
+                            </div>
+
+                            <button type="submit" class="btn-profile-save">
+                                Simpan NIK
+                            </button>
+                        </form>
+                    </section>
+
+                    <section class="card profile-form-card">
+                        <div class="card-header">
+                            <div>
+                                <span class="badge">TUJUAN REFUND</span>
+                                <h2>Rekening atau e-wallet</h2>
+                            </div>
+                        </div>
+
+                        <form action="{{ route('profile.refund-destination.update') }}" method="POST" class="profile-form">
+                            @csrf
+                            @method('PUT')
+
+                            <label class="profile-field">
+                                <span>Bank/e-wallet</span>
+                                <select name="refund_destination_channel_code" required>
+                                    <option value="">Pilih tujuan refund</option>
+                                    @foreach ($refundChannels as $group)
+                                        <optgroup label="{{ $group['label'] }}">
+                                            @foreach ($group['channels'] as $code => $label)
+                                                <option value="{{ $code }}" @selected(old('refund_destination_channel_code', $user->refund_destination_channel_code) === $code)>
+                                                    {{ $label }}
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endforeach
+                                </select>
+                            </label>
+
+                            <label class="profile-field">
+                                <span>Nomor rekening/e-wallet</span>
+                                <input
+                                    type="text"
+                                    name="refund_destination_account_number"
+                                    maxlength="50"
+                                    value="{{ old('refund_destination_account_number', $user->refund_destination_account_number) }}"
+                                    placeholder="Contoh: 081234567890 atau 1234567890"
+                                    required
+                                >
+                            </label>
+
+                            <label class="profile-field">
+                                <span>Nama pemilik</span>
+                                <input
+                                    type="text"
+                                    name="refund_destination_account_name"
+                                    maxlength="255"
+                                    value="{{ old('refund_destination_account_name', $user->refund_destination_account_name) }}"
+                                    placeholder="Nama sesuai rekening/e-wallet"
+                                    required
+                                >
+                            </label>
+
+                            <div class="escrow-note profile-note">
+                                <x-icon name="shield" :size="16" />
+                                Data ini dipakai jika refund otomatis ke metode pembayaran asal tidak didukung oleh channel pembayaran.
+                            </div>
+
+                            <button type="submit" class="btn-profile-save">
+                                Simpan Data Refund
+                            </button>
+                        </form>
+                    </section>
+                </div>
             </div>
         </div>
     </main>

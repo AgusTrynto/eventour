@@ -91,13 +91,15 @@ body.ticket-detail-page .main-content .container-custom.narrow {
 
 .ticket-status {
     align-items: center;
-    display: inline-flex;
+    display: flex;
+    justify-content: center;
+    width: fit-content;
+    margin: 0 auto 24px auto;
     gap: 7px;
     font-size: 12px;
     font-weight: 700;
     padding: 6px 16px;
     border-radius: 20px;
-    margin-bottom: 24px;
 }
 
 .status-valid { background: rgba(216,255,79,.1); color: var(--accent); border: 1px solid rgba(216,255,79,.2); }
@@ -108,8 +110,9 @@ body.ticket-detail-page .main-content .container-custom.narrow {
     background: white;
     padding: 16px;
     border-radius: 16px;
-    display: inline-block;
-    margin-bottom: 16px;
+    display: block;
+    width: fit-content;
+    margin: 0 auto 16px auto;
 }
 
 .ticket-code {
@@ -220,6 +223,7 @@ body.ticket-detail-page .main-content .container-custom.narrow {
 .ticket-qr canvas,
 .ticket-qr img {
     display: block;
+    margin: 0 auto;
 }
 
 .ticket-note {

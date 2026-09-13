@@ -40,7 +40,17 @@ class CheckoutController extends Controller
             return $redirect;
         }
 
-        return view('checkout.show', compact('event'));
+        $user = Auth::user();
+        $userOwnedTicketsCount = 0;
+        if ($event->max_tickets_per_person) {
+            $userOwnedTicketsCount = Ticket::where('event_id', $event->id)
+                ->where('attendee_nik', $user->nik)
+                ->whereIn('status', ['valid', 'used'])
+                ->count();
+        }
+        $userRemainingSlots = $event->max_tickets_per_person ? max(0, $event->max_tickets_per_person - $userOwnedTicketsCount) : null;
+
+        return view('checkout.show', compact('event', 'userRemainingSlots'));
     }
 
     // =========================================================
@@ -81,6 +91,16 @@ class CheckoutController extends Controller
 
         $user = Auth::user();
         $quantity = (int) $request->quantity;
+
+        $userOwnedTicketsCount = 0;
+        if ($event->max_tickets_per_person !== null) {
+            $userOwnedTicketsCount = Ticket::where('event_id', $event->id)
+                ->where('attendee_nik', $user->nik)
+                ->whereIn('status', ['valid', 'used'])
+                ->count();
+        }
+        $userRemainingSlots = $event->max_tickets_per_person !== null ? max(0, $event->max_tickets_per_person - $userOwnedTicketsCount) : null;
+
         $subtotal = $event->price * $quantity;
         $adminFee = Order::adminFeeForSubtotal((float) $subtotal);
         $total = $subtotal + $adminFee;
@@ -92,34 +112,75 @@ class CheckoutController extends Controller
             }
         }
 
-        if ($event->ticket_purchase_policy === 'strict' && $event->max_tickets_per_person !== null && $quantity > $event->max_tickets_per_person) {
-            return back()->with('error', "Maksimal {$event->max_tickets_per_person} tiket per orang. Jika ingin membeli lebih, buat pesanan terpisah atau hubungi EO.");
+        if ($event->ticket_purchase_policy === 'strict' && $event->max_tickets_per_person !== null) {
+            if ($quantity > $userRemainingSlots) {
+                if ($userRemainingSlots === 0) {
+                    return back()->with('error', "Kamu sudah mencapai batas maksimal {$event->max_tickets_per_person} tiket untuk event ini.");
+                }
+                return back()->with('error', "Maksimal {$event->max_tickets_per_person} tiket per orang. Kamu hanya bisa membeli {$userRemainingSlots} tiket lagi.");
+            }
         }
 
-        $attendeeNames = [];
-        if ($event->ticket_purchase_policy === 'flexible' && $event->max_tickets_per_person !== null && $quantity > $event->max_tickets_per_person) {
-            $requiredAttendeeCount = (int) ceil(($quantity - $event->max_tickets_per_person) / $event->max_tickets_per_person);
+        $attendeeDetails = [];
+        if ($event->ticket_purchase_policy === 'flexible' && $event->max_tickets_per_person !== null && ($userRemainingSlots === 0 || $quantity > $userRemainingSlots)) {
+            if ($userRemainingSlots === 0) {
+                // Semua tiket harus diisi data teman
+                $requiredAttendeeCount = (int) ceil($quantity / $event->max_tickets_per_person);
+            } else {
+                // Hanya tiket yang melebihi sisa slot yang butuh data teman
+                $excessTickets = $quantity - $userRemainingSlots;
+                $requiredAttendeeCount = (int) ceil($excessTickets / $event->max_tickets_per_person);
+            }
             $request->validate([
-                'attendee_name' => ['required', 'array', 'min:' . $requiredAttendeeCount, 'max:' . $requiredAttendeeCount],
-                'attendee_name.*' => ['required', 'string', 'max:255'],
+                'attendee_name'     => ['required', 'array', 'min:' . $requiredAttendeeCount, 'max:' . $requiredAttendeeCount],
+                'attendee_name.*'   => ['required', 'string', 'max:255'],
+                'attendee_nik'      => ['required', 'array', 'min:' . $requiredAttendeeCount, 'max:' . $requiredAttendeeCount],
+                'attendee_nik.*'    => ['required', 'string', 'max:30'],
+            ], [
+                'attendee_name.required'    => 'Data nama pemegang tiket tambahan wajib diisi.',
+                'attendee_name.*.required'  => 'Nama pemegang tiket tambahan wajib diisi.',
+                'attendee_nik.required'     => 'Data NIK pemegang tiket tambahan wajib diisi.',
+                'attendee_nik.*.required'   => 'NIK pemegang tiket tambahan wajib diisi.',
             ]);
-            $attendeeNames = $request->attendee_name;
+
+            $names = $request->attendee_name;
+            $niks  = $request->attendee_nik;
+            
+            // Validasi NIK agar tidak ada duplikasi dan tidak pernah didaftarkan di event ini sebelumnya (atau sudah melewati batas)
+            foreach ($niks as $i => $nik) {
+                if ($nik === $user->nik) {
+                    return back()->with('error', 'NIK Anda sendiri sudah melebihi limit, gunakan NIK lain.');
+                }
+                // Pastikan NIK ini belum mencapai limit di event ini
+                $nikTicketCount = Ticket::where('event_id', $event->id)
+                    ->where('attendee_nik', $nik)
+                    ->whereIn('status', ['valid', 'used'])
+                    ->count();
+                if ($nikTicketCount >= $event->max_tickets_per_person) {
+                    return back()->with('error', "NIK {$nik} sudah mencapai batas maksimal {$event->max_tickets_per_person} tiket di event ini.");
+                }
+
+                $attendeeDetails[] = [
+                    'name' => $names[$i],
+                    'nik'  => $nik,
+                ];
+            }
         }
 
         $externalId = 'ORDER-'.Str::upper(Str::random(10)).'-'.time();
 
         $order = Order::create([
-            'user_id' => $user->id,
-            'event_id' => $event->id,
-            'quantity' => $quantity,
-            'attendee_details' => !empty($attendeeNames) ? $attendeeNames : null,
-            'unit_price' => $event->price,
-            'subtotal_amount' => $subtotal,
-            'admin_fee' => $adminFee,
-            'total_amount' => $total,
-            'payment_status' => 'pending',
-            'payment_method' => 'xendit',
-            'external_id' => $externalId,
+            'user_id'          => $user->id,
+            'event_id'         => $event->id,
+            'quantity'         => $quantity,
+            'attendee_details' => !empty($attendeeDetails) ? $attendeeDetails : null,
+            'unit_price'       => $event->price,
+            'subtotal_amount'  => $subtotal,
+            'admin_fee'        => $adminFee,
+            'total_amount'     => $total,
+            'payment_status'   => 'pending',
+            'payment_method'   => 'xendit',
+            'external_id'      => $externalId,
         ]);
 
         app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order);
@@ -203,30 +264,73 @@ class CheckoutController extends Controller
     private function generateTickets(Order $order): void
     {
         if (! Ticket::where('order_id', $order->id)->exists()) {
-            $attendees = $order->attendee_details ?? [];
-            $userName = $order->user->name ?? 'Pembeli';
-            $event = $order->event;
-            $maxPerPerson = $event->max_tickets_per_person ?? $order->quantity;
-            $isFlexible = $event->ticket_purchase_policy === 'flexible';
-            $holderNames = array_values(array_filter(
-                array_merge([$userName], $attendees),
-                fn ($name) => trim((string) $name) !== ''
-            ));
+            $attendees   = $order->attendee_details ?? [];
+            $user        = $order->user;
+            $userName    = $user->name ?? 'Pembeli';
+            $userNik     = $user->nik ?? null;
+            $event       = $order->event;
+            $maxPerPerson = $event->max_tickets_per_person;
+            $isFlexible  = $event->ticket_purchase_policy === 'flexible';
+
+            $userOwnedTicketsCount = 0;
+            if ($maxPerPerson !== null) {
+                $userOwnedTicketsCount = Ticket::where('event_id', $event->id)
+                    ->where('attendee_nik', $userNik)
+                    ->whereIn('status', ['valid', 'used'])
+                    ->count();
+            }
+            $userRemainingSlots = $maxPerPerson !== null ? max(0, $maxPerPerson - $userOwnedTicketsCount) : null;
+
+            $holders = [];
+            
+            // Masukkan slot pembeli utama HANYA jika masih ada kuota
+            if ($userRemainingSlots === null || $userRemainingSlots > 0) {
+                $holders[] = [
+                    'name'     => $userName,
+                    'nik'      => $userNik,
+                    'capacity' => $userRemainingSlots ?? 99999
+                ];
+            }
+
+            foreach ($attendees as $attendee) {
+                if (is_array($attendee)) {
+                    $holders[] = [
+                        'name'     => $attendee['name'] ?? $userName,
+                        'nik'      => $attendee['nik'] ?? null,
+                        'capacity' => $maxPerPerson ?? 99999,
+                    ];
+                } else {
+                    $holders[] = [
+                        'name'     => (string) $attendee,
+                        'nik'      => null,
+                        'capacity' => $maxPerPerson ?? 99999,
+                    ];
+                }
+            }
+
+            $holderIndex = 0;
+            $currentHolderAssigned = 0;
 
             for ($i = 0; $i < $order->quantity; $i++) {
-                $name = $userName;
-                if ($isFlexible && $maxPerPerson > 0) {
-                    $name = $holderNames[intdiv($i, $maxPerPerson)] ?? $userName;
-                }
+                $holder = $holders[$holderIndex] ?? ['name' => $userName, 'nik' => $userNik, 'capacity' => 99999];
 
                 Ticket::create([
-                    'order_id' => $order->id,
-                    'event_id' => $order->event_id,
-                    'user_id' => $order->user_id,
-                    'attendee_name' => $name,
-                    'ticket_code' => Ticket::generateCode(),
-                    'status' => 'valid',
+                    'order_id'      => $order->id,
+                    'event_id'      => $order->event_id,
+                    'user_id'       => $order->user_id,
+                    'attendee_name' => $holder['name'],
+                    'attendee_nik'  => $holder['nik'],
+                    'ticket_code'   => Ticket::generateCode(),
+                    'status'        => 'valid',
                 ]);
+
+                if ($isFlexible && $maxPerPerson > 0) {
+                    $currentHolderAssigned++;
+                    if ($currentHolderAssigned >= $holder['capacity']) {
+                        $holderIndex++;
+                        $currentHolderAssigned = 0;
+                    }
+                }
             }
         }
 

@@ -766,15 +766,12 @@
         let gisHighlightedLayer = null;
         let provinceStatsData = null;
         let selectedProvince = null;
-
-        function getChoroplethColor(count, maxCount) {
-            if (maxCount === 0 || count === 0) return 'rgba(255,255,255,0.02)';
-            const ratio = count / maxCount;
-            const r = Math.round(255 * ratio);
-            const g = Math.round(40 * (1 - ratio));
-            const b = Math.round(40 * (1 - ratio));
-            const a = 0.05 + 0.15 * ratio;
-            return `rgba(${r},${g},${b},${a})`;
+        function getChoroplethColor(count) {
+            if (count === 0) return 'rgba(255,255,255,0.05)';
+            if (count >= 25) return '#dc2626'; // Sangat padat (Merah)
+            if (count >= 15) return '#f97316'; // Sedang (Orange)
+            if (count >= 5)  return '#facc15'; // Sedikit (Kuning)
+            return '#a3e635'; // 1-4 (Hijau Muda)
         }
 
         function onProvinceClick(e, feature) {
@@ -785,6 +782,7 @@
             }
 
             selectedProvince = name;
+            if (gisLayer) gisLayer.resetStyle();
             clearRoute();
 
             if (gisHighlightedLayer) {
@@ -793,10 +791,11 @@
 
             gisHighlightedLayer = L.geoJSON(feature, {
                 style: {
-                    fillColor: '#d8ff4f',
-                    fillOpacity: 0.25,
+                    fillColor: 'transparent',
+                    fillOpacity: 0,
                     color: '#d8ff4f',
-                    weight: 3,
+                    weight: 2.5,
+                    dashArray: null,
                 }
             }).addTo(map);
 
@@ -843,6 +842,7 @@
 
         function clearGisProvinceHighlight() {
             selectedProvince = null;
+            if (gisLayer) gisLayer.resetStyle();
             clearRoute();
             if (gisHighlightedLayer) {
                 map.removeLayer(gisHighlightedLayer);
@@ -865,12 +865,16 @@
             const maxCount = Math.max(...Object.values(counts), 1);
 
             gisLayer = L.geoJSON(data.provinces, {
-                style: feature => ({
-                    fillColor: getChoroplethColor(counts[feature.properties.name] || 0, maxCount),
-                    color: 'rgba(200,220,255,0.6)',
-                    weight: 1.5,
-                    fillOpacity: 0.12,
-                }),
+                style: feature => {
+                    const count = counts[feature.properties.name] || 0;
+                    const isSelected = selectedProvince === feature.properties.name;
+                    return {
+                        fillColor: getChoroplethColor(count),
+                        fillOpacity: isSelected ? 0 : (count > 0 ? 0.75 : 0.12),
+                        color: 'rgba(255,255,255,0.25)',
+                        weight: 0.8,
+                    };
+                },
                 onEachFeature: (feature, layer) => {
                     const count = counts[feature.properties.name] || 0;
                     layer.bindTooltip(`${feature.properties.name}<br>${count} event`, {
@@ -881,12 +885,13 @@
                     layer.on('click', () => onProvinceClick(layer, feature));
                     layer.on('mouseover', function() {
                         if (selectedProvince !== feature.properties.name) {
-                            this.setStyle({ weight: 2.5, color: 'rgba(216,255,79,0.8)', fillOpacity: 0.2 });
+                            this.setStyle({ weight: 2, color: 'rgba(216,255,79,1)', fillOpacity: count > 0 ? 0.9 : 0.22 });
+                            this.bringToFront();
                         }
                     });
                     layer.on('mouseout', function() {
                         if (selectedProvince !== feature.properties.name) {
-                            this.setStyle({ weight: 1.5, color: 'rgba(200,220,255,0.6)', fillOpacity: 0.12 });
+                            this.setStyle({ weight: 0.8, color: 'rgba(255,255,255,0.25)', fillOpacity: count > 0 ? 0.75 : 0.12 });
                         }
                     });
                 }
@@ -1134,8 +1139,8 @@
 
         function getMapStyle() {
             return isLightMode()
-                ? { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', routeColor: '#3b82f6', userColor: '#2563eb', radiusColor: '#2563eb' }
-                : { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', routeColor: '#d8ff4f', userColor: '#d8ff4f', radiusColor: '#d8ff4f' };
+                ? { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key={{ env('CARTO_API_KEY') }}', routeColor: '#3b82f6', userColor: '#2563eb', radiusColor: '#2563eb' }
+                : { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key={{ env('CARTO_API_KEY') }}', routeColor: '#d8ff4f', userColor: '#d8ff4f', radiusColor: '#d8ff4f' };
         }
 
         const defaultLat = -6.2088;

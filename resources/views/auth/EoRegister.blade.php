@@ -66,6 +66,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Nomor Induk Kependudukan (NIK)</label>
+                    <input type="text" name="nik" placeholder="16 digit NIK" value="{{ old('nik') }}" maxlength="30">
+                    @error('nik')
+                        <span class="field-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group">
                     <label>Email</label>
                     <input type="email" name="email" placeholder="nama@email.com" value="{{ old('email') }}" required>
                     @error('email')
@@ -206,7 +214,7 @@
         const defaultLat = -6.2088, defaultLng = 106.8456;
         const map = L.map('map-picker').setView([defaultLat, defaultLng], 5);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key={{ env('CARTO_API_KEY') }}', {
             attribution: '&copy; CARTO', maxZoom: 19,
         }).addTo(map);
 

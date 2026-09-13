@@ -59,6 +59,15 @@
                 </div>
 
                 <div class="form-group">
+                    <label>NIM/NIK</label>
+                    <input
+                        type="text"
+                        name="nik"
+                        placeholder="Contoh: 0123456789 (opsional)"
+                        maxlength="30">
+                </div>
+
+                <div class="form-group">
                     <label>Password</label>
                     <div class="password-wrapper">
                         <input

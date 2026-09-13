@@ -37,6 +37,7 @@ class EORegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
             'phone' => ['required', 'string', 'max:20'],
+            'nik' => ['nullable', 'string', 'max:30'],
             'address' => ['nullable', 'string', 'max:500'],
             'lat' => ['required', 'numeric', 'between:-90,90'],
             'lng' => ['required', 'numeric', 'between:-180,180'],
@@ -52,6 +53,7 @@ class EORegisterController extends Controller
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email ini sudah terdaftar.',
             'phone.required' => 'Nomor telepon wajib diisi.',
+            'nik.max' => 'NIK maksimal 30 karakter.',
             'bank_channel_code.required' => 'Bank tujuan payout wajib dipilih.',
             'bank_channel_code.in' => 'Bank tujuan payout tidak valid.',
             'bank_name.required' => 'Nama bank wajib diisi.',
@@ -71,6 +73,7 @@ class EORegisterController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'nik' => $request->nik,
             'address' => $request->address,
             'lat' => $request->lat,
             'lng' => $request->lng,
@@ -158,6 +161,7 @@ class EORegisterController extends Controller
         $user = User::create([
             'name' => $pending['name'],
             'email' => $pending['email'],
+            'nik' => $pending['nik'] ?? null,
             'password' => $pending['password'],
             'role' => 'eo',
         ]);

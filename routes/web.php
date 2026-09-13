@@ -121,6 +121,9 @@ Route::middleware('auth')->group(function () {
 
     Route::put('/profile/refund-destination', [UserProfileController::class, 'updateRefundDestination'])
         ->name('profile.refund-destination.update');
+
+    Route::put('/profile/nik', [UserProfileController::class, 'updateNik'])
+        ->name('profile.nik.update');
 });
 
 Route::post('/location/save', [LocationController::class, 'save'])

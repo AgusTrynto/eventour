@@ -21,7 +21,16 @@ class EventController extends Controller
             session(['user_location' => $userLocation]);
         }
 
-        return view('events.show', compact('event', 'userLocation'));
+        $userRemainingSlots = null;
+        if (Auth::check() && $event->max_tickets_per_person !== null) {
+            $userOwnedTicketsCount = \App\Models\Ticket::where('event_id', $event->id)
+                ->where('attendee_nik', Auth::user()->nik)
+                ->whereIn('status', ['valid', 'used'])
+                ->count();
+            $userRemainingSlots = max(0, $event->max_tickets_per_person - $userOwnedTicketsCount);
+        }
+
+        return view('events.show', compact('event', 'userLocation', 'userRemainingSlots'));
     }
 
     private function userLocation(?User $user): ?array
