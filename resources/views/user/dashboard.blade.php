@@ -175,7 +175,7 @@
                 {{-- REKOMENDASI CARD --}}
                 <div class="card">
                     <div class="card-header">
-                        <h2>Rekomendasi untuk Anda</h2>
+                        <h2>3 Event Tercocok Untukmu</h2>
                         <a href="{{ route('dashboard.events') }}" class="card-link">
                             Lihat selengkapnya
                             <x-icon name="arrow-right" size="14" />
