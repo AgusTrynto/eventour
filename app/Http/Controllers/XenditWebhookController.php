@@ -118,7 +118,8 @@ class XenditWebhookController extends Controller
         $failureCode = $data['failure_code'] ?? null;
 
         if (is_string($event)) {
-            if (str_contains($event, 'succeeded')
+            if (
+                str_contains($event, 'succeeded')
                 || str_contains($event, 'successful')
                 || str_contains($event, 'completed')
             ) {
@@ -451,13 +452,23 @@ class XenditWebhookController extends Controller
             $event = $order->event;
             $maxPerPerson = $event->max_tickets_per_person ?? $order->quantity;
             $isFlexible = $event->ticket_purchase_policy === 'flexible';
+
             $holderNames = array_values(array_filter(
-                array_merge([$userName], $attendees),
-                fn ($name) => trim((string) $name) !== ''
+                array_merge(
+                    [$userName],
+                    array_map(
+                        fn($attendee) => is_array($attendee)
+                            ? ($attendee['nama'] ?? $attendee['name'] ?? '')
+                            : $attendee,
+                        $attendees
+                    )
+                ),
+                fn($name) => is_string($name) && trim($name) !== ''
             ));
 
             for ($i = 0; $i < $order->quantity; $i++) {
                 $name = $userName;
+
                 if ($isFlexible && $maxPerPerson > 0) {
                     $name = $holderNames[intdiv($i, $maxPerPerson)] ?? $userName;
                 }
