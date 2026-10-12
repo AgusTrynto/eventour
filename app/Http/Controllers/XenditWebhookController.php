@@ -25,6 +25,13 @@ class XenditWebhookController extends Controller
     // =========================================================
     public function handle(Request $request)
     {
+        if ($request->isMethod('get')) {
+            return response()->json([
+                'status'  => 'active',
+                'message' => 'Xendit Webhook endpoint is active and listening. This endpoint only accepts POST requests from Xendit callbacks.',
+            ]);
+        }
+
         $token = $request->header('x-callback-token');
 
         if ($token !== config('services.xendit.webhook_token')) {

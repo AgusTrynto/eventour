@@ -177,8 +177,8 @@ Route::middleware('auth')->group(function () {
         ->name('reviews.store');
 });
 
-// ── Webhook Xendit (TANPA middleware auth/csrf — dipanggil server Xendit) ──
-Route::post('/webhooks/xendit', [XenditWebhookController::class, 'handle'])
+// ── Webhook Xendit (TANPA middleware auth/csrf — dipanggil server Xendit via POST) ──
+Route::match(['get', 'post'], '/webhooks/xendit', [XenditWebhookController::class, 'handle'])
     ->name('webhooks.xendit');
 
 // === EO DASHBOARD ROUTES ===
