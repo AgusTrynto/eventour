@@ -50,4 +50,110 @@ class Ticket extends Model
 
         return $code;
     }
+
+    // =========================================================
+    // Generate tiket untuk order berdasarkan data pemesan & attendees
+    // =========================================================
+    public static function generateForOrder(Order $order): void
+    {
+        if (self::where('order_id', $order->id)->exists()) {
+            return;
+        }
+
+        $attendees    = $order->attendee_details ?? [];
+        $user         = $order->user;
+        $userName     = $user->name ?? 'Pembeli';
+        $userNik      = $user->nik ?? null;
+        $event        = $order->event;
+        $maxPerPerson = $event->max_tickets_per_person;
+
+        // Hitung berapa tiket yang sudah dimiliki pemilik akun di event ini sebelum order ini
+        $userOwnedTicketsCount = 0;
+        if ($maxPerPerson !== null) {
+            $userOwnedTicketsCount = self::where('event_id', $event->id)
+                ->where('order_id', '!=', $order->id)
+                ->where(function ($q) use ($userNik, $user) {
+                    if ($userNik) {
+                        $q->where('attendee_nik', $userNik);
+                    } else {
+                        $q->where('user_id', $user->id);
+                    }
+                })
+                ->whereIn('status', ['valid', 'used'])
+                ->count();
+        }
+
+        $userRemainingSlots = $maxPerPerson !== null ? max(0, $maxPerPerson - $userOwnedTicketsCount) : null;
+
+        $holders = [];
+
+        if (!empty($attendees)) {
+            // Jika ada data pemegang tiket dari input form:
+            if ($userRemainingSlots !== null && $userRemainingSlots === 0) {
+                // Pembeli utama sudah mencapai limit kuota, seluruh tiket untuk attendees dari form
+            } else {
+                // Pembeli utama masih punya kuota, masukkan pembeli utama untuk slot miliknya
+                $buyerCapacity = $userRemainingSlots ?? 1;
+                $holders[] = [
+                    'name'     => $userName,
+                    'nik'      => $userNik,
+                    'capacity' => $buyerCapacity,
+                ];
+            }
+
+            foreach ($attendees as $attendee) {
+                if (is_array($attendee)) {
+                    $holders[] = [
+                        'name'     => $attendee['name'] ?? ($attendee['nama'] ?? $userName),
+                        'nik'      => $attendee['nik'] ?? null,
+                        'capacity' => $maxPerPerson ?? 1,
+                    ];
+                } else {
+                    $holders[] = [
+                        'name'     => (string) $attendee,
+                        'nik'      => null,
+                        'capacity' => $maxPerPerson ?? 1,
+                    ];
+                }
+            }
+        } else {
+            // Tidak ada attendees khusus (semua tiket atas nama pembeli utama)
+            $holders[] = [
+                'name'     => $userName,
+                'nik'      => $userNik,
+                'capacity' => $order->quantity,
+            ];
+        }
+
+        $holderIndex = 0;
+        $currentHolderAssigned = 0;
+
+        for ($i = 0; $i < $order->quantity; $i++) {
+            $holder = $holders[$holderIndex] ?? end($holders) ?: ['name' => $userName, 'nik' => $userNik, 'capacity' => 1];
+
+            self::create([
+                'order_id'      => $order->id,
+                'event_id'      => $order->event_id,
+                'user_id'       => $order->user_id,
+                'attendee_name' => $holder['name'],
+                'attendee_nik'  => $holder['nik'],
+                'ticket_code'   => self::generateCode(),
+                'status'        => 'valid',
+            ]);
+
+            $currentHolderAssigned++;
+            if ($currentHolderAssigned >= ($holder['capacity'] ?? 1)) {
+                if (isset($holders[$holderIndex + 1])) {
+                    $holderIndex++;
+                    $currentHolderAssigned = 0;
+                }
+            }
+        }
+
+        $order->refresh();
+
+        if (class_exists(\App\Services\RecommendationFeatureSnapshotService::class)) {
+            app(\App\Services\RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order);
+        }
+    }
 }

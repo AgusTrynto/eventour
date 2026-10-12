@@ -70,11 +70,13 @@ class EOScanController extends Controller
 
         // Tiket sudah dipakai sebelumnya
         if ($ticket->status === 'used') {
+            $usedTime = $ticket->checked_in_at ? " pada {$ticket->checked_in_at->translatedFormat('d M Y, H:i')}" : '';
             return response()->json([
                 'valid'   => false,
-                'message' => "Tiket sudah digunakan pada {$ticket->checked_in_at->translatedFormat('d M Y, H:i')}.",
+                'message' => "Tiket sudah digunakan{$usedTime}.",
                 'ticket'  => [
-                    'holder' => $ticket->user->name,
+                    'holder' => $ticket->attendee_name ?: $ticket->user->name,
+                    'nik'    => $ticket->attendee_nik ?: $ticket->user->nik,
                     'code'   => $ticket->ticket_code,
                 ],
             ], 409);
@@ -99,7 +101,8 @@ class EOScanController extends Controller
             'valid'   => true,
             'message' => 'Tiket valid! Selamat datang.',
             'ticket'  => [
-                'holder' => $ticket->user->name,
+                'holder' => $ticket->attendee_name ?: $ticket->user->name,
+                'nik'    => $ticket->attendee_nik ?: $ticket->user->nik,
                 'code'   => $ticket->ticket_code,
                 'event'  => $ticket->event->title,
             ],
