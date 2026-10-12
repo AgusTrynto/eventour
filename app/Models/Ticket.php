@@ -92,12 +92,11 @@ class Ticket extends Model
             if ($userRemainingSlots !== null && $userRemainingSlots === 0) {
                 // Pembeli utama sudah mencapai limit kuota, seluruh tiket untuk attendees dari form
             } else {
-                // Pembeli utama masih punya kuota, masukkan pembeli utama untuk slot miliknya
-                $buyerCapacity = $userRemainingSlots ?? 1;
+                // Pembeli utama masih punya kuota, masukkan pembeli utama untuk 1 tiket miliknya
                 $holders[] = [
                     'name'     => $userName,
                     'nik'      => $userNik,
-                    'capacity' => $buyerCapacity,
+                    'capacity' => 1,
                 ];
             }
 
@@ -106,13 +105,13 @@ class Ticket extends Model
                     $holders[] = [
                         'name'     => $attendee['name'] ?? ($attendee['nama'] ?? $userName),
                         'nik'      => $attendee['nik'] ?? null,
-                        'capacity' => $maxPerPerson ?? 1,
+                        'capacity' => 1,
                     ];
                 } else {
                     $holders[] = [
                         'name'     => (string) $attendee,
                         'nik'      => null,
-                        'capacity' => $maxPerPerson ?? 1,
+                        'capacity' => 1,
                     ];
                 }
             }

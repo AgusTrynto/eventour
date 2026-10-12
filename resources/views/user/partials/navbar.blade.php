@@ -71,6 +71,24 @@
                 <span class="theme-toggle__label" data-theme-toggle-label>Gelap</span>
             </button>
 
+            @auth
+                @php $cartCount = Auth::user()->cartItems()->count(); @endphp
+                <a href="{{ route('cart.index') }}" class="nav-cart" title="Keranjang"
+                    style="position:relative; display:inline-flex; align-items:center; gap:4px;
+                           text-decoration:none; color:inherit; font-size:13px; padding:5px 8px;
+                           border-radius:8px; transition:background .15s;"
+                    onmouseover="this.style.background='rgba(255,255,255,.07)'"
+                    onmouseout="this.style.background='transparent'">
+                    🛒
+                    @if($cartCount > 0)
+                        <span class="cart-badge"
+                            style="background:#d8ff4f; color:#0f1117; font-size:10px; font-weight:700;
+                                   border-radius:50%; width:16px; height:16px; display:inline-flex;
+                                   align-items:center; justify-content:center; line-height:1;">{{ $cartCount }}</span>
+                    @endif
+                </a>
+            @endauth
+
             @if ($navbarUser?->role === 'eo')
                 <a href="{{ route('eo.dashboard') }}" class="nav-link-eo-badge">
                     <x-icon name="building" :size="15" />

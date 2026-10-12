@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\EORegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EO\EODashboardController;
@@ -157,6 +158,14 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/checkout/order/{order}/failed', [CheckoutController::class, 'failed'])
         ->name('checkout.failed');
+
+    // Cart routes
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    Route::get('/cart/success/{externalId}', [CartController::class, 'cartSuccess'])->name('cart.success');
+    Route::post('/cart/event/{event}', [CartController::class, 'store'])->name('cart.store');
+    Route::patch('/cart/{cartItem}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy');
 });
 
 // ── User: lihat tiket sendiri (gabungkan ke grup auth yang sama) ──

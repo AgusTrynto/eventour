@@ -66,10 +66,10 @@ class XenditWebhookController extends Controller
             return response()->json(['message' => 'OK']);
         }
 
-        $order = Order::where('external_id', $externalId)->first();
+        $orders = Order::where('external_id', $externalId)->get();
 
-        if (! $order) {
-            Log::warning("Xendit webhook: order not found for external_id {$externalId}");
+        if ($orders->isEmpty()) {
+            Log::warning("Xendit webhook: no orders found for external_id {$externalId}");
 
             return response()->json(['message' => 'OK']);
         }
@@ -77,22 +77,26 @@ class XenditWebhookController extends Controller
         switch ($status) {
             case 'PAID':
             case 'SETTLED':
-                if ($order->payment_status === 'pending') {
-                    $order->update([
-                        'payment_status' => 'paid',
-                        'paid_at' => now(),
-                    ]);
+                foreach ($orders as $order) {
+                    if ($order->payment_status === 'pending') {
+                        $order->update([
+                            'payment_status' => 'paid',
+                            'paid_at'        => now(),
+                        ]);
 
-                    $this->generateTickets($order); // ← INI YANG HILANG
+                        $this->generateTickets($order);
 
-                    Log::info("Order {$order->id} marked as paid via webhook");
+                        Log::info("Order {$order->id} marked as paid via webhook");
+                    }
                 }
                 break;
 
             case 'EXPIRED':
-                if ($order->payment_status === 'pending') {
-                    $order->update(['payment_status' => 'expired']);
-                    app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order);
+                foreach ($orders as $order) {
+                    if ($order->payment_status === 'pending') {
+                        $order->update(['payment_status' => 'expired']);
+                        app(RecommendationFeatureSnapshotService::class)->recordPurchasedOrder($order);
+                    }
                 }
                 break;
 

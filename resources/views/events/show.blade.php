@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $event->title }} - EvenTour</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -115,6 +116,24 @@
                         </div>
 
                         @auth
+                            {{-- Toast notifikasi keranjang --}}
+                            <div id="cart-toast" style="display:none; background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.3);
+                                color: #86efac; padding: 10px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 10px; text-align: center;">
+                                ✅ Ditambahkan ke keranjang!
+                            </div>
+
+                            @if (!$event->is_ended && ($event->quota === null || ($event->quota - $event->tickets_sold) > 0))
+                                @if ($userRemainingSlots === 0 && $event->ticket_purchase_policy === 'strict')
+                                    {{-- Limit tercapai pada strict policy --}}
+                                @else
+                                    <button id="add-to-cart-btn" class="btn-buy"
+                                        style="background: rgba(216,255,79,.1); border: 1px solid rgba(216,255,79,.35); color: #d8ff4f; margin-bottom: 8px;"
+                                        data-event-id="{{ $event->id }}">
+                                        {{ $userRemainingSlots === 0 ? '🛒 + Keranjang (Untuk Teman)' : '🛒 + Keranjang' }}
+                                    </button>
+                                @endif
+                            @endif
+
                             @if ($event->is_ended)
                                 <button class="btn-buy" disabled>Event Berakhir</button>
                             @elseif ($event->quota !== null && ($event->quota - $event->tickets_sold) <= 0)
@@ -148,6 +167,56 @@
     <footer>Copyright 2026 EvenTour. All Rights Reserved.</footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    {{-- Add to cart AJAX --}}
+    @auth
+    <script>
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        const cartToast    = document.getElementById('cart-toast');
+
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function () {
+                const eventId = this.dataset.eventId;
+                addToCartBtn.disabled = true;
+                addToCartBtn.textContent = '⏳ Menambahkan...';
+
+                fetch(`/cart/event/${eventId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    },
+                    body: JSON.stringify({ quantity: 1 }),
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        cartToast.style.display = 'block';
+                        addToCartBtn.textContent = '✅ Di Keranjang';
+
+                        // Update badge jika ada
+                        const badge = document.querySelector('.cart-badge');
+                        if (badge && data.cart_count !== undefined) {
+                            badge.textContent = data.cart_count;
+                        }
+
+                        setTimeout(() => { cartToast.style.display = 'none'; }, 3000);
+                    } else {
+                        addToCartBtn.disabled = false;
+                        addToCartBtn.textContent = '🛒 + Keranjang';
+                        alert(data.message || 'Gagal menambahkan ke keranjang.');
+                    }
+                })
+                .catch(() => {
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.textContent = '🛒 + Keranjang';
+                });
+            });
+        }
+    </script>
+    @endauth
+
     <script>
         const eventLat = {{ $event->lat }};
         const eventLng = {{ $event->lng }};

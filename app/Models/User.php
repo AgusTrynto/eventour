@@ -86,6 +86,11 @@ class User extends Authenticatable
         return $this->role === 'eo';
     }
 
+    public function cartItems()
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
     public function hasRefundDestination(): bool
     {
         return filled($this->refund_destination_type)

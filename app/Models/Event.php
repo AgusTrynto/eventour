@@ -195,4 +195,54 @@ class Event extends Model
     {
         return $this->hasMany(RecommendationFeatureSnapshot::class);
     }
+
+    public function getUserOwnedTicketsCount(?User $user): int
+    {
+        if (! $user) {
+            return 0;
+        }
+
+        return (int) $this->tickets()
+            ->where(function ($q) use ($user) {
+                if ($user->nik) {
+                    $q->where('attendee_nik', $user->nik);
+                } else {
+                    $q->where('user_id', $user->id);
+                }
+            })
+            ->whereIn('status', ['valid', 'used'])
+            ->count();
+    }
+
+    public function getUserRemainingSlots(?User $user): ?int
+    {
+        if (! $user || $this->max_tickets_per_person === null) {
+            return null;
+        }
+
+        return max(0, (int) $this->max_tickets_per_person - $this->getUserOwnedTicketsCount($user));
+    }
+
+    public function getRequiredAttendeeCount(?User $user, int $quantity): int
+    {
+        if (! $user) {
+            return 0;
+        }
+
+        if ($this->ticket_purchase_policy === 'strict') {
+            return 0;
+        }
+
+        $owned = $this->getUserOwnedTicketsCount($user);
+
+        // Jika user sudah pernah memiliki tiket di event ini, seluruh tiket harus untuk orang lain
+        if ($owned > 0) {
+            return $quantity;
+        }
+
+        // Jika user belum pernah memiliki tiket di event ini:
+        // 1 tiket pertama untuk akun user sendiri, tiket ke-2 dan seterusnya (quantity - 1) untuk orang lain
+        return max(0, $quantity - 1);
+    }
 }
+
