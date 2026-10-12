@@ -58,7 +58,6 @@
                         </div>
 
                         <div class="recommendation-result-actions">
-                            <span class="rec-score">{{ $recommendation['score_label'] }}</span>
                             <a href="{{ route('events.show', $event) }}" class="rec-btn">Lihat</a>
                         </div>
                     </article>
