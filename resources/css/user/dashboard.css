@@ -1081,6 +1081,115 @@ footer {
     opacity: .65;
 }
 
+/* ── EVENTS PAGE SECTIONS & CATALOG ──────────── */
+.events-page-container {
+    display: grid;
+    gap: 36px;
+}
+
+.events-section {
+    display: grid;
+    gap: 16px;
+}
+
+.events-section-header {
+    align-items: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.events-section-title {
+    align-items: center;
+    color: white;
+    display: flex;
+    font-family: "Syne", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    gap: 8px;
+    margin: 0;
+}
+
+body.theme-light .events-section-title {
+    color: var(--light-text);
+}
+
+.events-section-subtitle {
+    color: #9ca3af;
+    font-size: 13px;
+    margin: 4px 0 0;
+}
+
+body.theme-light .events-section-subtitle {
+    color: var(--light-muted);
+}
+
+.events-catalog-search {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+}
+
+.events-search-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.events-search-field input {
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: white;
+    font-family: inherit;
+    font-size: 13px;
+    height: 38px;
+    min-width: 220px;
+    outline: none;
+    padding: 0 32px 0 12px;
+    transition: .2s;
+}
+
+.events-search-field input:focus {
+    border-color: rgba(216, 255, 79, .4);
+    background: rgba(255, 255, 255, .07);
+}
+
+body.theme-light .events-search-field input {
+    background: #ffffff;
+    border-color: #d1d5db;
+    color: var(--light-text);
+}
+
+.events-search-clear {
+    align-items: center;
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    padding: 4px;
+    position: absolute;
+    right: 8px;
+    text-decoration: none;
+}
+
+.events-search-clear:hover {
+    color: white;
+}
+
+body.theme-light .events-search-clear:hover {
+    color: var(--light-text);
+}
+
+.events-badge-upcoming {
+    background: rgba(59, 130, 246, .15) !important;
+    border: 1px solid rgba(59, 130, 246, .3) !important;
+    color: #60a5fa !important;
+}
+
 /* Leaflet dark override */
 .leaflet-container {
     background: transparent !important;

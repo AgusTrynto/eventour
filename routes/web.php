@@ -108,7 +108,7 @@ Route::get('/dashboard/recommendations', [DashboardController::class, 'recommend
     ->name('dashboard.recommendations')
     ->middleware('auth');
 
-Route::get('/dashboard/events', [DashboardController::class, 'recommendationList'])
+Route::get('/dashboard/events', [DashboardController::class, 'events'])
     ->name('dashboard.events')
     ->middleware('auth');
 

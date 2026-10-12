@@ -112,24 +112,37 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function recommendationList(Request $request, NeuralContentRecommendationService $recommendationService)
+    public function events(Request $request, NeuralContentRecommendationService $recommendationService)
     {
         $user = Auth::user();
-        $perPage = 10;
-        $page = max(1, (int) $request->query('page', 1));
-        $recommendations = $recommendationService->recommendForUser($user, null)->values();
-        $recommendedEvents = new LengthAwarePaginator(
-            $recommendations->forPage($page, $perPage)->values(),
-            $recommendations->count(),
-            $perPage,
-            $page,
-            [
-                'path' => $request->url(),
-                'query' => $request->query(),
-            ]
-        );
 
-        return view('user.recommendations', compact('user', 'recommendedEvents'));
+        // 1. Ambil 5 Rekomendasi Teratas
+        $recommendations = $recommendationService->recommendForUser($user, 5)->values();
+
+        // 2. Query Semua Event (Server-side Pagination, 10 per halaman)
+        $query = Event::where('status', 'approved')
+            ->with('organizer');
+
+        if ($search = trim((string) $request->query('q', ''))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'ilike', "%{$search}%")
+                    ->orWhere('location_name', 'ilike', "%{$search}%")
+                    ->orWhere('category', 'ilike', "%{$search}%");
+            });
+        }
+
+        $events = $query
+            ->orderByRaw("CASE WHEN end_date >= NOW() OR (end_date IS NULL AND start_date >= NOW()) THEN 0 ELSE 1 END")
+            ->orderBy('start_date', 'asc')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('user.events', compact('user', 'recommendations', 'events'));
+    }
+
+    public function recommendationList(Request $request, NeuralContentRecommendationService $recommendationService)
+    {
+        return $this->events($request, $recommendationService);
     }
 
     private function recommendationCacheKey(User $user): string
