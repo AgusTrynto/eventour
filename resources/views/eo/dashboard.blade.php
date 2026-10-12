@@ -124,6 +124,15 @@
                     </span>
                     <span class="dashboard-menu-action">Buka</span>
                 </a>
+
+                <a href="{{ route('eo.events.index') }}" class="dashboard-menu-card">
+                    <span class="dashboard-menu-icon"><x-icon name="scan-line" :size="26" /></span>
+                    <span class="dashboard-menu-body">
+                        <strong>Statistik Check-in</strong>
+                        <small>Lihat tiket yang sudah di-scan per event</small>
+                    </span>
+                    <span class="dashboard-menu-action">Pilih Event</span>
+                </a>
             </div>
 
             <div class="card full-width dashboard-finance-strip">

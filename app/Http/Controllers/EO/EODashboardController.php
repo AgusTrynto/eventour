@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\Order;
 use App\Models\Review;
 use App\Models\ReviewSummary;
+use App\Models\Ticket;
 use App\Services\EOPayoutAutomationService;
 use App\Services\ReviewSummaryService;
 use Illuminate\Http\Request;
@@ -304,6 +305,58 @@ public function events(Request $request)
 
         return redirect()->route('eo.events.index')
             ->with('success', 'Event berhasil diajukan! Menunggu persetujuan admin.');
+    }
+
+    // =========================================================
+    // Statistik detail tiket per event
+    // =========================================================
+    public function eventDetail(Request $request, Event $event)
+    {
+        $organizer = Auth::user()->eventOrganizer;
+
+        if (! $organizer || $event->event_organizer_id !== $organizer->id) {
+            abort(403, 'Event ini bukan milikmu.');
+        }
+
+        $ticketQuery = Ticket::where('event_id', $event->id);
+
+        $totalTickets   = (clone $ticketQuery)->count();
+        $validTickets   = (clone $ticketQuery)->where('status', 'valid')->count();
+        $usedTickets    = (clone $ticketQuery)->where('status', 'used')->count();
+        $cancelledTickets = (clone $ticketQuery)->where('status', 'cancelled')->count();
+
+        $checkInRate = $totalTickets > 0
+            ? round(($usedTickets / max(1, $validTickets + $usedTickets)) * 100, 1)
+            : 0;
+
+        // Daftar tiket yang sudah di-scan (dengan pencarian)
+        $search = $request->query('search');
+
+        $scannedTicketsQuery = Ticket::where('event_id', $event->id)
+            ->where('status', 'used')
+            ->with(['user', 'checkedInBy'])
+            ->orderBy('checked_in_at', 'desc');
+
+        if ($search) {
+            $scannedTicketsQuery->where(function ($q) use ($search) {
+                $q->where('attendee_name', 'like', "%{$search}%")
+                  ->orWhere('attendee_nik', 'like', "%{$search}%")
+                  ->orWhere('ticket_code', 'like', "%{$search}%");
+            });
+        }
+
+        $scannedTickets = $scannedTicketsQuery->paginate(20)->withQueryString();
+
+        return view('eo.event-detail', compact(
+            'event',
+            'totalTickets',
+            'validTickets',
+            'usedTickets',
+            'cancelledTickets',
+            'checkInRate',
+            'scannedTickets',
+            'search'
+        ));
     }
 
     // =========================================================

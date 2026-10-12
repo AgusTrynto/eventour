@@ -137,6 +137,7 @@
                             <span>Tiket</span>
                             <span>Dana</span>
                             <span>Ulasan</span>
+                            <span>Detail</span>
                         </div>
 
                         @foreach ($approvedEvents as $event)
@@ -149,6 +150,9 @@
                                 <span>Rp {{ number_format($event->escrow_amount, 0, ',', '.') }}</span>
                                 <span>
                                     <a href="{{ route('eo.events.reviews', $event) }}" class="btn-reviews">Lihat</a>
+                                </span>
+                                <span>
+                                    <a href="{{ route('eo.events.detail', $event) }}" class="btn-reviews">Tiket</a>
                                 </span>
                             </div>
                         @endforeach

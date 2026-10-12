@@ -204,6 +204,9 @@ Route::middleware(['auth', 'eo'])->prefix('eo')->group(function () {
     Route::get('/customers', [EODashboardController::class, 'customers'])
         ->name('eo.customers.index');
 
+    Route::get('/events/{event}/detail', [EODashboardController::class, 'eventDetail'])
+        ->name('eo.events.detail');
+
     Route::get('/events/{event}/reviews', [EODashboardController::class, 'eventReviews'])
         ->name('eo.events.reviews');
 
